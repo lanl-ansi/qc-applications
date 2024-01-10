@@ -1,3 +1,7 @@
 Trotter/*
 QSP/*
 .ipynb*
+*.sh
+GSE/*
+*.zip
+qasm_circuits/*
