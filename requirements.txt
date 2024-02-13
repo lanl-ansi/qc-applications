@@ -5,4 +5,4 @@ numpy
 openfermion
 openfermionpyscf
 pandas
-pyLIQTR==0.3.3
+pyLIQTR>=1.0.0
