@@ -47,7 +47,7 @@ MANIFEST
 env/
 venv/
 ENV/
-*.back
+*.bak
 
 # mypy
 .mypy_cache/
