@@ -17,7 +17,7 @@ dependencies = [
 ]
 requires-python = ">=3.9"
 description = "Documentation of Applications for Quantum Computers"
-readme = "readme.md"
+readme = "README.md"
 license = {file = "LICENSE.txt"}
 classifiers = [
   "Programming Language :: Python"
