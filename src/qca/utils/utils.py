@@ -1,6 +1,4 @@
 import os
-from re import findall
-from typing import Union
 from cirq import Circuit, QasmOutput
 from pyLIQTR.utils.qsp_helpers import circuit_decompose_once
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
