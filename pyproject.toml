@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qca"
+version = "0.0.1"
+dependencies = [
+    "cirq",
+    "matplotlib",
+    "networkx",
+    "numpy",
+    "openfermion",
+    "openfermionpyscf",
+    "pandas",
+    "pyLIQTR == 0.3.3"
+]
+requires-python = ">=3.9"
+description = "Documentation of Applications for Quantum Computers"
+readme = "README.md"
+license = {file = "LICENSE.txt"}
+classifiers = [
+  "Programming Language :: Python"
+]
