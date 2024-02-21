@@ -1,15 +1,8 @@
 import os
-from re import findall
-from typing import Union
 from cirq import Circuit, QasmOutput
 from pyLIQTR.utils.qsp_helpers import circuit_decompose_once
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 from pyLIQTR.utils.utils import count_T_gates
-
-
-def extract_number(string) -> Union[int, None]:
-    number = findall(r'\d+', string)
-    return int(number[0]) if number else None
 
 
 def count_gates(cpt_circuit) -> int:
