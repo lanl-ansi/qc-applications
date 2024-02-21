@@ -7,11 +7,6 @@ from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 from pyLIQTR.utils.utils import count_T_gates
 
 
-def extract_number(string) -> Union[int, None]:
-    number = findall(r'\d+', string)
-    return int(number[0]) if number else None
-
-
 def count_gates(cpt_circuit) -> int:
     count = 0
     for moment in cpt_circuit:
