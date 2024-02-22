@@ -1,4 +1,5 @@
 import os
+import re
 from cirq import Circuit, QasmOutput
 from pyLIQTR.utils.qsp_helpers import circuit_decompose_once
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
@@ -11,6 +12,9 @@ def count_gates(cpt_circuit) -> int:
         count += len(moment)
     return count
 
+def extract_number(string):
+    number = re.findall(r'\d+', string)
+    return int(number[0]) if number else None
 
 def estimate_gsee(
         circuit: Circuit,
