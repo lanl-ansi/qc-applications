@@ -1,8 +1,0 @@
-cirq
-matplotlib
-networkx
-numpy
-openfermion
-openfermionpyscf
-pandas
-pyLIQTR>=1.0.0
