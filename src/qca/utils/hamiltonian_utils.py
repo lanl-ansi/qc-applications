@@ -161,12 +161,16 @@ def nx_triangle_lattice(lattice_size: int) -> Graph:
             graph.add_edge((i,j),(i+1,j+1))
     return graph
 
-def generate_square_hamiltonian(lattice_size: int, dim:int, longitudinal_weight_prob:float=0.5, transverse_weight_prob:float=1, is_trangle_hamiltoniain:bool=False):
-    if is_trangle_hamiltoniain:
-        graph = nx_triangle_lattice(lattice_size)
-    else:
-        dimensions = (lattice_size, lattice_size) if dim == 2 else (lattice_size, lattice_size, lattice_size)
-        graph = grid_graph(dim=dimensions)
+def generate_triangle_hamiltonian(lattice_size: int, longitudinal_weight_prob:float=0.5, transverse_weight_prob:float=1):
+    graph = nx_triangle_lattice(lattice_size)
+    graph = flatten_nx_graph(graph)
+    H_transverse = nx_transverse_ising_terms(graph, transverse_weight_prob)
+    H_longitudinal = nx_longitudinal_ising_terms(graph, longitudinal_weight_prob)
+    return H_transverse, H_longitudinal
+
+def generate_square_hamiltonian(lattice_size: int, dim:int, longitudinal_weight_prob:float=0.5, transverse_weight_prob:float=1):
+    dimensions = (lattice_size, lattice_size) if dim == 2 else (lattice_size, lattice_size, lattice_size)
+    graph = grid_graph(dim=dimensions)
     graph = flatten_nx_graph(graph)
     H_transverse = nx_transverse_ising_terms(graph, transverse_weight_prob)
     H_longitudinal = nx_longitudinal_ising_terms(graph, longitudinal_weight_prob)
