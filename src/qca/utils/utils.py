@@ -1,4 +1,5 @@
 import os
+import re
 from cirq import Circuit, QasmOutput, AbstractCircuit
 from pyLIQTR.utils.qsp_helpers import circuit_decompose_once
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
@@ -11,6 +12,10 @@ def count_gates(cpt_circuit: AbstractCircuit) -> int:
     for moment in cpt_circuit:
         count += len(moment)
     return count
+
+def extract_number(string):
+    number = re.findall(r'\d+', string)
+    return int(number[0]) if number else None
 
 def get_T_depth_wire(cpt_circuit: AbstractCircuit):
     # maximum number of T-gates on a wire.  This may be more optimistic than
