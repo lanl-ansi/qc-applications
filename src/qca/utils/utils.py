@@ -1,23 +1,74 @@
 import os
-from re import findall
-from typing import Union
-from cirq import Circuit, QasmOutput
+from cirq import Circuit, QasmOutput, AbstractCircuit
 from pyLIQTR.utils.qsp_helpers import circuit_decompose_once
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 from pyLIQTR.utils.utils import count_T_gates
+import matplotlib.pyplot as plt
+import pandas as pd
 
-
-def extract_number(string) -> Union[int, None]:
-    number = findall(r'\d+', string)
-    return int(number[0]) if number else None
-
-
-def count_gates(cpt_circuit) -> int:
+def count_gates(cpt_circuit: AbstractCircuit) -> int:
     count = 0
     for moment in cpt_circuit:
         count += len(moment)
     return count
 
+def get_T_depth_wire(cpt_circuit: AbstractCircuit):
+    # maximum number of T-gates on a wire.  This may be more optimistic than
+    # number of layers with T-gates.  Perhaps good to treat as lower bound
+    # for an implementation
+    count_dict = {}
+    for moment in cpt_circuit:
+        for operator in moment:
+            opstr = str(operator)
+            if opstr[0] == 'T':
+                reg_label = opstr[opstr.find("(")+1:opstr.find(")")]
+                if not reg_label in count_dict:
+                    count_dict[reg_label] = 1
+                else:
+                    count_dict[reg_label] += 1
+    max_depth=0
+    for register in count_dict:
+        if count_dict[register] > max_depth:
+            max_depth = count_dict[register]
+    return max_depth
+
+def plot_T_step_histogram(cpt_circuit:AbstractCircuit, kwargs, lowest_ind:int=0) -> plt.hist:
+    t_widths = [0] * len(cpt_circuit)
+    for i, moment in enumerate(cpt_circuit):
+        width = 0
+        for operator in moment:
+            opstr = str(operator)
+            if opstr[0] == 'T':
+                width += 1
+        t_widths[i] = width
+    bins = range(max(t_widths))
+    histogram = plt.hist(t_widths, bins[lowest_ind:-1], **kwargs)
+    return histogram
+
+def plot_histogram(cpt_circuit: AbstractCircuit,
+                   histogram_title:str,
+                   figdir:str,
+                   widthdir:str,
+                   lowest_ind:int=0,
+                   **kwargs) -> None:
+    circuit_histogram = plot_T_step_histogram(cpt_circuit, kwargs=kwargs, lowest_ind=lowest_ind)
+    plt.title(histogram_title)
+    plt.xlabel('T Width')
+    plt.ylabel('Count')
+    plt.savefig(f'{figdir}_width_histogram_square.pdf')
+    df_histogram_trotter_square = pd.DataFrame({'bin': circuit_histogram[1][:-1], \
+                                            'count': circuit_histogram[0]})
+    df_histogram_trotter_square.to_csv(f'{widthdir}widths_square.csv', sep=',',index=False)
+
+def get_T_depth(cpt_circuit: AbstractCircuit):
+    t_depth = 0
+    for moment in cpt_circuit:
+        for operator in moment:
+            opstr = str(operator)
+            if opstr[0] == 'T':
+                t_depth += 1
+                break
+    return t_depth
 
 def estimate_gsee(
         circuit: Circuit,
