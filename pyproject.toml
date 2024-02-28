@@ -13,7 +13,7 @@ dependencies = [
     "openfermion",
     "openfermionpyscf",
     "pandas",
-    "pyLIQTR == 0.3.3"
+    "pyLIQTR == 1.0.0"
 ]
 requires-python = ">=3.9"
 description = "Documentation of Applications for Quantum Computers"
