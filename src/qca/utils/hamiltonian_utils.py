@@ -5,6 +5,15 @@ from networkx.generators.lattice import grid_2d_graph
 from openfermion import FermionOperator, QubitOperator
 
 def flatten_nx_graph(graph: Graph) -> Graph:
+    """
+    This function takes as input a graph and flattens it
+
+    :param graph: The graph to be flattened
+    :type graph: networkx.Graph
+    :return: The flattened graph
+    :rtype: networkx.Graph
+
+    """
     new_ids = {}
     count = 0
     for node in graph.nodes:

@@ -17,7 +17,7 @@ def extract_number(string: str) -> Union[int, None]:
     :type string: str type
     :return: Either the number found or None
     :rtype: Union[int, None]
-    
+
     """
     number = re.findall(r'\d+', string)
     return int(number[0]) if number else None
@@ -27,11 +27,11 @@ def count_gates(cpt_circuit: AbstractCircuit) -> int:
     """
     For some clifford + T circuit, iterate through it and sum up the number
     of gates
-    
+
     :param cpt_circuit: A clifford + T circuit
     :type cpt_circuit: cirq.AbstractCircuit
     :return: The number of gates in the clifford + T circuit
-    :rtype: integer
+    :rtype: int
 
     """
     count = 0
@@ -39,27 +39,51 @@ def count_gates(cpt_circuit: AbstractCircuit) -> int:
         count += len(moment)
     return count
 
-def get_T_depth_wire(cpt_circuit: AbstractCircuit):
-    # maximum number of T-gates on a wire.  This may be more optimistic than
-    # number of layers with T-gates.  Perhaps good to treat as lower bound
-    # for an implementation
+
+def get_T_depth_wire(cpt_circuit: AbstractCircuit) -> int:
+    """
+    Grab the maximum number of T-gates on a wire.  This may be more optimistic than
+    number of layers with T-gates.  Perhaps good to treat as lower bound
+    for an implementation
+
+    :param cpt_circuit: A clifford + T circuit
+    :type cpt_circuit: cirq.AbstractCircuit
+    :return: The maximum T depth on a wire
+    :rtype: int
+    """
     count_dict = {}
     for moment in cpt_circuit:
         for operator in moment:
             opstr = str(operator)
             if opstr[0] == 'T':
-                reg_label = opstr[opstr.find("(")+1:opstr.find(")")]
-                if not reg_label in count_dict:
+                reg_label = opstr[opstr.find("(") + 1:opstr.find(")")]
+                if reg_label not in count_dict:
                     count_dict[reg_label] = 1
                 else:
                     count_dict[reg_label] += 1
-    max_depth=0
+    max_depth = 0
     for register in count_dict:
         if count_dict[register] > max_depth:
             max_depth = count_dict[register]
     return max_depth
 
-def plot_T_step_histogram(cpt_circuit:AbstractCircuit, kwargs, lowest_ind:int=0) -> plt.hist:
+
+def plot_T_step_histogram(
+        cpt_circuit: AbstractCircuit,
+        kwargs,
+        lowest_ind: int = 0) -> plt.hist:
+    """
+    For some clifford + T circuit, grab its corresponding histogram
+
+    :param cpt_circuit: A clifford + T circuit
+    :type cpt_circuit: cirq.AbstractCircuit
+    :param kwargs: Additional arguments for plotting the histogram
+    :param lowest_ind: Lowest index to plot
+    :type lowest_ind: int
+    :return: The corresponding histogram
+    :rtype: plt.hist
+
+    """
     t_widths = [0] * len(cpt_circuit)
     for i, moment in enumerate(cpt_circuit):
         width = 0
@@ -72,22 +96,50 @@ def plot_T_step_histogram(cpt_circuit:AbstractCircuit, kwargs, lowest_ind:int=0)
     histogram = plt.hist(t_widths, bins[lowest_ind:-1], **kwargs)
     return histogram
 
+
 def plot_histogram(cpt_circuit: AbstractCircuit,
-                   histogram_title:str,
-                   figdir:str,
-                   widthdir:str,
-                   lowest_ind:int=0,
+                   histogram_title: str,
+                   figdir: str,
+                   widthdir: str,
+                   lowest_ind: int = 0,
                    **kwargs) -> None:
-    circuit_histogram = plot_T_step_histogram(cpt_circuit, kwargs=kwargs, lowest_ind=lowest_ind)
+    """
+    For some clifford + T circuit, plot its histogram
+
+    :param cpt_circuit: A clifford + T circuit
+    :type cpt_circuit: cirq.AbstractCircuit
+    :param histogram_title: The title to give your histogram
+    :type histogram_title: str
+    :param widthdir: The T width
+    :type widthdir: str
+    :param lowest_ind: Lowest index to plot
+    :type lowest_ind: int
+    :param kwargs: Additional arguments for plotting the histogram
+    :return: None
+
+    """
+    circuit_histogram = plot_T_step_histogram(
+        cpt_circuit, kwargs=kwargs, lowest_ind=lowest_ind)
     plt.title(histogram_title)
     plt.xlabel('T Width')
     plt.ylabel('Count')
     plt.savefig(f'{figdir}_width_histogram_square.pdf')
-    df_histogram_trotter_square = pd.DataFrame({'bin': circuit_histogram[1][:-1], \
-                                            'count': circuit_histogram[0]})
-    df_histogram_trotter_square.to_csv(f'{widthdir}widths_square.csv', sep=',',index=False)
+    df_histogram_trotter_square = pd.DataFrame(
+        {'bin': circuit_histogram[1][:-1], 'count': circuit_histogram[0]})
+    df_histogram_trotter_square.to_csv(
+        f'{widthdir}widths_square.csv', sep=',', index=False)
 
-def get_T_depth(cpt_circuit: AbstractCircuit):
+
+def get_T_depth(cpt_circuit: AbstractCircuit) -> int:
+    """
+    For some clifford + T circuit, grabbing the total T depth
+
+    :param cpt_circuit: A clifford + T circuit
+    :type cpt_circuit: cirq.AbstractCirquit
+    :return: The T depth of the circuit
+    :rtype: int
+
+    """
     t_depth = 0
     for moment in cpt_circuit:
         for operator in moment:
@@ -96,6 +148,7 @@ def get_T_depth(cpt_circuit: AbstractCircuit):
                 t_depth += 1
                 break
     return t_depth
+
 
 def estimate_gsee(
         circuit: Circuit,
@@ -115,7 +168,7 @@ def estimate_gsee(
     :param write_circuits: Flag to denote whether or not to save the results to disk
     :type write_circuits: bool
     :return: None
-   
+
    """
 
     if not os.path.exists(outdir):
