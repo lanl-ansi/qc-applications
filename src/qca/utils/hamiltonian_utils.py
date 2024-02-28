@@ -1,8 +1,8 @@
 import random
+from pyLIQTR.utils import Hamiltonian
 from networkx import relabel_nodes, Graph, grid_graph
 from networkx.generators.lattice import grid_2d_graph
 from openfermion import FermionOperator, QubitOperator
-from pyLIQTR.utils import Hamiltonian
 
 def flatten_nx_graph(graph: Graph) -> Graph:
     new_ids = {}
