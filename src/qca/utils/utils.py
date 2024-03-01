@@ -37,7 +37,7 @@ def get_T_depth_wire(cpt_circuit: AbstractCircuit):
             max_depth = count_dict[register]
     return max_depth
 
-def plot_T_step_histogram(cpt_circuit:AbstractCircuit, lowest_ind:int=0, **kwargs) -> plt.hist:
+def plot_T_step_histogram(cpt_circuit:AbstractCircuit, kwargs, lowest_ind:int=0) -> plt.hist:
     t_widths = [0] * len(cpt_circuit)
     for i, moment in enumerate(cpt_circuit):
         width = 0

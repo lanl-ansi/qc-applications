@@ -188,7 +188,7 @@ def pyliqtr_hamiltonian_to_openfermion_qubit_operator(H:Hamiltonian) -> QubitOpe
             open_fermion_operator += term[1] * open_fermion_term_op
     return open_fermion_operator
 
-def assign_hexagon_labels(graph:Graph):
+def assign_hexagon_labels(graph:Graph, x:str, y:str, z:str):
     for n1, n2 in graph.edges:
         # start by making sure that the edges are ordered correctly
         r1,c1 = n1
@@ -200,12 +200,12 @@ def assign_hexagon_labels(graph:Graph):
         # now that they are ordered correctly, we can assign labels
         label = ''
         if c1 == c2:
-            label = 'Z'
+            label = z
         # You can differentiate X and Y labels based off nx's node label parity
         elif (((r1 % 2) + (c1 % 2)) % 2 == 0):
-            label = 'Y'
+            label = y
         else:
-            label = 'X'
+            label = x
         
         graph[n1][n2]['label'] = label
 
