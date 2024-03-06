@@ -4,9 +4,10 @@ from networkx import relabel_nodes, Graph, grid_graph
 from networkx.generators.lattice import grid_2d_graph
 from openfermion import FermionOperator, QubitOperator
 
+
 def flatten_nx_graph(graph: Graph) -> Graph:
     """
-    This function takes as input a graph and flattens it
+    Given some graph, flatten it
 
     :param graph: The graph to be flattened
     :type graph: networkx.Graph
@@ -25,6 +26,18 @@ def flatten_nx_graph(graph: Graph) -> Graph:
 
 
 def generate_two_orbital_nx(Lx: int, Ly: int) -> Graph:
+    """
+    Given some lattice  size in both the x and y dimension, generate a
+    two orbital Hamiltonian
+
+    :param Lx: Lattice size in the x dimension
+    :type Lx: int
+    :param Ly: Lattice size in the y dimension
+    :type Ly: int
+    :return: The generated two orbital Hamiltonian graph
+    :rtype: networkx.Graph
+
+    """
     # can combine logic between loops if this is slow
     g = Graph()
     for m in range(Lx):
@@ -107,6 +120,20 @@ def nx_to_two_orbital_hamiltonian(
         t3: float,
         t4: float,
         mu: float) -> FermionOperator:
+    """
+    Given somme Hamiltonian graph and several weights, perform a conversion from a
+    two orbital Hamiltonian graph to a two orbital FermionOperator.
+
+    :param graph: The Hamiltonian graph to be converted
+    :type graph: networkx.Graph
+    :param t1: t1 weight
+    :type t1: float
+    :pram mu: Number operator
+    :type mu: float
+    :return: The converted FermionOperator
+    :rtype: FermionOperator
+
+    """
     g_flat = flatten_nx_graph(graph)
     H = FermionOperator()
 
@@ -136,26 +163,56 @@ def nx_to_two_orbital_hamiltonian(
 
     return H
 
-# given a networkx graph g, construct a hamiltonian with random weights
-# which can be processed by pyLIQTR
-def nx_longitudinal_ising_terms(graph,p,magnitude=1) -> list[tuple[str, float]]:
+
+def nx_longitudinal_ising_terms(
+        graph: Graph, p: float, magnitude: float = 1) -> list[tuple[str, float]]:
+    """
+    Given a networkx graph, construct a Hamiltonian with random weights
+    which can be processed by pyLIQTR in terms of its longitudinal ising terms
+
+    :param graph: The graph to construct the Hamiltonian from
+    :type graph: networkx.graph
+    :param p: longitudinal weight probability
+    :type p:float
+    :param magnitude: magnitude to assign weight to if some random value is larger than the longitudinal weight probability
+    :type magnitude: float
+    :return: A list of tuples containing the Hamiltonian string and its weights
+    :rtype: list[tuple[str, float]]
+    """
     H_longitudinal = []
     n = len(graph.nodes)
     for n1, n2 in graph.edges:
         weight = magnitude if random.random() < p else -magnitude
-        curr_hamil_string = n * 'I' 
+        curr_hamil_string = n * 'I'
         for idx in range(len(graph)):
             if idx == n1 or idx == n2:
                 curr_hamil_string = f'{curr_hamil_string[:idx]}Z{curr_hamil_string[idx+1:]}'
         H_longitudinal.append((curr_hamil_string, weight))
     return H_longitudinal
 
-def nx_transverse_ising_terms(graph: Graph,p,magnitude=0.1) -> list[tuple[str, float]]:
+
+def nx_transverse_ising_terms(
+        graph: Graph, p: float, magnitude=0.1) -> list[tuple[str, float]]:
+    """
+    Given a networkx graph, construct a Hamiltonian with random weights
+    which can be processed by pyLIQTR in terms of its transverse ising terms
+
+    :param graph: The graph to construct the Hamiltonian from
+    :type graph: networkx.graph
+    :param p: transverse weight probability
+    :type p: float
+    :param magnitude: magnitude to assign weight to if some random value is larger
+                      than the longitudinal weight probability
+    :type magnitude: float
+    :return: A list of tuples containing the Hamiltonian string and its weights
+    :rtype: list[tuple[str, float]]
+
+    """
     H_transverse = []
     n = len(graph)
     for idx in range(n):
         w = magnitude if random.random() < p else -magnitude
-        curr_hamil_string = n * 'I' 
+        curr_hamil_string = n * 'I'
         for k in range(n):
             if idx == k:
                 curr_hamil_string = f'{curr_hamil_string[:idx]}X{curr_hamil_string[idx+1:]}'
@@ -164,28 +221,93 @@ def nx_transverse_ising_terms(graph: Graph,p,magnitude=0.1) -> list[tuple[str, f
 
 
 def nx_triangle_lattice(lattice_size: int) -> Graph:
+    """
+    Given some lattice size, generate a triangle Hamiltonian graph
+
+    :param lattice_size: Lattice size to use to construct the Hamiltonian graph
+    :type lattice_size: int
+    :return: The generated Hamiltonian using triangle lattices
+    :rtype: networkx.Graph
+    """
     graph = grid_2d_graph(lattice_size, lattice_size)
     for i in range(lattice_size - 1):
         for j in range(lattice_size - 1):
-            graph.add_edge((i,j),(i+1,j+1))
+            graph.add_edge((i, j), (i + 1, j + 1))
     return graph
 
-def generate_triangle_hamiltonian(lattice_size: int, longitudinal_weight_prob:float=0.5, transverse_weight_prob:float=1):
+
+def generate_triangle_hamiltonian(lattice_size: int,
+                                  longitudinal_weight_prob: float = 0.5,
+                                  transverse_weight_prob: float = 1) -> tuple[list[tuple[str,
+                                                                                         float]],
+                                                                              list[tuple[str,
+                                                                                         float]]]:
+    """
+    Given some lattice size, longitudinal weight probability, and transverse weight probability, generate a flattened
+    triangle Hamiltonian.
+
+    :param lattice_size: The lattice size to use to construct the Hamiltonian
+    :type lattice_size: int
+    :param longitudinal_weight_prob: probability for a weight in the longitudinal field
+    :type longitudinal_weight_prob: float
+    :param transverse_weight_prob: probability for a weight in the transverse field
+    :type transverse_weight_prob: float
+    :return: A tuple containing the terms to the transverse portion of the Hamiltonian and the longitudinal portion of the Hamiltonian
+    :rtype: tuple[list[tuple[str, float]], list[tuple[str, float]]]
+    """
     graph = nx_triangle_lattice(lattice_size)
     graph = flatten_nx_graph(graph)
     H_transverse = nx_transverse_ising_terms(graph, transverse_weight_prob)
-    H_longitudinal = nx_longitudinal_ising_terms(graph, longitudinal_weight_prob)
+    H_longitudinal = nx_longitudinal_ising_terms(
+        graph, longitudinal_weight_prob)
     return H_transverse, H_longitudinal
 
-def generate_square_hamiltonian(lattice_size: int, dim:int, longitudinal_weight_prob:float=0.5, transverse_weight_prob:float=1):
-    dimensions = (lattice_size, lattice_size) if dim == 2 else (lattice_size, lattice_size, lattice_size)
+
+def generate_square_hamiltonian(lattice_size: int,
+                                dim: int,
+                                longitudinal_weight_prob: float = 0.5,
+                                transverse_weight_prob: float = 1) -> tuple[list[tuple[str,
+                                                                                       float]],
+                                                                            list[tuple[str,
+                                                                                       float]]]:
+    """
+    Given some lattice size, longitudinal weight probability, and transverse weight probability, generate a flattened
+    square Hamiltonian.
+
+    :param lattice_size: The lattice size to use to construct the Hamiltonian
+    :type lattice_size: int
+    :param longitudinal_weight_prob: probability for a weight in the longitudinal field
+    :type longitudinal_weight_prob: float
+    :param transverse_weight_prob: probability for a weight in the transverse field
+    :type transverse_weight_prob: float
+    :return: A tuple containing the terms to the transverse portion of the Hamiltonian and the longitudinal portion of the Hamiltonian
+    :rtype: tuple[list[tuple[str, float]], list[tuple[str, float]]]
+    """
+    dimensions = (
+        lattice_size,
+        lattice_size) if dim == 2 else (
+        lattice_size,
+        lattice_size,
+        lattice_size)
     graph = grid_graph(dim=dimensions)
     graph = flatten_nx_graph(graph)
     H_transverse = nx_transverse_ising_terms(graph, transverse_weight_prob)
-    H_longitudinal = nx_longitudinal_ising_terms(graph, longitudinal_weight_prob)
+    H_longitudinal = nx_longitudinal_ising_terms(
+        graph, longitudinal_weight_prob)
     return H_transverse, H_longitudinal
 
-def pyliqtr_hamiltonian_to_openfermion_qubit_operator(H:Hamiltonian) -> QubitOperator:
+
+def pyliqtr_hamiltonian_to_openfermion_qubit_operator(
+        H: Hamiltonian.Hamiltonian) -> QubitOperator:
+    """
+    Given some pyLIQTR Hamiltonian type, convert it to a openfermion Qubit Operator
+
+    :param H: The Hamiltonian to be converted
+    :type H: Hamiltonian
+    :return: The converted QubitOperator
+    :rtype: QubitOperator
+
+    """
     open_fermion_operator = QubitOperator()
     for term in H.terms:
         open_fermion_term = ''
@@ -197,15 +319,35 @@ def pyliqtr_hamiltonian_to_openfermion_qubit_operator(H:Hamiltonian) -> QubitOpe
             open_fermion_operator += term[1] * open_fermion_term_op
     return open_fermion_operator
 
-def assign_hexagon_labels(graph:Graph, x:str='X', y:str='Y', z:str='Z'):
+
+def assign_hexagon_labels(
+        graph: Graph,
+        x: str = 'X',
+        y: str = 'Y',
+        z: str = 'Z') -> None:
+    """
+    Given some Hamiltonian expressed as a graph, assign its labels.
+    We take as input x, y, and z labels that are default to 'X', 'Y', and 'Z' respectively.
+
+    :param graph: The hamiltonian to be labeled
+    :type graph: networkx.Graph
+    :param x: X label, defaults to 'X'
+    :type x: str
+    :param y: Y label, defaults to 'Y'
+    :type y: str
+    :param z: Z label, defaults to 'Z'
+    :type z: str
+    :return: None
+
+    """
     for n1, n2 in graph.edges:
         # start by making sure that the edges are ordered correctly
-        r1,c1 = n1
-        r2,c2 = n2
+        r1, c1 = n1
+        r2, c2 = n2
         if r2 - r1 < 0 or c2 - c1 < 0:
             r1, r2 = r2, r1
             c1, c2 = c2, c1
-        
+
         # now that they are ordered correctly, we can assign labels
         label = ''
         if c1 == c2:
@@ -215,15 +357,26 @@ def assign_hexagon_labels(graph:Graph, x:str='X', y:str='Y', z:str='Z'):
             label = y
         else:
             label = x
-        
+
         graph[n1][n2]['label'] = label
 
-def assign_directional_triangular_labels(g:Graph, lattice_size:int) -> None: 
+
+def assign_directional_triangular_labels(g: Graph, lattice_size: int) -> None:
+    """
+    Given some Hamiltonian graph which has some size, iterate through it and assign its labels.
+
+    :param g: The Hamiltonian graph to be labeled
+    :type g: networkx.Graph
+    :param lattice_size: The lattice size
+    :type lattice_size: int
+    :return: None
+
+    """
     for i in range(lattice_size - 1):
         for j in range(lattice_size - 1):
-            g[(i,j)][(i+1,j)]['label'] = 'Z'
-            g[(i,j)][(i,j+1)]['label'] = 'X'
-            g[(i,j)][i+1,j+1]['label'] = 'Y'
-        g[(i,lattice_size-1)][(i+1,lattice_size-1)]['label'] = 'Z'
+            g[(i, j)][(i + 1, j)]['label'] = 'Z'
+            g[(i, j)][(i, j + 1)]['label'] = 'X'
+            g[(i, j)][i + 1, j + 1]['label'] = 'Y'
+        g[(i, lattice_size - 1)][(i + 1, lattice_size - 1)]['label'] = 'Z'
     for j in range(lattice_size - 1):
-        g[(lattice_size-1,j)][(lattice_size-1,j+1)]['label'] = 'X'
+        g[(lattice_size - 1, j)][(lattice_size - 1, j + 1)]['label'] = 'X'

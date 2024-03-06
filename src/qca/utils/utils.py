@@ -132,7 +132,7 @@ def plot_histogram(cpt_circuit: AbstractCircuit,
 
 def get_T_depth(cpt_circuit: AbstractCircuit) -> int:
     """
-    For some clifford + T circuit, grabbing the total T depth
+    For some clifford + T circuit, grab the total T depth
 
     :param cpt_circuit: A clifford + T circuit
     :type cpt_circuit: cirq.AbstractCirquit
