@@ -171,9 +171,9 @@ def nx_longitudinal_ising_terms(
     which can be processed by pyLIQTR in terms of its longitudinal ising terms
 
     :param graph: The graph to construct the Hamiltonian from
-    :type graph: networkx.graph
+    :type graph: networkx.Graph
     :param p: longitudinal weight probability
-    :type p:float
+    :type p: float
     :param magnitude: magnitude to assign weight to if some random value is larger than the longitudinal weight probability
     :type magnitude: float
     :return: A list of tuples containing the Hamiltonian string and its weights
@@ -198,7 +198,7 @@ def nx_transverse_ising_terms(
     which can be processed by pyLIQTR in terms of its transverse ising terms
 
     :param graph: The graph to construct the Hamiltonian from
-    :type graph: networkx.graph
+    :type graph: networkx.Graph
     :param p: transverse weight probability
     :type p: float
     :param magnitude: magnitude to assign weight to if some random value is larger
@@ -329,7 +329,7 @@ def assign_hexagon_labels(
     Given some Hamiltonian expressed as a graph, assign its labels.
     We take as input x, y, and z labels that are default to 'X', 'Y', and 'Z' respectively.
 
-    :param graph: The hamiltonian to be labeled
+    :param graph: The Hamiltonian to be labeled
     :type graph: networkx.Graph
     :param x: X label, defaults to 'X'
     :type x: str
