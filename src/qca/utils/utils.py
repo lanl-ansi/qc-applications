@@ -82,42 +82,41 @@ def estimate_gsee(
         write_circuits: bool = False) -> None:
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-
-    t_counts = {}
-    gate_counts = {}
-    clifford_counts = {}
-    subcircuit_counts = {}
-    subcircuit_depths = {}
-
+    
+    subcircuit_counts = dict()
+    t_counts = dict()
+    clifford_counts = dict()
+    gate_counts = dict()
+    subcircuit_depths = dict()
+    
     outfile_data = f'{outdir}{circuit_name}_high_level.dat'
-
     for moment in circuit:
         for operation in moment:
             gate_type = type(operation.gate)
             if gate_type in subcircuit_counts:
                 subcircuit_counts[gate_type] += 1
             else:
-                decomposed_circuit = circuit_decompose_once(
-                    circuit_decompose_once(Circuit(operation)))
-                cpt_circuit = clifford_plus_t_direct_transform(
-                    decomposed_circuit)
-
+                decomposed_circuit = circuit_decompose_once(circuit_decompose_once(Circuit(operation)))
+                cpt_circuit = clifford_plus_t_direct_transform(decomposed_circuit)
+                
+                outfile_qasm_decomposed = f'{outdir}{str(gate_type)[8:-2]}.decomposed.qasm'
+                outfile_qasm_cpt = f'{outdir}{str(gate_type)[8:-2]}.cpt.qasm'
+                
                 if write_circuits:
-                    outfile_qasm_decomposed = f'{outdir}{str(gate_type)[8:-2]}.decomposed.qasm'
-                    outfile_qasm_cpt = f'{outdir}{str(gate_type)[8:-2]}.cpt.qasm'
                     QasmOutput(
                         decomposed_circuit,
                         decomposed_circuit.all_qubits()).save(outfile_qasm_decomposed)
+
                     QasmOutput(cpt_circuit,
                                cpt_circuit.all_qubits()).save(outfile_qasm_cpt)
-
+    
                 subcircuit_counts[gate_type] = 1
                 subcircuit_depths[gate_type] = len(cpt_circuit)
                 t_counts[gate_type] = count_T_gates(cpt_circuit)
                 gate_counts[gate_type] = count_gates(cpt_circuit)
-                clifford_counts[gate_type] = gate_counts[gate_type] - \
-                    t_counts[gate_type]
-
+                clifford_counts[gate_type] = gate_counts[gate_type] - t_counts[gate_type]
+                
+                
     total_gate_count = 0
     total_gate_depth = 0
     total_T_count = 0
@@ -127,17 +126,17 @@ def estimate_gsee(
         total_gate_depth += subcircuit_counts[gate] * subcircuit_depths[gate]
         total_T_count += subcircuit_counts[gate] * t_counts[gate]
         total_clifford_count += subcircuit_counts[gate] * clifford_counts[gate]
-    with open(outfile_data, 'w', encoding='utf-8') as file:
-        file.write(f'Logical Qubit Count: {len(circuit.all_qubits())}\n')
-        file.write(f'Total Gate Count: {total_gate_count}\n')
-        file.write(f'Total Gate Depth: {total_gate_depth}\n')
-        file.write(f'Total T Count: {total_T_count}\n')
-        file.write(f'Total Clifford Count: {total_clifford_count}\n')
-        file.write('Subcircuit Info:\n')
+    with open(outfile_data, 'w') as f:
+        f.write(str("Logical Qubit Count:"+str(len(circuit.all_qubits()))+"\n"))
+        f.write(str("Total Gate Count:"+str(total_gate_count)+"\n"))
+        f.write(str("Total Gate Depth:"+str(total_gate_depth)+"\n"))
+        f.write(str("Total T Count:"+str(total_T_count)+"\n"))
+        f.write(str("Total Clifford Count:"+str(total_clifford_count)+"\n"))
+        f.write("Subcircuit Info:\n")
         for gate in subcircuit_counts:
-            file.write(f'{gate}\n')
-            file.write(f'Subcircuit Occurrences: {subcircuit_counts[gate]}\n')
-            file.write(f'Gate count: {gate_counts[gate]}\n')
-            file.write(f'Gate depth: {subcircuit_counts[gate]}\n')
-            file.write(f'T Count: {t_counts[gate]}\n')
-            file.write(f'Clifford Count: {clifford_counts[gate]}\n')
+            f.write(str(str(gate)+"\n"))
+            f.write(str("Subcircuit Occurrences:"+str(subcircuit_counts[gate])+"\n"))
+            f.write(str("Gate Count:"+str(gate_counts[gate])+"\n"))
+            f.write(str("Gate Depth:"+str(subcircuit_depths[gate])+"\n"))
+            f.write(str("T Count:"+str(t_counts[gate])+"\n"))
+            f.write(str("Clifford Count:"+str(clifford_counts[gate])+"\n"))
