@@ -1,3 +1,4 @@
 name: Run mypy with reviewdog
+on: [push]
 uses: tsuyoshicho/action-mypy@v4.1.0
             
