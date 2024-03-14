@@ -31,4 +31,3 @@ jobs:
           reporter: github-pr-review
           reviewdog_flags: -filter-mode=file -fail-on-error
           setup_method: install
-          workdir: src/
