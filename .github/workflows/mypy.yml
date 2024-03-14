@@ -1,4 +1,14 @@
-name: Run mypy with reviewdog
+name: MyPy 
+
 on: [push]
-uses: tsuyoshicho/action-mypy@v4.1.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+    steps:
+      -uses: tsuyoshicho/action-mypy@v4.1.0
+
             
