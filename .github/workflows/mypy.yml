@@ -28,6 +28,6 @@ jobs:
         uses: tsuyoshicho/action-mypy@v4
         with:
           github_token: ${{ secrets.github_token }}
-          reporter: github-pr-review
+          reporter: github-pr-check
           reviewdog_flags: -filter-mode=file -fail-on-error
           setup_method: install
