@@ -1,15 +1,25 @@
 name: MyPy 
-
-on: [pull_request]
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+permissions:
+  pull-requests: write
 
 jobs:
   build:
+    if: github.event_name == 'pull_request'
+    name: runner / mypy
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.11"]
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
