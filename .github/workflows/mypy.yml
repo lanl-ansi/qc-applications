@@ -28,8 +28,7 @@ jobs:
         uses: tsuyoshicho/action-mypy@v4
         with:
           github_token: ${{ secrets.github_token }}
-          reporter: github-pr-check
-          level: warning
+          reporter: github-pr-review
           reviewdog_flags: -filter-mode=file -fail-on-error
           setup_method: install
-          workdir: .
+          workdir: src/
