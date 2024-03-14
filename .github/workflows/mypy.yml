@@ -1,33 +1,20 @@
-name: Test
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-permissions:
-  pull-requests: write
+name: Mypy
+
+on: [push]
 
 jobs:
-  test-pr-check:
-    if: github.event_name == 'pull_request'
-    name: runner / mypy (github-pr-check)
+  build:
     runs-on: ubuntu-latest
+    name: Mypy
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: true
-      - name: Setup Python
-        uses: actions/setup-python@v5
-      - name: Setup Python package
-        shell: bash
-        run: |
-          python -m pip install --upgrade pip
-          pip install pylint
-      - name: mypy-github-pr-check
-        uses: tsuyoshicho/action-mypy@v4
-        with:
-          github_token: ${{ secrets.github_token }}
-          reporter: github-pr-check
-          reviewdog_flags: -filter-mode=file -fail-on-error
-          setup_method: install
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.11
+    - name: Install Dependencies
+      run: |
+        pip install mypy
+    - name: mypy
+      run: |
+        mypy .
