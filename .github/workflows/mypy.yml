@@ -9,6 +9,7 @@ jobs:
       matrix:
         python-version: ["3.11"]
     steps:
-      -uses: tsuyoshicho/action-mypy@v4.1.0
+      - uses: tsuyoshicho/action-mypy@v4.1.0
+      - name: Running mypy
 
             
