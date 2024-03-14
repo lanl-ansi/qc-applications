@@ -1,40 +1,35 @@
-name: MyPy 
+name: Test
 on:
   push:
     branches:
-    - master
+      - master
   pull_request:
 permissions:
   pull-requests: write
 
 jobs:
-  build:
+  test-pr-check:
     if: github.event_name == 'pull_request'
-    name: runner / mypy
+    name: runner / mypy (github-pr-check)
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.11"]
     steps:
-    - name: Checkout
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: true
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install mypy
-    - name: MyPy PR
-      uses: tsuyoshicho/action-mypy@v4.1.0
-      with:
-        github_token: ${{ secrets.github_token }}
-        # Change reviewdog reporter if you need [github-pr-check,github-check,github-pr-review].
-        reporter: github-pr-review
-        level: warning
-        # Change the current directory to run mypy command.
-        # mypy command reads setup.cfg or other settings file in this path.
-            
+      - name: Setup Python
+        uses: actions/setup-python@v5
+      - name: Setup Python package
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          pip install pylint
+      - name: mypy-github-pr-check
+        uses: tsuyoshicho/action-mypy@v4
+        with:
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-check
+          level: warning
+          reviewdog_flags: -filter-mode=file -fail-on-error
+          setup_method: install
+          workdir: .
