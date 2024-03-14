@@ -1,0 +1,3 @@
+name: Run mypy with reviewdog
+uses: tsuyoshicho/action-mypy@v4.1.0
+            
