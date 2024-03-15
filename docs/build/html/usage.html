@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html  lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1"><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+      <title>QCA API</title>
+    
+          <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+          <link rel="stylesheet" href="_static/theme.css " type="text/css" />
+          <link rel="stylesheet" href="_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" type="text/css" />
+      
+      <!-- sphinx script_files -->
+        <script src="_static/documentation_options.js?v=2709fde1"></script>
+        <script src="_static/doctools.js?v=888ff710"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+
+      
+      <!-- bundled in js (rollup iife) -->
+      <!-- <script src="_static/theme-vendors.js"></script> -->
+      <script src="_static/theme.js" defer></script>
+    
+  <link rel="index" title="Index" href="genindex.html" />
+  <link rel="search" title="Search" href="search.html" />
+  <link rel="next" title="&lt;no title&gt;" href="qca.html" />
+  <link rel="prev" title="QC-Applications (QCA) Documentation" href="index.html" /> 
+  </head>
+
+  <body>
+    <div id="app">
+    <div class="theme-container" :class="pageClasses"><navbar @toggle-sidebar="toggleSidebar">
+  <router-link to="index.html" class="home-link">
+    
+      <span class="site-name">qca</span>
+    
+  </router-link>
+
+  <div class="links">
+    <navlinks class="can-hide">
+
+
+
+    </navlinks>
+  </div>
+</navbar>
+
+      
+      <div class="sidebar-mask" @click="toggleSidebar(false)">
+      </div>
+        <sidebar @toggle-sidebar="toggleSidebar">
+          
+          <navlinks>
+            
+
+
+
+            
+          </navlinks><div id="searchbox" class="searchbox" role="search">
+  <div class="caption"><span class="caption-text">Quick search</span>
+    <div class="searchformwrapper">
+      <form class="search" action="search.html" method="get">
+        <input type="text" name="q" />
+        <input type="submit" value="Search" />
+        <input type="hidden" name="check_keywords" value="yes" />
+        <input type="hidden" name="area" value="default" />
+      </form>
+    </div>
+  </div>
+</div><div class="sidebar-links" role="navigation" aria-label="main navigation">
+  
+    <div class="sidebar-group">
+      <p class="caption">
+        <span class="caption-text"><a href="index.html#qc-applications-qca-documentation">Contents:</a></span>
+      </p>
+      <ul class="current">
+        
+          <li class="toctree-l1 current">
+            
+              <a href="#" class="reference internal current">QCA API</a>
+            
+
+            
+              <ul>
+                
+                  <li class="toctree-l2"><a href="#utils" class="reference internal">Utils</a></li>
+                
+                  <li class="toctree-l2"><a href="#hamiltonian-utils" class="reference internal">Hamiltonian Utils</a></li>
+                
+              </ul>
+            
+          </li>
+
+        
+          <li class="toctree-l1 ">
+            
+              <a href="qca.html" class="reference internal "><no title></a>
+            
+
+            
+          </li>
+
+        
+      </ul>
+    </div>
+  
+</div>
+        </sidebar>
+
+      <page>
+          <div class="body-header" role="navigation" aria-label="navigation">
+  
+  <ul class="breadcrumbs">
+    <li><a href="index.html">Docs</a> &raquo;</li>
+    
+    <li>QCA API</li>
+  </ul>
+  
+
+  <ul class="page-nav">
+  <li class="prev">
+    <a href="index.html"
+       title="previous chapter">← QC-Applications (QCA) Documentation</a>
+  </li>
+  <li class="next">
+    <a href="qca.html"
+       title="next chapter">&lt;no title&gt; →</a>
+  </li>
+</ul>
+  
+</div>
+<hr>
+          <div class="content" role="main" v-pre>
+            
+  <section id="qca-api">
+<h1>QCA API<a class="headerlink" href="#qca-api" title="Link to this heading">¶</a></h1>
+<p>Software support for the documentation of Applications for Quantum Computers</p>
+<section id="utils">
+<h2>Utils<a class="headerlink" href="#utils" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="qca.utils.get_T_depth">
+<span class="sig-prename descclassname"><span class="pre">qca.utils.</span></span><span class="sig-name descname"><span class="pre">get_T_depth</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpt_circuit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AbstractCircuit</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#qca.utils.get_T_depth" title="Link to this definition">¶</a></dt>
+<dd><p>For some clifford + T circuit, grab the total T depth</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cpt_circuit</strong> (<em>cirq.AbstractCirquit</em>) – A clifford + T circuit</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The T depth of the circuit</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qca.utils.count_gates">
+<span class="sig-prename descclassname"><span class="pre">qca.utils.</span></span><span class="sig-name descname"><span class="pre">count_gates</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpt_circuit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AbstractCircuit</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#qca.utils.count_gates" title="Link to this definition">¶</a></dt>
+<dd><p>For some clifford + T circuit, iterate through it and sum up the number
+of gates</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cpt_circuit</strong> (<em>cirq.AbstractCircuit</em>) – A clifford + T circuit</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The number of gates in the clifford + T circuit</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qca.utils.estimate_gsee">
+<span class="sig-prename descclassname"><span class="pre">qca.utils.</span></span><span class="sig-name descname"><span class="pre">estimate_gsee</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">circuit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Circuit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">circuit_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'gse_circuit'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">write_circuits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#qca.utils.estimate_gsee" title="Link to this definition">¶</a></dt>
+<dd><p>Perform ground state energy estimation (gsee) on some circuit and write out the
+results if desired</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>circuit</strong> (<em>cirq.Circuit</em>) – The circuit to perform gsee on</p></li>
+<li><p><strong>outdir</strong> (<em>str</em>) – The directory to save the results to</p></li>
+<li><p><strong>circuit_name</strong> (<em>str</em>) – The name of the circuit, defaults to gse_circuit</p></li>
+<li><p><strong>write_circuits</strong> (<em>bool</em>) – Flag to denote whether or not to save the results to disk</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qca.utils.extract_number">
+<span class="sig-prename descclassname"><span class="pre">qca.utils.</span></span><span class="sig-name descname"><span class="pre">extract_number</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">string</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="headerlink" href="#qca.utils.extract_number" title="Link to this definition">¶</a></dt>
+<dd><p>For some string, return a number from it if it exists</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>string</strong> (<em>str type</em>) – the string to evaluate</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Either the number found or None</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Union[int, None]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qca.utils.plot_histogram">
+<span class="sig-prename descclassname"><span class="pre">qca.utils.</span></span><span class="sig-name descname"><span class="pre">plot_histogram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpt_circuit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AbstractCircuit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">histogram_title</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">widthdir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lowest_ind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#qca.utils.plot_histogram" title="Link to this definition">¶</a></dt>
+<dd><p>For some clifford + T circuit, plot its histogram</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cpt_circuit</strong> (<em>cirq.AbstractCircuit</em>) – A clifford + T circuit</p></li>
+<li><p><strong>histogram_title</strong> (<em>str</em>) – The title to give your histogram</p></li>
+<li><p><strong>widthdir</strong> (<em>str</em>) – The T width</p></li>
+<li><p><strong>lowest_ind</strong> (<em>int</em>) – Lowest index to plot</p></li>
+<li><p><strong>kwargs</strong> – Additional arguments for plotting the histogram</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qca.utils.get_T_depth_wire">
+<span class="sig-prename descclassname"><span class="pre">qca.utils.</span></span><span class="sig-name descname"><span class="pre">get_T_depth_wire</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpt_circuit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AbstractCircuit</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="headerlink" href="#qca.utils.get_T_depth_wire" title="Link to this definition">¶</a></dt>
+<dd><p>Grab the maximum number of T-gates on a wire.  This may be more optimistic than
+number of layers with T-gates.  Perhaps good to treat as lower bound
+for an implementation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cpt_circuit</strong> (<em>cirq.AbstractCircuit</em>) – A clifford + T circuit</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The maximum T depth on a wire</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qca.utils.plot_T_step_histogram">
+<span class="sig-prename descclassname"><span class="pre">qca.utils.</span></span><span class="sig-name descname"><span class="pre">plot_T_step_histogram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpt_circuit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">AbstractCircuit</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kwargs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lowest_ind</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">hist</span></span></span><a class="headerlink" href="#qca.utils.plot_T_step_histogram" title="Link to this definition">¶</a></dt>
+<dd><p>For some clifford + T circuit, grab its corresponding histogram</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cpt_circuit</strong> (<em>cirq.AbstractCircuit</em>) – A clifford + T circuit</p></li>
+<li><p><strong>kwargs</strong> – Additional arguments for plotting the histogram</p></li>
+<li><p><strong>lowest_ind</strong> (<em>int</em>) – Lowest index to plot</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The corresponding histogram</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>plt.hist</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="hamiltonian-utils">
+<h2>Hamiltonian Utils<a class="headerlink" href="#hamiltonian-utils" title="Link to this heading">¶</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="qca.hamiltonian_utils.flatten_nx_graph">
+<span class="sig-prename descclassname"><span class="pre">qca.hamiltonian_utils.</span></span><span class="sig-name descname"><span class="pre">flatten_nx_graph</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Graph</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Graph</span></span></span><a class="headerlink" href="#qca.hamiltonian_utils.flatten_nx_graph" title="Link to this definition">¶</a></dt>
+<dd><p>Given some graph, flatten it</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>graph</strong> (<em>networkx.Graph</em>) – The graph to be flattened</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The flattened graph</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>networkx.Graph</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qca.hamiltonian_utils.nx_triangle_lattice">
+<span class="sig-prename descclassname"><span class="pre">qca.hamiltonian_utils.</span></span><span class="sig-name descname"><span class="pre">nx_triangle_lattice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lattice_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Graph</span></span></span><a class="headerlink" href="#qca.hamiltonian_utils.nx_triangle_lattice" title="Link to this definition">¶</a></dt>
+<dd><p>Given some lattice size, generate a triangle Hamiltonian graph</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>lattice_size</strong> (<em>int</em>) – Lattice size to use to construct the Hamiltonian graph</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The generated Hamiltonian using triangle lattices</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>networkx.Graph</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qca.hamiltonian_utils.assign_hexagon_labels">
+<span class="sig-prename descclassname"><span class="pre">qca.hamiltonian_utils.</span></span><span class="sig-name descname"><span class="pre">assign_hexagon_labels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'X'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Y'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'Z'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#qca.hamiltonian_utils.assign_hexagon_labels" title="Link to this definition">¶</a></dt>
+<dd><p>Given some Hamiltonian expressed as a graph, assign its labels.
+We take as input x, y, and z labels that are default to ‘X’, ‘Y’, and ‘Z’ respectively.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>networkx.Graph</em>) – The Hamiltonian to be labeled</p></li>
+<li><p><strong>x</strong> (<em>str</em>) – X label, defaults to ‘X’</p></li>
+<li><p><strong>y</strong> (<em>str</em>) – Y label, defaults to ‘Y’</p></li>
+<li><p><strong>z</strong> (<em>str</em>) – Z label, defaults to ‘Z’</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qca.hamiltonian_utils.generate_two_orbital_nx">
+<span class="sig-prename descclassname"><span class="pre">qca.hamiltonian_utils.</span></span><span class="sig-name descname"><span class="pre">generate_two_orbital_nx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">Lx</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Ly</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Graph</span></span></span><a class="headerlink" href="#qca.hamiltonian_utils.generate_two_orbital_nx" title="Link to this definition">¶</a></dt>
+<dd><p>Given some lattice  size in both the x and y dimension, generate a
+two orbital Hamiltonian</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>Lx</strong> (<em>int</em>) – Lattice size in the x dimension</p></li>
+<li><p><strong>Ly</strong> (<em>int</em>) – Lattice size in the y dimension</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The generated two orbital Hamiltonian graph</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>networkx.Graph</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qca.hamiltonian_utils.nx_transverse_ising_terms">
+<span class="sig-prename descclassname"><span class="pre">qca.hamiltonian_utils.</span></span><span class="sig-name descname"><span class="pre">nx_transverse_ising_terms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnitude</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#qca.hamiltonian_utils.nx_transverse_ising_terms" title="Link to this definition">¶</a></dt>
+<dd><p>Given a networkx graph, construct a Hamiltonian with random weights
+which can be processed by pyLIQTR in terms of its transverse ising terms</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>networkx.Graph</em>) – The graph to construct the Hamiltonian from</p></li>
+<li><p><strong>p</strong> (<em>float</em>) – transverse weight probability</p></li>
+<li><p><strong>magnitude</strong> (<em>float</em>) – magnitude to assign weight to if some random value is larger
+than the longitudinal weight probability</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of tuples containing the Hamiltonian string and its weights</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[tuple[str, float]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qca.hamiltonian_utils.generate_square_hamiltonian">
+<span class="sig-prename descclassname"><span class="pre">qca.hamiltonian_utils.</span></span><span class="sig-name descname"><span class="pre">generate_square_hamiltonian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lattice_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dim</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitudinal_weight_prob</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transverse_weight_prob</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#qca.hamiltonian_utils.generate_square_hamiltonian" title="Link to this definition">¶</a></dt>
+<dd><p>Given some lattice size, longitudinal weight probability, and transverse weight probability, generate a flattened
+square Hamiltonian.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lattice_size</strong> (<em>int</em>) – The lattice size to use to construct the Hamiltonian</p></li>
+<li><p><strong>longitudinal_weight_prob</strong> (<em>float</em>) – probability for a weight in the longitudinal field</p></li>
+<li><p><strong>transverse_weight_prob</strong> (<em>float</em>) – probability for a weight in the transverse field</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing the terms to the transverse portion of the Hamiltonian and the longitudinal portion of the Hamiltonian</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[list[tuple[str, float]], list[tuple[str, float]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qca.hamiltonian_utils.nx_longitudinal_ising_terms">
+<span class="sig-prename descclassname"><span class="pre">qca.hamiltonian_utils.</span></span><span class="sig-name descname"><span class="pre">nx_longitudinal_ising_terms</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">magnitude</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#qca.hamiltonian_utils.nx_longitudinal_ising_terms" title="Link to this definition">¶</a></dt>
+<dd><p>Given a networkx graph, construct a Hamiltonian with random weights
+which can be processed by pyLIQTR in terms of its longitudinal ising terms</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>networkx.Graph</em>) – The graph to construct the Hamiltonian from</p></li>
+<li><p><strong>p</strong> (<em>float</em>) – longitudinal weight probability</p></li>
+<li><p><strong>magnitude</strong> (<em>float</em>) – magnitude to assign weight to if some random value is larger than the longitudinal weight probability</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list of tuples containing the Hamiltonian string and its weights</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list[tuple[str, float]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qca.hamiltonian_utils.generate_triangle_hamiltonian">
+<span class="sig-prename descclassname"><span class="pre">qca.hamiltonian_utils.</span></span><span class="sig-name descname"><span class="pre">generate_triangle_hamiltonian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lattice_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">longitudinal_weight_prob</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transverse_weight_prob</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="headerlink" href="#qca.hamiltonian_utils.generate_triangle_hamiltonian" title="Link to this definition">¶</a></dt>
+<dd><p>Given some lattice size, longitudinal weight probability, and transverse weight probability, generate a flattened
+triangle Hamiltonian.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lattice_size</strong> (<em>int</em>) – The lattice size to use to construct the Hamiltonian</p></li>
+<li><p><strong>longitudinal_weight_prob</strong> (<em>float</em>) – probability for a weight in the longitudinal field</p></li>
+<li><p><strong>transverse_weight_prob</strong> (<em>float</em>) – probability for a weight in the transverse field</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A tuple containing the terms to the transverse portion of the Hamiltonian and the longitudinal portion of the Hamiltonian</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[list[tuple[str, float]], list[tuple[str, float]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qca.hamiltonian_utils.nx_to_two_orbital_hamiltonian">
+<span class="sig-prename descclassname"><span class="pre">qca.hamiltonian_utils.</span></span><span class="sig-name descname"><span class="pre">nx_to_two_orbital_hamiltonian</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">graph</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t1</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t3</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">t4</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">FermionOperator</span></span></span><a class="headerlink" href="#qca.hamiltonian_utils.nx_to_two_orbital_hamiltonian" title="Link to this definition">¶</a></dt>
+<dd><p>Given somme Hamiltonian graph and several weights, perform a conversion from a
+two orbital Hamiltonian graph to a two orbital FermionOperator.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>graph</strong> (<em>networkx.Graph</em>) – The Hamiltonian graph to be converted</p></li>
+<li><p><strong>t1</strong> (<em>float</em>) – t1 weight</p></li>
+</ul>
+</dd>
+<dt class="field-even">Pram mu<span class="colon">:</span></dt>
+<dd class="field-even"><p>Number operator</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The converted FermionOperator</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>FermionOperator</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qca.hamiltonian_utils.assign_directional_triangular_labels">
+<span class="sig-prename descclassname"><span class="pre">qca.hamiltonian_utils.</span></span><span class="sig-name descname"><span class="pre">assign_directional_triangular_labels</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">g</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Graph</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lattice_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#qca.hamiltonian_utils.assign_directional_triangular_labels" title="Link to this definition">¶</a></dt>
+<dd><p>Given some Hamiltonian graph which has some size, iterate through it and assign its labels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>g</strong> (<em>networkx.Graph</em>) – The Hamiltonian graph to be labeled</p></li>
+<li><p><strong>lattice_size</strong> (<em>int</em>) – The lattice size</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="qca.hamiltonian_utils.pyliqtr_hamiltonian_to_openfermion_qubit_operator">
+<span class="sig-prename descclassname"><span class="pre">qca.hamiltonian_utils.</span></span><span class="sig-name descname"><span class="pre">pyliqtr_hamiltonian_to_openfermion_qubit_operator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">H</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Hamiltonian</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">QubitOperator</span></span></span><a class="headerlink" href="#qca.hamiltonian_utils.pyliqtr_hamiltonian_to_openfermion_qubit_operator" title="Link to this definition">¶</a></dt>
+<dd><p>Given some pyLIQTR Hamiltonian type, convert it to a openfermion Qubit Operator</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>H</strong> (<em>Hamiltonian</em>) – The Hamiltonian to be converted</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The converted QubitOperator</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>QubitOperator</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+          </div>
+          <div class="page-nav">
+            <div class="inner"><ul class="page-nav">
+  <li class="prev">
+    <a href="index.html"
+       title="previous chapter">← QC-Applications (QCA) Documentation</a>
+  </li>
+  <li class="next">
+    <a href="qca.html"
+       title="next chapter">&lt;no title&gt; →</a>
+  </li>
+</ul><div class="footer" role="contentinfo">
+      &#169; Copyright 2024, Zachary Morrell, Jonhas Colina, Zain Mughal, Carleton Coffrin.
+    <br>
+    Created using <a href="http://sphinx-doc.org/">Sphinx</a> 7.2.6 with <a href="https://github.com/schettino72/sphinx_press_theme">Press Theme</a> 0.8.0.
+</div>
+            </div>
+          </div>
+      </page>
+    </div></div>
+    
+    
+  </body>
+</html>
