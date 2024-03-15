@@ -17,6 +17,8 @@ Utils
 
 .. autofunction:: qca.utils.get_T_depth_wire
 
+.. autofunction:: qca.utils.get_cpt_estimate
+
 .. autofunction:: qca.utils.plot_T_step_histogram
 
 

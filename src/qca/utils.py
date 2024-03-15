@@ -149,6 +149,26 @@ def get_T_depth(cpt_circuit: AbstractCircuit) -> int:
                 break
     return t_depth
 
+def get_cpt_estimate(cpt_circuit: AbstractCircuit, circuit_name:str="cpt_circuit") -> dict:
+    """
+    For a given clifford + T circuit, grab its logical resource estimates
+
+    :param cpt_circuit: A clifford + T circuit
+    :type cpt_circuit: cirq.AbstractCirquit
+    :return: A dictionary giving all of that information
+    :rtype: dict
+    """
+    t_count = count_T_gates(cpt_circuit)
+    gate_count = count_gates(cpt_circuit)
+    estimate = {'num_qubits': len(cpt_circuit.all_qubits()),
+                't_count': t_count,
+                't_depth': get_T_depth(cpt_circuit),
+                't_depth_wire': get_T_depth_wire(cpt_circuit),
+                'gate_count': gate_count,
+                'clifford_count': gate_count - t_count,
+                'circuit_depth': len(cpt_circuit),
+                'circuit_name': circuit_name}
+    return estimate
 
 def estimate_gsee(
         circuit: Circuit,
