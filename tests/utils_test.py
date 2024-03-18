@@ -1,6 +1,6 @@
-import numpy as np
-import unittest
 import cirq
+import unittest
+import numpy as np
 from qca.utils.utils import count_gates, count_T_gates, get_T_depth, get_T_depth_wire
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 
