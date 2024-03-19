@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import time
 from cirq import Circuit, QasmOutput, AbstractCircuit
 from pyLIQTR.utils.qsp_helpers import circuit_decompose_once
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
@@ -118,7 +119,6 @@ def gen_resource_estimate(cpt_circuit: AbstractCircuit,
     
     return resource_estimate
 
-
 def estimate_gsee(
         circuit: Circuit,
         outdir: str,
@@ -128,24 +128,29 @@ def estimate_gsee(
         os.makedirs(outdir)
     
     subcircuit_counts = dict()
-    t_counts = dict()
-    clifford_counts = dict()
-    gate_counts = dict()
-    subcircuit_depths = dict()
-    
+
     for moment in circuit:
         for operation in moment:
             gate_type = type(operation.gate)
             if gate_type in subcircuit_counts:
-                subcircuit_counts[gate_type] += 1
+                subcircuit_counts[gate_type][0] += 1
             else:
+                gate_type_name = f'{str(gate_type)[8:-2]}'
+                t0 = time.perf_counter()
                 decomposed_circuit = circuit_decompose_once(circuit_decompose_once(Circuit(operation)))
+                t1 = time.perf_counter()
+                elapsed = t1-t0
+                print(f'   Time to decompose high level {gate_type_name} circuit: {elapsed} seconds ')
+
+                t0 = time.perf_counter()
                 cpt_circuit = clifford_plus_t_direct_transform(decomposed_circuit)
-                
-                outfile_qasm_decomposed = f'{outdir}{str(gate_type)[8:-2]}.decomposed.qasm'
-                outfile_qasm_cpt = f'{outdir}{str(gate_type)[8:-2]}.cpt.qasm'
+                t1 = time.perf_counter()
+                elapsed = t1-t0
+                print(f'   Time to transform decomposed {gate_type_name} circuit to Clifford+T: {elapsed} seconds')
                 
                 if write_circuits:
+                    outfile_qasm_decomposed = f'{outdir}{gate_type_name}.decomposed.qasm'
+                    outfile_qasm_cpt = f'{outdir}{gate_type_name}.cpt.qasm'
                     QasmOutput(
                         decomposed_circuit,
                         decomposed_circuit.all_qubits()).save(outfile_qasm_decomposed)
@@ -153,35 +158,45 @@ def estimate_gsee(
                     QasmOutput(cpt_circuit,
                                cpt_circuit.all_qubits()).save(outfile_qasm_cpt)
     
-                subcircuit_counts[gate_type] = 1
-                subcircuit_depths[gate_type] = len(cpt_circuit)
-                t_counts[gate_type] = count_T_gates(cpt_circuit)
-                gate_counts[gate_type] = count_gates(cpt_circuit)
-                clifford_counts[gate_type] = gate_counts[gate_type] - t_counts[gate_type]
-                
+                subcircuit_counts[gate_type] = [1, cpt_circuit]
                 
     total_gate_count = 0
     total_gate_depth = 0
     total_T_count = 0
+    total_T_depth = 0
+    total_T_depth_wire = 0
     total_clifford_count = 0
     for gate in subcircuit_counts:
-        total_gate_count += subcircuit_counts[gate] * gate_counts[gate]
-        total_gate_depth += subcircuit_counts[gate] * subcircuit_depths[gate]
-        total_T_count += subcircuit_counts[gate] * t_counts[gate]
-        total_clifford_count += subcircuit_counts[gate] * clifford_counts[gate]
+        subcircuit = subcircuit_counts[gate][1]
+        resource_estimate = gen_resource_estimate(subcircuit,
+                                                  f'{outdir}{circuit_name}_{gate}.json',
+                                                  circ_occurences=subcircuit_counts[gate][0])
+        gate_count = resource_estimate['gate_count']
+        gate_depth = resource_estimate['circuit_depth']
+        t_depth = resource_estimate['t_depth']
+        t_depth_wire = resource_estimate['t_depth_wire']
+        t_count = resource_estimate['t_count']
+        clifford_count = resource_estimate['clifford_count']
+        
+        total_gate_count += subcircuit_counts[gate][0] * gate_count
+        total_gate_depth += subcircuit_counts[gate][0] * gate_depth
+        total_T_depth += subcircuit_counts[gate][0] * t_depth
+        total_T_depth_wire += subcircuit_counts[gate][0] * t_depth_wire
+        total_T_count += subcircuit_counts[gate][0] * t_count
+        total_clifford_count += subcircuit_counts[gate][0] * clifford_count
 
-    outfile_data = f'{outdir}{circuit_name}_high_level.dat'
+    outfile_data = f'{outdir}{circuit_name}_high_level.dat.json'
+    total_resources = {
+        'num_qubits': len(subcircuit.all_qubits()),
+        'gate_count': total_gate_count,
+        'circuit_depth': total_gate_depth,
+        't_count': total_T_count,
+        't_depth': total_T_depth,
+        't_depth_wire': total_T_depth_wire,
+        'clifford_count': total_clifford_count
+    }
     with open(outfile_data, 'w') as f:
-        f.write(str("Logical Qubit Count:"+str(len(circuit.all_qubits()))+"\n"))
-        f.write(str("Total Gate Count:"+str(total_gate_count)+"\n"))
-        f.write(str("Total Gate Depth:"+str(total_gate_depth)+"\n"))
-        f.write(str("Total T Count:"+str(total_T_count)+"\n"))
-        f.write(str("Total Clifford Count:"+str(total_clifford_count)+"\n"))
-        f.write("Subcircuit Info:\n")
-        for gate in subcircuit_counts:
-            f.write(str(str(gate)+"\n"))
-            f.write(str("Subcircuit Occurrences:"+str(subcircuit_counts[gate])+"\n"))
-            f.write(str("Gate Count:"+str(gate_counts[gate])+"\n"))
-            f.write(str("Gate Depth:"+str(subcircuit_depths[gate])+"\n"))
-            f.write(str("T Count:"+str(t_counts[gate])+"\n"))
-            f.write(str("Clifford Count:"+str(clifford_counts[gate])+"\n"))
+        json.dump(total_resources, f,
+                  sort_keys=True,
+                  indent=4,
+                  separators=(',', ': '))
