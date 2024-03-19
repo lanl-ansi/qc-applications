@@ -1,5 +1,6 @@
 import os
 import re
+import json
 from cirq import Circuit, QasmOutput, AbstractCircuit
 from pyLIQTR.utils.qsp_helpers import circuit_decompose_once
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
@@ -75,6 +76,49 @@ def get_T_depth(cpt_circuit: AbstractCircuit):
                 break
     return t_depth
 
+def gen_resource_estimate(cpt_circuit: AbstractCircuit,
+                          file_name:str = 'cpt_circuit.json',
+                          trotter_steps:int = -1,
+                          circ_occurences:int = -1) -> dict:
+    '''
+    Given some clifford + T circuit and a given filename, we grab the logical resource estimates
+    from the circuit and then write it to disk. The function also returns the resource dictionary
+    if the user needs it.
+
+    trotter_steps is a flag denoting if the circuit was estimated through trotterization. If so, the
+    user should specify the number of steps required.  
+    '''
+    t_count = count_T_gates(cpt_circuit)
+    t_depth = get_T_depth(cpt_circuit)
+    t_depth_single_wire = get_T_depth_wire(cpt_circuit)
+    gate_count = count_gates(cpt_circuit)
+    if not file_name.endswith('.json'):
+        file_name = f'{file_name}.json'
+    resource_estimate = {'num_qubits': len(cpt_circuit.all_qubits()),
+                        't_count': t_count,
+                        't_depth': t_depth,
+                        't_depth_wire': t_depth_single_wire,
+                        'gate_count': gate_count,
+                        'clifford_count': gate_count - t_count,
+                        'circuit_depth': len(cpt_circuit),
+                        'circuit_name': file_name.split('.')[0]
+                        }
+    if trotter_steps > 0:
+        resource_estimate['total_t_depth'] = t_depth * trotter_steps
+        resource_estimate['max_t_count_single_wire'] = t_depth_single_wire * trotter_steps
+        resource_estimate['trotter_steps_required'] = trotter_steps
+    if circ_occurences > 0:
+        resource_estimate['circuit occurrences'] = circ_occurences
+
+    with open(file_name, 'w') as f:
+        json.dump(resource_estimate, f,
+                  sort_keys=True,
+                  indent=4,
+                  separators=(',', ': '))
+    
+    return resource_estimate
+
+
 def estimate_gsee(
         circuit: Circuit,
         outdir: str,
@@ -89,7 +133,6 @@ def estimate_gsee(
     gate_counts = dict()
     subcircuit_depths = dict()
     
-    outfile_data = f'{outdir}{circuit_name}_high_level.dat'
     for moment in circuit:
         for operation in moment:
             gate_type = type(operation.gate)
@@ -126,6 +169,8 @@ def estimate_gsee(
         total_gate_depth += subcircuit_counts[gate] * subcircuit_depths[gate]
         total_T_count += subcircuit_counts[gate] * t_counts[gate]
         total_clifford_count += subcircuit_counts[gate] * clifford_counts[gate]
+
+    outfile_data = f'{outdir}{circuit_name}_high_level.dat'
     with open(outfile_data, 'w') as f:
         f.write(str("Logical Qubit Count:"+str(len(circuit.all_qubits()))+"\n"))
         f.write(str("Total Gate Count:"+str(total_gate_count)+"\n"))
