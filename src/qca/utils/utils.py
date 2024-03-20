@@ -111,13 +111,15 @@ def gen_resource_estimate(cpt_circuit: AbstractCircuit,
     return resource_estimate
 
 def re_as_json(main_estimate:dict, estimates:list[dict], file_name:str) -> None:
+    main_estimate['subcircuit_info'] = {}
     if estimates:
-        main_estimate['subcircuit_info'] = estimates
+        for op in estimates:
+            for op_key in op.keys():
+                main_estimate['subcircuit_info'][op_key] = op[op_key]
     with open(file_name, 'w') as f:
             json.dump(main_estimate, f,
                     indent=4,
                     separators=(',', ': '))
-    
 def estimate_gsee(
         circuit: Circuit,
         outdir: str,
