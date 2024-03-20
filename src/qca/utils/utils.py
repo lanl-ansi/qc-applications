@@ -187,7 +187,7 @@ def estimate_gsee(
         total_T_count += subcircuit_counts[gate][0] * t_count
         total_clifford_count += subcircuit_counts[gate][0] * clifford_count
 
-    outfile_data = f'{outdir}{circuit_name}_high_level.dat.json'
+    outfile_data = f'{outdir}{circuit_name}_high_level.json'
     total_resources = {
         'num_qubits': len(subcircuit.all_qubits()),
         'gate_count': total_gate_count,
