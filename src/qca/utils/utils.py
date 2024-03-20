@@ -78,7 +78,6 @@ def get_T_depth(cpt_circuit: AbstractCircuit):
     return t_depth
 
 def gen_resource_estimate(cpt_circuit: AbstractCircuit,
-                          file_name:str = 'cpt_circuit.json',
                           trotter_steps:int = -1,
                           circ_occurences:int = -1) -> dict:
     '''
@@ -93,16 +92,14 @@ def gen_resource_estimate(cpt_circuit: AbstractCircuit,
     t_depth = get_T_depth(cpt_circuit)
     t_depth_single_wire = get_T_depth_wire(cpt_circuit)
     gate_count = count_gates(cpt_circuit)
-    if not file_name.endswith('.json'):
-        file_name = f'{file_name}.json'
+
     resource_estimate = {'num_qubits': len(cpt_circuit.all_qubits()),
                         't_count': t_count,
                         't_depth': t_depth,
-                        't_depth_wire': t_depth_single_wire,
+                        'max_t_depth_wire': t_depth_single_wire,
                         'gate_count': gate_count,
                         'clifford_count': gate_count - t_count,
-                        'circuit_depth': len(cpt_circuit),
-                        'circuit_name': file_name.split('.')[0]
+                        'circuit_depth': len(cpt_circuit)
                         }
     if trotter_steps > 0:
         resource_estimate['total_t_depth'] = t_depth * trotter_steps
@@ -111,14 +108,16 @@ def gen_resource_estimate(cpt_circuit: AbstractCircuit,
     if circ_occurences > 0:
         resource_estimate['circuit occurrences'] = circ_occurences
 
-    with open(file_name, 'w') as f:
-        json.dump(resource_estimate, f,
-                  sort_keys=True,
-                  indent=4,
-                  separators=(',', ': '))
-    
     return resource_estimate
 
+def re_as_json(main_estimate:dict, estimates:list[dict], file_name:str) -> None:
+    if estimates:
+        main_estimate['subcircuit_info'] = estimates
+    with open(file_name, 'w') as f:
+            json.dump(main_estimate, f,
+                    indent=4,
+                    separators=(',', ': '))
+    
 def estimate_gsee(
         circuit: Circuit,
         outdir: str,
