@@ -134,7 +134,7 @@ def estimate_gsee(
             if gate_type in subcircuit_counts:
                 subcircuit_counts[gate_type][0] += 1
             else:
-                gate_type_name = f'{str(gate_type)[8:-2]}'
+                gate_type_name = f'{str(gate_type).split(".")[-1][:-2]}'
                 t0 = time.perf_counter()
                 decomposed_circuit = circuit_decompose_once(circuit_decompose_once(Circuit(operation)))
                 t1 = time.perf_counter()
@@ -157,7 +157,7 @@ def estimate_gsee(
                     QasmOutput(cpt_circuit,
                                cpt_circuit.all_qubits()).save(outfile_qasm_cpt)
     
-                subcircuit_counts[gate_type] = [1, cpt_circuit]
+                subcircuit_counts[gate_type] = [1, cpt_circuit, gate_type_name]
                 
     total_gate_count = 0
     total_gate_depth = 0
@@ -165,15 +165,18 @@ def estimate_gsee(
     total_T_depth = 0
     total_T_depth_wire = 0
     total_clifford_count = 0
+    subcircuit_re = []
     for gate in subcircuit_counts:
         subcircuit = subcircuit_counts[gate][1]
+        subcircuit_name = subcircuit_counts[gate][2]
         resource_estimate = gen_resource_estimate(subcircuit,
-                                                  f'{outdir}{circuit_name}_{gate}.json',
                                                   circ_occurences=subcircuit_counts[gate][0])
+        subcircuit_info = {subcircuit_name:resource_estimate}
+        subcircuit_re.append(subcircuit_info)
         gate_count = resource_estimate['gate_count']
         gate_depth = resource_estimate['circuit_depth']
         t_depth = resource_estimate['t_depth']
-        t_depth_wire = resource_estimate['t_depth_wire']
+        t_depth_wire = resource_estimate['max_t_depth_wire']
         t_count = resource_estimate['t_count']
         clifford_count = resource_estimate['clifford_count']
         
@@ -194,8 +197,4 @@ def estimate_gsee(
         't_depth_wire': total_T_depth_wire,
         'clifford_count': total_clifford_count
     }
-    with open(outfile_data, 'w') as f:
-        json.dump(total_resources, f,
-                  sort_keys=True,
-                  indent=4,
-                  separators=(',', ': '))
+    re_as_json(total_resources, subcircuit_re, outfile_data)
