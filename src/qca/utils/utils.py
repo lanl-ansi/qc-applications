@@ -85,7 +85,6 @@ def get_T_depth(cpt_circuit: AbstractCircuit):
     return t_depth
 
 def gen_resource_estimate(cpt_circuit: AbstractCircuit,
-                          num_magnus:int = 1,
                           trotter_steps:int = -1,
                           circ_occurences:int = -1) -> dict:
     '''
@@ -114,7 +113,7 @@ def gen_resource_estimate(cpt_circuit: AbstractCircuit,
         resource_estimate['max_t_count_single_wire'] = t_depth_single_wire * trotter_steps
         resource_estimate['subcircuit_occurences'] = trotter_steps
     if circ_occurences > 0:
-        resource_estimate['subcicruit_occurrences'] = circ_occurences*num_magnus
+        resource_estimate['subcicruit_occurrences'] = circ_occurences
 
     return resource_estimate
 
@@ -171,7 +170,6 @@ def circuit_estimate(circuit:AbstractCircuit,
         subcircuit = subcircuit_counts[gate][1]
         subcircuit_name = subcircuit_counts[gate][2]
         resource_estimate = gen_resource_estimate(subcircuit,
-                                                  num_magnus=num_magnus,
                                                   circ_occurences=subcircuit_counts[gate][0])
         subcircuit_info = {subcircuit_name:resource_estimate}
         subcircuit_re.append(subcircuit_info)
