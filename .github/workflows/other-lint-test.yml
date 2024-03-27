@@ -3,77 +3,77 @@ on: [pull_request]
 
 jobs:
   lint:
-  name: Test Lint
-  runs-on: ubuntu-latest
-  steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    name: Test Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pylint
+          pip install .
+    - uses: Silleellie/pylint-github-action@v2
       with:
+        
+        # Path of the package(s) or python file(s) to lint, relative to the repository root. 
+        # If more than one package (or python file) should be linted, simply specify all of them 
+        # with the multi-line notation like so:
+        # lint-path: |
+        #   src
+        #   other_src
+        #   main.py
+        #   ...
+        # 
+        # Required
+        lint-path: src
+        
+        # Version of the Python interpreter which will install all requirements of your project 
+        # and lint the package(s) or python file(s) specified with the `lint-path` argument
+        #
+        # Required
         python-version: 3.11
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pylint
-        pip install .
-  - uses: Silleellie/pylint-github-action@v2
-    with:
-      
-      # Path of the package(s) or python file(s) to lint, relative to the repository root. 
-      # If more than one package (or python file) should be linted, simply specify all of them 
-      # with the multi-line notation like so:
-      # lint-path: |
-      #   src
-      #   other_src
-      #   main.py
-      #   ...
-      # 
-      # Required
-      lint-path: src
-      
-      # Version of the Python interpreter which will install all requirements of your project 
-      # and lint the package(s) or python file(s) specified with the `lint-path` argument
-      #
-      # Required
-      python-version: 3.11
 
-      # Path of the requirements of your project, relative to the repository root. 
-      # This can be easily changed in case you have `requirements-dev.txt`
-      #
-      # Optional, Default: requirements.txt
-      # requirements-path: requirements.txt
-      
-      # Path of the README.md to update with the pylint badge, relative to the repository root.
-      #
-      # Optional, Default: README.md
-      readme-path: README.md
+        # Path of the requirements of your project, relative to the repository root. 
+        # This can be easily changed in case you have `requirements-dev.txt`
+        #
+        # Optional, Default: requirements.txt
+        # requirements-path: requirements.txt
+        
+        # Path of the README.md to update with the pylint badge, relative to the repository root.
+        #
+        # Optional, Default: README.md
+        readme-path: README.md
 
-      # Text to display in the badge
-      #
-      # Optional, Default: PyLint
-      badge-text: PyLint
+        # Text to display in the badge
+        #
+        # Optional, Default: PyLint
+        badge-text: PyLint
 
-      # Color of the badge for pylint scores < 5.
-      # Hex, rgb, rgba, hsl, hsla and css named colors can all be used
-      #
-      # Optional, Default: red
-      color-bad-score: red
+        # Color of the badge for pylint scores < 5.
+        # Hex, rgb, rgba, hsl, hsla and css named colors can all be used
+        #
+        # Optional, Default: red
+        color-bad-score: red
 
-      # Color of the badge for pylint scores in range [5,8).
-      # Hex, rgb, rgba, hsl, hsla and css named colors can all be used
-      #
-      # Optional, Default: orange
-      color-ok-score: orange
+        # Color of the badge for pylint scores in range [5,8).
+        # Hex, rgb, rgba, hsl, hsla and css named colors can all be used
+        #
+        # Optional, Default: orange
+        color-ok-score: orange
 
-      # Color of the badge for pylint scores in range [8,10).
-      # Hex, rgb, rgba, hsl, hsla and css named colors can all be used
-      #
-      # Optional, Default: yellow
-      color-good-score: yellow
+        # Color of the badge for pylint scores in range [8,10).
+        # Hex, rgb, rgba, hsl, hsla and css named colors can all be used
+        #
+        # Optional, Default: yellow
+        color-good-score: yellow
 
-      # Color of the badge for pylint scores == 10.
-      # Hex, rgb, rgba, hsl, hsla and css named colors can all be used
-      #
-      # Optional, Default: brightgreen
-      color-perfect-score: brightgreen
+        # Color of the badge for pylint scores == 10.
+        # Hex, rgb, rgba, hsl, hsla and css named colors can all be used
+        #
+        # Optional, Default: brightgreen
+        color-perfect-score: brightgreen
