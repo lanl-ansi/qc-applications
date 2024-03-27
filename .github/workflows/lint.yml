@@ -1,15 +1,16 @@
-name: Pylint
+name: Lint
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
-  build:
+  pylint:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.11"]
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout
+      uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
@@ -21,3 +22,19 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         pylint $(git ls-files '*.py')
+  mypy:
+    name: Type checking with mypy
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.11
+    - name: Install Dependencies
+      run: |
+        pip install mypy
+    - name: Lint using mypy
+      run: |
+        mypy .
