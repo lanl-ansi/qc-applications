@@ -21,7 +21,7 @@ jobs:
       run: |
         pylint $(git ls-files '*.py')
   mypy:
-    name: Type Checking with mypy
+    name: Type Checking with Mypy
     runs-on: ubuntu-latest
     steps:
     - name: Checkout

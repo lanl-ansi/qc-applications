@@ -1,0 +1,13 @@
+name: Pylint Score Badge Generation 
+
+on: [pull_request]
+
+jobs:
+  pylint:
+    name: Pylint Badge Update
+    runs-on: ubuntu-latest
+    steps:
+    - uses: Silleellie/pylint-github-action@v2
+      with:
+        lint-path: src
+        python-version: 3.11
