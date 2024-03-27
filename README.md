@@ -1,3 +1,4 @@
+![pylint]()
 # Quantum Computing Application Specifications
 
 Documentation of Applications for Quantum Computers
