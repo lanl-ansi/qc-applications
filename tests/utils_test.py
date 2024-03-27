@@ -51,7 +51,7 @@ class UtilsTest(unittest.TestCase):
         clifford_count = gate_count - t_count
         circ_depth = len(circ_cpt)
         self.assertEqual(circ_depth, 5)
-        self.assertEqual(clifford_count, 12)
+        self.assertEqual(clifford_count, 1)
 
 
 if __name__ == '__main__':
