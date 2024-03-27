@@ -13,11 +13,7 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: 3.11
-    - name: Python Linter
-      uses: sunnysid3up/python-linter@master
+    - uses: Silleellie/pylint-github-action@v2
       with:
-        source: "src"
-        mypy-options: "--ignore-missing-imports --show-error-codes"
-        pylint-options: "--rcfile=setup.cfg"
-        isort-options: "-w 100"
-        django: true
+        lint-path: src
+        python-version: 3.11
