@@ -173,7 +173,6 @@ def circuit_estimate(circuit:AbstractCircuit,
                                                   circ_occurences=subcircuit_counts[gate][0])
         subcircuit_info = {subcircuit_name:resource_estimate}
         subcircuit_re.append(subcircuit_info)
-        gate_count = resource_estimate['gate_count']
         gate_depth = resource_estimate['circuit_depth']
         t_depth = resource_estimate['t_depth']
         t_depth_wire = resource_estimate['max_t_depth_wire']
