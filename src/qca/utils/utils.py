@@ -180,7 +180,7 @@ def circuit_estimate(circuit:AbstractCircuit,
         t_count = resource_estimate['t_count']
         clifford_count = resource_estimate['clifford_count']
         
-        total_gate_count += subcircuit_counts[gate][0] * gate_count * timesteps / timestep_of_interest
+        total_gate_count += subcircuit_counts[gate][0] * timesteps / timestep_of_interest
         total_gate_depth += subcircuit_counts[gate][0] * gate_depth * timesteps / timestep_of_interest
         total_T_depth += subcircuit_counts[gate][0] * t_depth * timesteps / timestep_of_interest
         total_T_depth_wire += subcircuit_counts[gate][0] * t_depth_wire * timesteps / timestep_of_interest
