@@ -142,7 +142,6 @@ def circuit_estimate(circuit:AbstractCircuit,
                 t1 = time.perf_counter()
                 elapsed = t1-t0
                 print(f'   Time to decompose high level {gate_type_name} circuit: {elapsed} seconds ')
-
                 t0 = time.perf_counter()
                 cpt_circuit = clifford_plus_t_direct_transform(decomposed_circuit)
                 t1 = time.perf_counter()
@@ -174,7 +173,7 @@ def circuit_estimate(circuit:AbstractCircuit,
         subcircuit_info = {subcircuit_name:resource_estimate}
         subcircuit_re.append(subcircuit_info)
         gate_depth = resource_estimate['circuit_depth']
-        t_depth = resource_estimate['t_depth']
+        t_depth = resource_estimate['t_depth']/len(circuit.all_qubits())
         t_depth_wire = resource_estimate['max_t_depth_wire']
         t_count = resource_estimate['t_count']
         clifford_count = resource_estimate['clifford_count']
@@ -187,7 +186,12 @@ def circuit_estimate(circuit:AbstractCircuit,
         total_clifford_count += subcircuit_counts[gate][0] * clifford_count * timesteps / timestep_of_interest
 
     outfile_data = f'{outdir}{circuit_name}_high_level.json'
-    circ_occurences = trotter_steps if trotter_steps > 0 else num_magnus
+    if trotter_steps > 0 and num_magnus > 0:
+        circ_occurences = trotter_steps * num_magnus
+    elif trotter_steps > 0:
+        circ_occurences = trotter_steps
+    else:
+        circ_occurences = num_magnus
     total_resources = {
         'num_qubits': len(circuit.all_qubits()),
         'gate_count': total_gate_count,
