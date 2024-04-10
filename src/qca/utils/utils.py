@@ -80,8 +80,8 @@ def estimate_gsee(
         outdir: str,
         circuit_name: str = 'gse_circuit',
         write_circuits: bool = False,
-        bits_precision: int = 1,
-        trotter_steps: int = 1) -> None:
+        bits_precision: int=1,
+        trotter_steps: int=1) -> None:
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
