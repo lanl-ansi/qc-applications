@@ -125,7 +125,7 @@ def circuit_estimate(circuit:AbstractCircuit,
                      timesteps:int=1,
                      timestep_of_interest:int=1,
                      trotter_steps:int=-1,
-                     write_circuits:bool = False) -> AbstractCircuit:
+                     write_circuits:bool = False) -> dict:
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     
@@ -200,7 +200,8 @@ def circuit_estimate(circuit:AbstractCircuit,
         'circuit_occurences': circ_occurences
     }
     re_as_json(total_resources, subcircuit_re, outfile_data)
-
+    return total_resources
+ 
 def re_as_json(main_estimate:dict, estimates:list[dict], file_name:str) -> None:
     main_estimate['subcircuit_info'] = {}
     if estimates:
