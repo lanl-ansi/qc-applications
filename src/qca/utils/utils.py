@@ -123,6 +123,7 @@ def circuit_estimate(circuit:AbstractCircuit,
                      circuit_name: str,
                      num_magnus:int=1,
                      timesteps:int=1,
+                     bits_precision:int=1,
                      timestep_of_interest:int=1,
                      trotter_steps:int=-1,
                      write_circuits:bool = False) -> dict:
@@ -180,12 +181,12 @@ def circuit_estimate(circuit:AbstractCircuit,
         t_count = resource_estimate['t_count']
         clifford_count = resource_estimate['clifford_count']
         
-        total_gate_count += subcircuit_counts[gate][0] * gate_count * timesteps / timestep_of_interest
-        total_gate_depth += subcircuit_counts[gate][0] * gate_depth * timesteps / timestep_of_interest
-        total_T_depth += subcircuit_counts[gate][0] * t_depth * timesteps / timestep_of_interest
-        total_T_depth_wire += subcircuit_counts[gate][0] * t_depth_wire * timesteps / timestep_of_interest
-        total_T_count += subcircuit_counts[gate][0] * t_count * timesteps / timestep_of_interest
-        total_clifford_count += subcircuit_counts[gate][0] * clifford_count * timesteps / timestep_of_interest
+        total_gate_count += subcircuit_counts[gate][0] * gate_count * timesteps / timestep_of_interest * pow(2,bits_precision - 1) * trotter_steps
+        total_gate_depth += subcircuit_counts[gate][0] * gate_depth * timesteps / timestep_of_interest * pow(2,bits_precision - 1) * trotter_steps
+        total_T_depth += subcircuit_counts[gate][0] * t_depth * timesteps / timestep_of_interest * pow(2,bits_precision - 1) * trotter_steps
+        total_T_depth_wire += subcircuit_counts[gate][0] * t_depth_wire * timesteps / timestep_of_interest * pow(2,bits_precision - 1) * trotter_steps
+        total_T_count += subcircuit_counts[gate][0] * t_count * timesteps / timestep_of_interest * pow(2,bits_precision - 1) * trotter_steps
+        total_clifford_count += subcircuit_counts[gate][0] * clifford_count * timesteps / timestep_of_interest * pow(2,bits_precision - 1) * trotter_steps
 
     outfile_data = f'{outdir}{circuit_name}_high_level.json'
     circ_occurences = trotter_steps if trotter_steps > 0 else num_magnus
