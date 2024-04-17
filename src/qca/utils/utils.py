@@ -100,14 +100,15 @@ def gen_resource_estimate(cpt_circuit: AbstractCircuit,
     t_depth_single_wire = get_T_depth_wire(cpt_circuit)
     gate_count = count_gates(cpt_circuit)
 
-    resource_estimate = {'num_qubits': len(cpt_circuit.all_qubits()),
-                        't_count': t_count,
-                        't_depth': t_depth,
-                        'max_t_depth_wire': t_depth_single_wire,
-                        'gate_count': gate_count,
-                        'clifford_count': gate_count - t_count,
-                        'circuit_depth': len(cpt_circuit)
-                        }
+    resource_estimate = {
+        'num_qubits': len(cpt_circuit.all_qubits()),
+        't_count': t_count,
+        't_depth': t_depth,
+        'max_t_depth_wire': t_depth_single_wire,
+        'gate_count': gate_count,
+        'clifford_count': gate_count - t_count,
+        'circuit_depth': len(cpt_circuit)
+    }
     if trotter_steps > 0:
         resource_estimate['total_t_depth'] = t_depth * trotter_steps
         resource_estimate['max_t_count_single_wire'] = t_depth_single_wire * trotter_steps
@@ -117,6 +118,9 @@ def gen_resource_estimate(cpt_circuit: AbstractCircuit,
 
     return resource_estimate
 
+
+def estimate_trotter_resources(circuit: AbstractCircuit):
+    pass
 
 def circuit_estimate(circuit:AbstractCircuit,
                      outdir: str,
@@ -173,6 +177,7 @@ def circuit_estimate(circuit:AbstractCircuit,
                                                   circ_occurences=subcircuit_counts[gate][0])
         subcircuit_info = {subcircuit_name:resource_estimate}
         subcircuit_re.append(subcircuit_info)
+
         gate_count = resource_estimate['gate_count']
         gate_depth = resource_estimate['circuit_depth']
         t_depth = resource_estimate['t_depth']
