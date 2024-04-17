@@ -152,7 +152,7 @@ def estimate_trotter_resources(
             't_depth': resource_estimate['t_depth']//total_steps,
             'max_t_depth_wire': resource_estimate['max_t_depth_wire']//total_steps,
             'circuit_depth': resource_estimate['circuit_depth']//total_steps,
-            'circuit_occurences': total_steps
+            'subcicruit_occurrences': total_steps
         }
     }
     outfile_data = f'{outdir}{circuit_name}_high_level.json'
