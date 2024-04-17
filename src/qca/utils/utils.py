@@ -144,7 +144,7 @@ def estimate_trotter_resources(
                                               total_steps=total_steps)
     resource_estimate['circuit_occurences'] = 1
     resource_estimate['subcircuit_info'] = {
-        'Trotter_Step': {
+        'Trotter_Unitary': {
             'num_qubits': resource_estimate['num_qubits'],
             'gate_count': resource_estimate['gate_count']//total_steps,
             'clifford_count': resource_estimate['clifford_count']//total_steps,
