@@ -85,7 +85,8 @@ def get_T_depth(cpt_circuit: AbstractCircuit):
     return t_depth
 
 def gen_resource_estimate(cpt_circuit: AbstractCircuit,
-                          trotter_steps:int = -1,
+                          is_approximate: bool,
+                          total_steps:int = -1,
                           circ_occurences:int = -1) -> dict:
     '''
     Given some clifford + T circuit and a given filename, we grab the logical resource estimates
@@ -95,32 +96,68 @@ def gen_resource_estimate(cpt_circuit: AbstractCircuit,
     trotter_steps is a flag denoting if the circuit was estimated through trotterization. If so, the
     user should specify the number of steps required.  
     '''
+    num_qubits = len(cpt_circuit.all_qubits())
+    gate_count = count_gates(cpt_circuit)
     t_count = count_T_gates(cpt_circuit)
     t_depth = get_T_depth(cpt_circuit)
     t_depth_single_wire = get_T_depth_wire(cpt_circuit)
-    gate_count = count_gates(cpt_circuit)
+    clifford_count = gate_count - t_count
+    circuit_depth = len(cpt_circuit)
 
     resource_estimate = {
-        'num_qubits': len(cpt_circuit.all_qubits()),
+        'num_qubits': num_qubits,
+        'gate_count': gate_count,
+        'circuit_depth': circuit_depth,
         't_count': t_count,
         't_depth': t_depth,
         'max_t_depth_wire': t_depth_single_wire,
-        'gate_count': gate_count,
-        'clifford_count': gate_count - t_count,
-        'circuit_depth': len(cpt_circuit)
+        'clifford_count': clifford_count,
     }
-    if trotter_steps > 0:
-        resource_estimate['total_t_depth'] = t_depth * trotter_steps
-        resource_estimate['max_t_count_single_wire'] = t_depth_single_wire * trotter_steps
-        resource_estimate['subcircuit_occurences'] = trotter_steps
+
+    if total_steps > 0 and is_approximate:
+        resource_estimate['t_depth'] = resource_estimate['t_depth'] * total_steps
+        resource_estimate['t_count'] = resource_estimate['t_count'] * total_steps
+        resource_estimate['max_t_depth_wire'] = resource_estimate['max_t_depth_wire'] * total_steps
+        resource_estimate['gate_count'] = resource_estimate['gate_count'] * total_steps
+        resource_estimate['circuit_depth'] = resource_estimate['circuit_depth'] * total_steps
+        resource_estimate['clifford_count'] = resource_estimate['clifford_count'] * total_steps
+
     if circ_occurences > 0:
         resource_estimate['subcicruit_occurrences'] = circ_occurences
 
     return resource_estimate
 
 
-def estimate_trotter_resources(circuit: AbstractCircuit):
-    pass
+def estimate_trotter_resources(
+        cpt_circuit: AbstractCircuit,
+        outdir: str,
+        is_approximate:bool,
+        circuit_name:str,
+        magnus_steps:int=1,
+        trotter_steps:int=1):
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+    
+    total_steps = trotter_steps * magnus_steps
+    resource_estimate = gen_resource_estimate(cpt_circuit=cpt_circuit,
+                                              is_approximate=is_approximate,
+                                              total_steps=total_steps)
+    resource_estimate['circuit_occurences'] = 1
+    resource_estimate['subcircuit_info'] = {
+        'Trotter_Step': {
+            'num_qubits': resource_estimate['num_qubits'],
+            'gate_count': resource_estimate['gate_count']//total_steps,
+            'clifford_count': resource_estimate['clifford_count']//total_steps,
+            't_count': resource_estimate['t_count']//total_steps,
+            't_depth': resource_estimate['t_depth']//total_steps,
+            'max_t_depth_wire': resource_estimate['max_t_depth_wire']//total_steps,
+            'circuit_depth': resource_estimate['circuit_depth']//total_steps,
+            'circuit_occurences': total_steps
+        }
+    }
+    outfile_data = f'{outdir}{circuit_name}_high_level.json'
+    re_as_json(resource_estimate, [], outfile_data)
+
 
 def circuit_estimate(circuit:AbstractCircuit,
                      outdir: str,
@@ -174,6 +211,7 @@ def circuit_estimate(circuit:AbstractCircuit,
         subcircuit = subcircuit_counts[gate][1]
         subcircuit_name = subcircuit_counts[gate][2]
         resource_estimate = gen_resource_estimate(subcircuit,
+                                                  is_approximate=False,
                                                   circ_occurences=subcircuit_counts[gate][0])
         subcircuit_info = {subcircuit_name:resource_estimate}
         subcircuit_re.append(subcircuit_info)
@@ -207,8 +245,8 @@ def circuit_estimate(circuit:AbstractCircuit,
     re_as_json(total_resources, subcircuit_re, outfile_data)
 
 def re_as_json(main_estimate:dict, estimates:list[dict], file_name:str) -> None:
-    main_estimate['subcircuit_info'] = {}
     if estimates:
+        main_estimate['subcircuit_info'] = {}
         for op in estimates:
             for op_key in op.keys():
                 main_estimate['subcircuit_info'][op_key] = op[op_key]

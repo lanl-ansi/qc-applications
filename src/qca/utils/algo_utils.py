@@ -2,19 +2,18 @@ import time
 import random
 import numpy as np
 import networkx as nx
-from cirq import Circuit
+from cirq import Circuit, QasmOutput
 from openfermion import count_qubits
 from cirq.contrib import qasm_import
-from qca.utils.utils import circuit_estimate
 from pyLIQTR.utils.Hamiltonian import Hamiltonian
 from openfermion.ops.operators import QubitOperator
 from pyLIQTR.utils.utils import open_fermion_to_qasm
 from pyLIQTR.circuits.qsp import generate_QSP_circuit
 from openfermion.circuits import trotter_steps_required, error_bound
+from qca.utils.utils import circuit_estimate, estimate_trotter_resources
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 from openfermion.circuits.trotter_exp_to_qgates import trotterize_exp_qubop_to_qasm
 from pyLIQTR.phase_factors.fourier_response.fourier_response import Angler_fourier_response
-from typing import Union
 
 def estimate_qsp(
     pyliqtr_hamiltonian: Hamiltonian,
@@ -120,17 +119,23 @@ def estimate_trotter(
 
     qasm_str_trotter = open_fermion_to_qasm(count_qubits(openfermion_hamiltonian), trotter_circuit_of)
     trotter_circuit_qasm = qasm_import.circuit_from_qasm(qasm_str_trotter)
-    
     t0 = time.perf_counter()
     cpt_trotter = clifford_plus_t_direct_transform(trotter_circuit_qasm)
     t1 = time.perf_counter()
     elapsed = t1-t0
     print(f'Time to generate a clifford + T circuit from trotter circuit: {elapsed} seconds')
-    circuit_estimate(
-        trotter_circuit_qasm,
+
+    if write_circuits:
+        outfile_qasm_trotter = f'{outdir}Trotter_Unitary.qasm'
+        outfile_qasm_cpt = f'{outdir}Trotter_Unitary.cpt.qasm'
+        QasmOutput(cpt_trotter, cpt_trotter.all_qubits()).save(outfile_qasm_cpt)
+        QasmOutput(trotter_circuit_qasm, trotter_circuit_qasm.all_qubits()).save(outfile_qasm_trotter)
+
+    estimate_trotter_resources(
+        cpt_trotter,
         outdir,
-        hamiltonian_name,
-        trotter_steps=nsteps,
-        write_circuits=write_circuits
+        is_approximate=True,
+        circuit_name=hamiltonian_name,
+        trotter_steps=nsteps
     )
     return cpt_trotter
