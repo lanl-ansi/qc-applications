@@ -3,11 +3,11 @@ import re
 import json
 import time
 import pandas as pd
-import matplotlib.pyplot as plt
 from statistics import median
+import matplotlib.pyplot as plt
 from pyLIQTR.utils.utils import count_T_gates
-from cirq import Circuit, QasmOutput, AbstractCircuit
-from pyLIQTR.utils.qsp_helpers import circuit_decompose_once
+from cirq import Circuit, AbstractCircuit
+from pyLIQTR.utils.qsp_helpers import circuit_decompose_once, print_to_openqasm
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 
 def count_gates(cpt_circuit: AbstractCircuit) -> int:
@@ -151,13 +151,11 @@ def circuit_estimate(circuit:AbstractCircuit,
                 if write_circuits:
                     outfile_qasm_decomposed = f'{outdir}{gate_type_name}.decomposed.qasm'
                     outfile_qasm_cpt = f'{outdir}{gate_type_name}.cpt.qasm'
-                    QasmOutput(
-                        decomposed_circuit,
-                        decomposed_circuit.all_qubits()).save(outfile_qasm_decomposed)
-
-                    QasmOutput(cpt_circuit,
-                               cpt_circuit.all_qubits()).save(outfile_qasm_cpt)
-    
+                    with open(outfile_qasm_decomposed, 'w', encoding='utf-8') as f:
+                        print_to_openqasm(f, decomposed_circuit, qubits=decomposed_circuit.all_qubits())
+                    with open(outfile_qasm_cpt, 'w', encoding='utf-8') as f:
+                        print_to_openqasm(f, cpt_circuit, qubits=cpt_circuit.all_qubits())
+                    
                 subcircuit_counts[gate_type] = [1, cpt_circuit, gate_type_name]
     total_gate_count = 0
     total_gate_depth = 0
