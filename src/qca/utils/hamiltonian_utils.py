@@ -134,7 +134,7 @@ def nx_longitudinal_ising_terms(graph,p,magnitude=1) -> list[tuple[str, float]]:
     n = len(graph.nodes)
     for n1, n2 in graph.edges:
         weight = magnitude if random.random() < p else -magnitude
-        curr_hamil_string = n * 'I' 
+        curr_hamil_string = n * 'I'
         for idx in range(len(graph)):
             if idx == n1 or idx == n2:
                 curr_hamil_string = f'{curr_hamil_string[:idx]}Z{curr_hamil_string[idx+1:]}'
@@ -146,7 +146,7 @@ def nx_transverse_ising_terms(graph: Graph,p,magnitude=0.1) -> list[tuple[str, f
     n = len(graph)
     for idx in range(n):
         w = magnitude if random.random() < p else -magnitude
-        curr_hamil_string = n * 'I' 
+        curr_hamil_string = n * 'I'
         for k in range(n):
             if idx == k:
                 curr_hamil_string = f'{curr_hamil_string[:idx]}X{curr_hamil_string[idx+1:]}'
@@ -161,14 +161,19 @@ def nx_triangle_lattice(lattice_size: int) -> Graph:
             graph.add_edge((i,j),(i+1,j+1))
     return graph
 
-def generate_triangle_hamiltonian(lattice_size: int, longitudinal_weight_prob:float=0.5, transverse_weight_prob:float=1):
+def generate_triangle_hamiltonian(lattice_size: int,
+                                  longitudinal_weight_prob:float=0.5,
+                                  transverse_weight_prob:float=1):
     graph = nx_triangle_lattice(lattice_size)
     graph = flatten_nx_graph(graph)
     H_transverse = nx_transverse_ising_terms(graph, transverse_weight_prob)
     H_longitudinal = nx_longitudinal_ising_terms(graph, longitudinal_weight_prob)
     return H_transverse, H_longitudinal
 
-def generate_square_hamiltonian(lattice_size: int, dim:int, longitudinal_weight_prob:float=0.5, transverse_weight_prob:float=1):
+def generate_square_hamiltonian(lattice_size: int,
+                                dim:int,
+                                longitudinal_weight_prob:float=0.5,
+                                transverse_weight_prob:float=1):
     dimensions = (lattice_size, lattice_size) if dim == 2 else (lattice_size, lattice_size, lattice_size)
     graph = grid_graph(dim=dimensions)
     graph = flatten_nx_graph(graph)
@@ -196,20 +201,20 @@ def assign_hexagon_labels(graph:Graph, x:str='X', y:str='Y', z:str='Z'):
         if r2 - r1 < 0 or c2 - c1 < 0:
             r1, r2 = r2, r1
             c1, c2 = c2, c1
-        
+
         # now that they are ordered correctly, we can assign labels
         label = ''
         if c1 == c2:
             label = z
         # You can differentiate X and Y labels based off nx's node label parity
-        elif (((r1 % 2) + (c1 % 2)) % 2 == 0):
+        elif ((r1 % 2) + (c1 % 2)) % 2 == 0:
             label = y
         else:
             label = x
-        
+
         graph[n1][n2]['label'] = label
 
-def assign_directional_triangular_labels(g:Graph, lattice_size:int) -> None: 
+def assign_directional_triangular_labels(g:Graph, lattice_size:int) -> None:
     for i in range(lattice_size - 1):
         for j in range(lattice_size - 1):
             g[(i,j)][(i+1,j)]['label'] = 'Z'
