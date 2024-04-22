@@ -2,11 +2,15 @@ import os
 import re
 import json
 import time
-import pandas as pd
-import matplotlib.pyplot as plt
 from statistics import median
-from pyLIQTR.utils.utils import count_T_gates
+
+import pandas as pd
+
+import matplotlib.pyplot as plt
+
 from cirq import Circuit, QasmOutput, AbstractCircuit
+
+from pyLIQTR.utils.utils import count_T_gates
 from pyLIQTR.utils.qsp_helpers import circuit_decompose_once
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 
@@ -30,7 +34,7 @@ def get_T_depth_wire(cpt_circuit: AbstractCircuit):
             opstr = str(operator)
             if opstr[0] == 'T':
                 reg_label = opstr[opstr.find("(")+1:opstr.find(")")]
-                if not reg_label in count_dict:
+                if reg_label not in count_dict:
                     count_dict[reg_label] = 1
                 else:
                     count_dict[reg_label] += 1
@@ -129,8 +133,8 @@ def circuit_estimate(circuit:AbstractCircuit,
                      write_circuits:bool = False) -> dict:
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    
-    subcircuit_counts = dict()
+
+    subcircuit_counts = {}
     for moment in circuit:
         for operation in moment:
             gate_type = type(operation.gate)
@@ -158,7 +162,7 @@ def circuit_estimate(circuit:AbstractCircuit,
 
                     QasmOutput(cpt_circuit,
                                cpt_circuit.all_qubits()).save(outfile_qasm_cpt)
-    
+
                 subcircuit_counts[gate_type] = [1, cpt_circuit, gate_type_name]
     total_gate_count = 0
     total_gate_depth = 0
@@ -180,7 +184,7 @@ def circuit_estimate(circuit:AbstractCircuit,
         t_depth_wire = resource_estimate['max_t_depth_wire']
         t_count = resource_estimate['t_count']
         clifford_count = resource_estimate['clifford_count']
-        
+
         total_gate_count += subcircuit_counts[gate][0] * gate_count * timesteps / timestep_of_interest * pow(2,bits_precision - 1) * trotter_steps
         total_gate_depth += subcircuit_counts[gate][0] * gate_depth * timesteps / timestep_of_interest * pow(2,bits_precision - 1) * trotter_steps
         total_T_depth += subcircuit_counts[gate][0] * t_depth * timesteps / timestep_of_interest * pow(2,bits_precision - 1) * trotter_steps
@@ -202,14 +206,14 @@ def circuit_estimate(circuit:AbstractCircuit,
     }
     re_as_json(total_resources, subcircuit_re, outfile_data)
     return total_resources
- 
+
 def re_as_json(main_estimate:dict, estimates:list[dict], file_name:str) -> None:
     main_estimate['subcircuit_info'] = {}
     if estimates:
         for op in estimates:
             for op_key in op.keys():
                 main_estimate['subcircuit_info'][op_key] = op[op_key]
-    with open(file_name, 'w') as f:
-            json.dump(main_estimate, f,
-                    indent=4,
-                    separators=(',', ': '))
+    with open(file_name, 'w', encoding='utf-8') as f:
+        json.dump(main_estimate, f,
+                indent=4,
+                separators=(',', ': '))
