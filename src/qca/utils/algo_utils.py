@@ -18,7 +18,7 @@ from pyLIQTR.phase_factors.fourier_response.fourier_response import Angler_fouri
 
 def estimate_qsp(
     pyliqtr_hamiltonian: Hamiltonian,
-    evolution_time:int,
+    evolution_time:float,
     numsteps:int,
     energy_precision:float,
     outdir:str,
@@ -85,7 +85,7 @@ def find_hamiltonian_ordering(of_hamiltonian: QubitOperator) -> list:
 
 def estimate_trotter(
     openfermion_hamiltonian: QubitOperator,
-    evolution_time: int,
+    evolution_time: float,
     energy_precision: float,
     outdir:str,
     hamiltonian_name:str='hamiltonian',
