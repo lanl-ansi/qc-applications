@@ -85,7 +85,7 @@ def get_T_depth(cpt_circuit: AbstractCircuit):
     return t_depth
 
 def gen_resource_estimate(cpt_circuit: AbstractCircuit,
-                          is_approximate: bool,
+                          is_extrapolated: bool,
                           total_steps:int = -1,
                           circ_occurences:int = -1) -> dict:
     '''
@@ -114,7 +114,7 @@ def gen_resource_estimate(cpt_circuit: AbstractCircuit,
         'clifford_count': clifford_count,
     }
 
-    if total_steps > 0 and is_approximate:
+    if total_steps > 0 and is_extrapolated:
         resource_estimate['t_depth'] = resource_estimate['t_depth'] * total_steps
         resource_estimate['t_count'] = resource_estimate['t_count'] * total_steps
         resource_estimate['max_t_depth_wire'] = resource_estimate['max_t_depth_wire'] * total_steps
@@ -128,23 +128,25 @@ def gen_resource_estimate(cpt_circuit: AbstractCircuit,
     return resource_estimate
 
 
-def estimate_trotter_resources(
+def estimate_cpt_resources(
         cpt_circuit: AbstractCircuit,
         outdir: str,
-        is_approximate:bool,
+        is_extrapolated:bool,
         circuit_name:str,
+        algo_name:str,
         magnus_steps:int=1,
-        trotter_steps:int=1):
+        trotter_steps:int=1
+    ):
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     
     total_steps = trotter_steps * magnus_steps
     resource_estimate = gen_resource_estimate(cpt_circuit=cpt_circuit,
-                                              is_approximate=is_approximate,
+                                              is_extrapolated=is_extrapolated,
                                               total_steps=total_steps)
     resource_estimate['circuit_occurences'] = 1
     resource_estimate['subcircuit_info'] = {
-        'Trotter_Unitary': {
+        f'{algo_name}': {
             'num_qubits': resource_estimate['num_qubits'],
             'gate_count': resource_estimate['gate_count']//total_steps,
             'clifford_count': resource_estimate['clifford_count']//total_steps,
@@ -152,21 +154,22 @@ def estimate_trotter_resources(
             't_depth': resource_estimate['t_depth']//total_steps,
             'max_t_depth_wire': resource_estimate['max_t_depth_wire']//total_steps,
             'circuit_depth': resource_estimate['circuit_depth']//total_steps,
-            'subcicruit_occurrences': total_steps
+            'subcicruit_occurrences': total_steps,
+            'subcircuit_info': {}
         }
     }
+    
     outfile_data = f'{outdir}{circuit_name}_high_level.json'
-    re_as_json(resource_estimate, [], outfile_data)
+    re_as_json(resource_estimate, [], outfile_data, '')
 
-
-def circuit_estimate(circuit:AbstractCircuit,
-                     outdir: str,
-                     circuit_name: str,
-                     num_magnus:int=1,
-                     timesteps:int=1,
-                     timestep_of_interest:int=1,
-                     trotter_steps:int=-1,
-                     write_circuits:bool = False) -> AbstractCircuit:
+def circuit_estimate(
+        circuit:AbstractCircuit,
+        outdir: str,
+        numsteps: int,
+        circuit_name: str,
+        algo_name:str,
+        write_circuits:bool = False
+    ) -> AbstractCircuit:
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     
@@ -181,14 +184,14 @@ def circuit_estimate(circuit:AbstractCircuit,
                 t0 = time.perf_counter()
                 decomposed_circuit = circuit_decompose_once(circuit_decompose_once(Circuit(operation)))
                 t1 = time.perf_counter()
-                elapsed = t1-t0
-                print(f'   Time to decompose high level {gate_type_name} circuit: {elapsed} seconds ')
+                decomposed_elapsed = t1-t0
+                print(f'   Time to decompose high level {gate_type_name} circuit: {decomposed_elapsed} seconds ')
 
                 t0 = time.perf_counter()
                 cpt_circuit = clifford_plus_t_direct_transform(decomposed_circuit)
                 t1 = time.perf_counter()
-                elapsed = t1-t0
-                print(f'   Time to transform decomposed {gate_type_name} circuit to Clifford+T: {elapsed} seconds')
+                cpt_elapsed = t1-t0
+                print(f'   Time to transform decomposed {gate_type_name} circuit to Clifford+T: {cpt_elapsed} seconds')
                 if write_circuits:
                     outfile_qasm_decomposed = f'{outdir}{gate_type_name}.decomposed.qasm'
                     outfile_qasm_cpt = f'{outdir}{gate_type_name}.cpt.qasm'
@@ -211,7 +214,7 @@ def circuit_estimate(circuit:AbstractCircuit,
         subcircuit = subcircuit_counts[gate][1]
         subcircuit_name = subcircuit_counts[gate][2]
         resource_estimate = gen_resource_estimate(subcircuit,
-                                                  is_approximate=False,
+                                                  is_extrapolated=False,
                                                   circ_occurences=subcircuit_counts[gate][0])
         subcircuit_info = {subcircuit_name:resource_estimate}
         subcircuit_re.append(subcircuit_info)
@@ -223,15 +226,14 @@ def circuit_estimate(circuit:AbstractCircuit,
         t_count = resource_estimate['t_count']
         clifford_count = resource_estimate['clifford_count']
         
-        total_gate_count += subcircuit_counts[gate][0] * gate_count * timesteps / timestep_of_interest
-        total_gate_depth += subcircuit_counts[gate][0] * gate_depth * timesteps / timestep_of_interest
-        total_T_depth += subcircuit_counts[gate][0] * t_depth * timesteps / timestep_of_interest
-        total_T_depth_wire += subcircuit_counts[gate][0] * t_depth_wire * timesteps / timestep_of_interest
-        total_T_count += subcircuit_counts[gate][0] * t_count * timesteps / timestep_of_interest
-        total_clifford_count += subcircuit_counts[gate][0] * clifford_count * timesteps / timestep_of_interest
+        total_gate_count += subcircuit_counts[gate][0] * gate_count * numsteps
+        total_gate_depth += subcircuit_counts[gate][0] * gate_depth * numsteps
+        total_T_depth += subcircuit_counts[gate][0] * t_depth * numsteps
+        total_T_depth_wire += subcircuit_counts[gate][0] * t_depth_wire * numsteps
+        total_T_count += subcircuit_counts[gate][0] * t_count * numsteps
+        total_clifford_count += subcircuit_counts[gate][0] * clifford_count * numsteps
 
     outfile_data = f'{outdir}{circuit_name}_high_level.json'
-    circ_occurences = trotter_steps if trotter_steps > 0 else num_magnus
     total_resources = {
         'num_qubits': len(circuit.all_qubits()),
         'gate_count': total_gate_count,
@@ -240,16 +242,30 @@ def circuit_estimate(circuit:AbstractCircuit,
         't_depth': total_T_depth,
         'max_t_depth_wire': total_T_depth_wire,
         'clifford_count': total_clifford_count,
-        'circuit_occurences': circ_occurences
+        'circuit_occurences': 1,
+        'subcircuit_info': {
+            f'{algo_name}': {
+                'gate_count': total_gate_count//numsteps,
+                'circuit_depth': total_gate_depth//numsteps,
+                't_count': total_T_count//numsteps,
+                't_depth': total_T_depth//numsteps,
+                'max_t_depth_wire': total_T_depth_wire//numsteps,
+                'clifford_count': total_clifford_count//numsteps,
+                'circuit_occurences': numsteps,
+            }
+        }
     }
-    re_as_json(total_resources, subcircuit_re, outfile_data)
+    re_as_json(algo_name=algo_name,
+               main_estimate=total_resources,
+               estimates=subcircuit_re,
+               file_name=outfile_data)
 
-def re_as_json(main_estimate:dict, estimates:list[dict], file_name:str) -> None:
+def re_as_json(main_estimate:dict, estimates:list[dict], file_name:str, algo_name:str) -> None:
     if estimates:
-        main_estimate['subcircuit_info'] = {}
+        main_estimate['subcircuit_info'][algo_name]['subcircuit_info'] = {}
         for op in estimates:
             for op_key in op.keys():
-                main_estimate['subcircuit_info'][op_key] = op[op_key]
+                main_estimate['subcircuit_info'][algo_name]['subcircuit_info'][op_key] = op[op_key]
     with open(file_name, 'w') as f:
             json.dump(main_estimate, f,
                     indent=4,
