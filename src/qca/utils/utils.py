@@ -245,6 +245,7 @@ def circuit_estimate(
         'circuit_occurences': 1,
         'subcircuit_info': {
             f'{algo_name}': {
+                'num_qubits': len(circuit.all_qubits()),
                 'gate_count': total_gate_count//numsteps,
                 'circuit_depth': total_gate_depth//numsteps,
                 't_count': total_T_count//numsteps,
