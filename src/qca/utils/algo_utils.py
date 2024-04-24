@@ -10,6 +10,7 @@ from pyLIQTR.utils.Hamiltonian import Hamiltonian
 from openfermion.ops.operators import QubitOperator
 from pyLIQTR.utils.utils import open_fermion_to_qasm
 from pyLIQTR.circuits.qsp import generate_QSP_circuit
+from pyLIQTR.utils.qsp_helpers import print_to_openqasm
 from openfermion.circuits import trotter_steps_required, error_bound
 from qca.utils.utils import circuit_estimate, estimate_cpt_resources
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
@@ -130,8 +131,10 @@ def estimate_trotter(
     if write_circuits:
         outfile_qasm_trotter = f'{outdir}Trotter_Unitary.qasm'
         outfile_qasm_cpt = f'{outdir}Trotter_Unitary.cpt.qasm'
-        QasmOutput(cpt_trotter, cpt_trotter.all_qubits()).save(outfile_qasm_cpt)
-        QasmOutput(trotter_circuit_qasm, trotter_circuit_qasm.all_qubits()).save(outfile_qasm_trotter)
+        with open(outfile_qasm_trotter, 'w', encoding='utf-8') as f:
+            print_to_openqasm(f, trotter_circuit_qasm, trotter_circuit_qasm.all_qubits())
+        with open(outfile_qasm_cpt, 'w', encoding='utf-8') as f:
+            print_to_openqasm(f, cpt_trotter, qubits=cpt_trotter.all_qubits())
 
     estimate_cpt_resources(
         cpt_trotter,
