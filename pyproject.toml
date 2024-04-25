@@ -9,7 +9,7 @@ dynamic = ["dependencies"]
 requires-python = ">=3.9"
 description = "Documentation of Applications for Quantum Computers"
 readme = "README.md"
-license = {file = "LICENSE.txt"}
+license = {file = "License.md"}
 classifiers = [
   "Programming Language :: Python"
 ]

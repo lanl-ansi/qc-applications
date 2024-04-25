@@ -64,7 +64,7 @@ class UtilsTest(unittest.TestCase):
         circuit.append(layer_rx)
         circuit.append(layer_measurement)
         circ_cpt =  clifford_plus_t_direct_transform(circuit)
-        circ_estimate = gen_resource_estimate(circ_cpt)
+        circ_estimate = gen_resource_estimate(circ_cpt, is_extrapolated=False)
         correct_estimate = {'num_qubits': 4,
                             't_count': 8,
                             't_depth': 2,

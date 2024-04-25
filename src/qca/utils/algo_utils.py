@@ -1,3 +1,4 @@
+import os
 import time
 import random
 import numpy as np
@@ -14,23 +15,22 @@ from openfermion.circuits.trotter_exp_to_qgates import trotterize_exp_qubop_to_q
 from pyLIQTR.utils.Hamiltonian import Hamiltonian
 from pyLIQTR.utils.utils import open_fermion_to_qasm
 from pyLIQTR.circuits.qsp import generate_QSP_circuit
+from pyLIQTR.utils.qsp_helpers import print_to_openqasm
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 from pyLIQTR.phase_factors.fourier_response.fourier_response import Angler_fourier_response
 
-from qca.utils.utils import circuit_estimate
+from qca.utils.utils import circuit_estimate, estimate_cpt_resources
 
 def estimate_qsp(
     pyliqtr_hamiltonian: Hamiltonian,
-    timesteps:int,
+    evolution_time:float,
+    numsteps:int,
     energy_precision:float,
     outdir:str,
     hamiltonian_name:str='hamiltonian',
     write_circuits:bool=False,
-    num_magnus:int=1000,
-    timestep_of_interest:int=None
 ) -> Circuit:
-    if not timestep_of_interest:
-        timestep_of_interest=timesteps/num_magnus
+    timestep_of_interest=evolution_time/numsteps
     random.seed(0)
     np.random.seed(0)
     t0 = time.perf_counter()
@@ -45,12 +45,11 @@ def estimate_qsp(
     elapsed = t1 - t0
     print(f'Time to generate high level QSP circuit: {elapsed} seconds')
     circuit_estimate(
-        qsp_circuit,
-        outdir,
-        hamiltonian_name,
-        num_magnus=num_magnus,
-        timesteps=timesteps,
-        timestep_of_interest=timestep_of_interest,
+        circuit=qsp_circuit,
+        outdir=outdir,
+        numsteps=numsteps,
+        circuit_name=hamiltonian_name,
+        algo_name='QSP_Step',
         write_circuits=write_circuits
     )
     return qsp_circuit
@@ -93,16 +92,20 @@ def find_hamiltonian_ordering(of_hamiltonian: QubitOperator) -> list:
 
 def estimate_trotter(
     openfermion_hamiltonian: QubitOperator,
-    timesteps: int,
+    evolution_time: float,
     energy_precision: float,
     outdir:str,
     hamiltonian_name:str='hamiltonian',
     write_circuits:bool=False
 ) -> Circuit:
+
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
     t0 = time.perf_counter()
     bounded_error = error_bound(list(openfermion_hamiltonian.get_operators()),tight=False)
     nsteps = trotter_steps_required(trotter_error_bound = bounded_error,
-                                    time = timesteps,
+                                    time = evolution_time,
                                     energy_precision = energy_precision)
     t1 = time.perf_counter()
     elapsed = t1 - t0
@@ -117,7 +120,7 @@ def estimate_trotter(
     t0 = time.perf_counter()
     trotter_circuit_of = trotterize_exp_qubop_to_qasm(openfermion_hamiltonian,
                                                       trotter_order=2,
-                                                      evolution_time=timesteps/nsteps,
+                                                      evolution_time=evolution_time/nsteps,
                                                       term_ordering=term_ordering)
     t1 = time.perf_counter()
     elapsed = t1 - t0
@@ -125,17 +128,26 @@ def estimate_trotter(
 
     qasm_str_trotter = open_fermion_to_qasm(count_qubits(openfermion_hamiltonian), trotter_circuit_of)
     trotter_circuit_qasm = qasm_import.circuit_from_qasm(qasm_str_trotter)
-
     t0 = time.perf_counter()
     cpt_trotter = clifford_plus_t_direct_transform(trotter_circuit_qasm)
     t1 = time.perf_counter()
     elapsed = t1-t0
     print(f'Time to generate a clifford + T circuit from trotter circuit: {elapsed} seconds')
-    circuit_estimate(
-        trotter_circuit_qasm,
+
+    if write_circuits:
+        outfile_qasm_trotter = f'{outdir}Trotter_Unitary.qasm'
+        outfile_qasm_cpt = f'{outdir}Trotter_Unitary.cpt.qasm'
+        with open(outfile_qasm_trotter, 'w', encoding='utf-8') as f:
+            print_to_openqasm(f, trotter_circuit_qasm, trotter_circuit_qasm.all_qubits())
+        with open(outfile_qasm_cpt, 'w', encoding='utf-8') as f:
+            print_to_openqasm(f, cpt_trotter, qubits=cpt_trotter.all_qubits())
+
+    estimate_cpt_resources(
+        cpt_trotter,
         outdir,
-        hamiltonian_name,
-        trotter_steps=nsteps,
-        write_circuits=write_circuits
+        is_extrapolated=True,
+        circuit_name=hamiltonian_name,
+        algo_name='Trotter_Step',
+        trotter_steps=nsteps
     )
     return cpt_trotter
