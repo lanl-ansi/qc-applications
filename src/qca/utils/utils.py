@@ -91,7 +91,8 @@ def get_T_depth(cpt_circuit: AbstractCircuit):
 def gen_resource_estimate(cpt_circuit: AbstractCircuit,
                           is_extrapolated: bool,
                           total_steps:int = -1,
-                          circ_occurences:int = -1) -> dict:
+                          circ_occurences:int = -1,
+                          bits_precision:int=1) -> dict:
     '''
     Given some clifford + T circuit and a given filename, we grab the logical resource estimates
     from the circuit and then write it to disk. The function also returns the resource dictionary
@@ -119,12 +120,19 @@ def gen_resource_estimate(cpt_circuit: AbstractCircuit,
     }
 
     if total_steps > 0 and is_extrapolated:
-        resource_estimate['t_depth'] = resource_estimate['t_depth'] * total_steps
-        resource_estimate['t_count'] = resource_estimate['t_count'] * total_steps
-        resource_estimate['max_t_depth_wire'] = resource_estimate['max_t_depth_wire'] * total_steps
-        resource_estimate['gate_count'] = resource_estimate['gate_count'] * total_steps
-        resource_estimate['circuit_depth'] = resource_estimate['circuit_depth'] * total_steps
-        resource_estimate['clifford_count'] = resource_estimate['clifford_count'] * total_steps
+        scaling_factor = total_steps
+    elif bits_precision > 0:
+        scaling_factor = pow(2, bits_precision - 1)
+    else:
+        scaling_factor = None
+    
+    if scaling_factor:
+        resource_estimate['t_depth'] = resource_estimate['t_depth'] * scaling_factor
+        resource_estimate['t_count'] = resource_estimate['t_count'] * scaling_factor
+        resource_estimate['max_t_depth_wire'] = resource_estimate['max_t_depth_wire'] * scaling_factor
+        resource_estimate['gate_count'] = resource_estimate['gate_count'] * scaling_factor
+        resource_estimate['circuit_depth'] = resource_estimate['circuit_depth'] * scaling_factor
+        resource_estimate['clifford_count'] = resource_estimate['clifford_count'] * scaling_factor
 
     if circ_occurences > 0:
         resource_estimate['subcicruit_occurrences'] = circ_occurences
@@ -218,7 +226,8 @@ def circuit_estimate(
         subcircuit_name = subcircuit_counts[gate][2]
         resource_estimate = gen_resource_estimate(subcircuit,
                                                   is_extrapolated=False,
-                                                  circ_occurences=subcircuit_counts[gate][0])
+                                                  circ_occurences=subcircuit_counts[gate][0],
+                                                  bits_precision=bits_precision)
         subcircuit_info = {subcircuit_name:resource_estimate}
         subcircuit_re.append(subcircuit_info)
 
@@ -228,13 +237,20 @@ def circuit_estimate(
         t_depth_wire = resource_estimate['max_t_depth_wire']
         t_count = resource_estimate['t_count']
         clifford_count = resource_estimate['clifford_count']
-
-        total_gate_count += subcircuit_counts[gate][0] * gate_count * numsteps * pow(2, bits_precision - 1)
-        total_gate_depth += subcircuit_counts[gate][0] * gate_depth * numsteps * pow(2, bits_precision - 1)
-        total_T_depth += subcircuit_counts[gate][0] * t_depth * numsteps * pow(2, bits_precision - 1)
-        total_T_depth_wire += subcircuit_counts[gate][0] * t_depth_wire * numsteps * pow(2, bits_precision - 1)
-        total_T_count += subcircuit_counts[gate][0] * t_count * numsteps * pow(2, bits_precision - 1)
-        total_clifford_count += subcircuit_counts[gate][0] * clifford_count * numsteps * pow(2, bits_precision - 1)
+        
+        total_gate_count += subcircuit_counts[gate][0] * gate_count * numsteps
+        total_gate_depth += subcircuit_counts[gate][0] * gate_depth * numsteps
+        total_T_depth += subcircuit_counts[gate][0] * t_depth * numsteps
+        total_T_depth_wire += subcircuit_counts[gate][0] * t_depth_wire * numsteps
+        total_T_count += subcircuit_counts[gate][0] * t_count * numsteps
+        total_clifford_count += subcircuit_counts[gate][0] * clifford_count * numsteps
+        
+        # total_gate_count += subcircuit_counts[gate][0] * gate_count * numsteps * pow(2, bits_precision - 1)
+        # total_gate_depth += subcircuit_counts[gate][0] * gate_depth * numsteps * pow(2, bits_precision - 1)
+        # total_T_depth += subcircuit_counts[gate][0] * t_depth * numsteps * pow(2, bits_precision - 1)
+        # total_T_depth_wire += subcircuit_counts[gate][0] * t_depth_wire * numsteps * pow(2, bits_precision - 1)
+        # total_T_count += subcircuit_counts[gate][0] * t_count * numsteps * pow(2, bits_precision - 1)
+        # total_clifford_count += subcircuit_counts[gate][0] * clifford_count * numsteps * pow(2, bits_precision - 1)
 
     outfile_data = f'{outdir}{circuit_name}_high_level.json'
     total_resources = {
