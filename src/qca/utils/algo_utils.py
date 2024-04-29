@@ -3,19 +3,23 @@ import time
 import random
 import numpy as np
 import networkx as nx
+
 from cirq import Circuit
-from openfermion import count_qubits
 from cirq.contrib import qasm_import
-from pyLIQTR.utils.Hamiltonian import Hamiltonian
+
+from openfermion import count_qubits
 from openfermion.ops.operators import QubitOperator
+from openfermion.circuits import trotter_steps_required, error_bound
+from openfermion.circuits.trotter_exp_to_qgates import trotterize_exp_qubop_to_qasm
+
+from pyLIQTR.utils.Hamiltonian import Hamiltonian
 from pyLIQTR.utils.utils import open_fermion_to_qasm
 from pyLIQTR.circuits.qsp import generate_QSP_circuit
 from pyLIQTR.utils.qsp_helpers import print_to_openqasm
-from openfermion.circuits import trotter_steps_required, error_bound
-from qca.utils.utils import circuit_estimate, estimate_cpt_resources
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
-from openfermion.circuits.trotter_exp_to_qgates import trotterize_exp_qubop_to_qasm
 from pyLIQTR.phase_factors.fourier_response.fourier_response import Angler_fourier_response
+
+from qca.utils.utils import circuit_estimate, estimate_cpt_resources
 
 def estimate_qsp(
     pyliqtr_hamiltonian: Hamiltonian,
@@ -58,7 +62,9 @@ def find_hamiltonian_ordering(of_hamiltonian: QubitOperator) -> list:
     #ordering hamiltonian terms by performing edge coloring to make optimal trotter ordering
     #assuming that any 2 body interactions are ZZ
     sorted_terms = sorted(list(of_hamiltonian.terms.keys()))
-    sorted_terms.sort(key=lambda x: len(x) * 100 + ord(x[0][1])) #Z and X get translated to 90 and 88 respectively, multiplying by 100 ensures interacting term weight is considered
+
+    #Z and X get translated to 90 and 88 respectively, multiplying by 100 ensures interacting term weight is considered
+    sorted_terms.sort(key=lambda x: len(x) * 100 + ord(x[0][1]))
     one_body_terms_ordered = list(filter(lambda x: len(x) == 1, sorted_terms))
     two_body_terms = list(filter(lambda x: len(x) == 2, sorted_terms))
 
@@ -77,7 +83,7 @@ def find_hamiltonian_ordering(of_hamiltonian: QubitOperator) -> list:
         two_body_terms[i] = term
 
     two_body_terms.sort(key=lambda x: x[2])
-    two_body_terms_ordered = list()
+    two_body_terms_ordered = []
     for (i,term) in enumerate(two_body_terms):
         new_item = (term[0],term[1])
         two_body_terms_ordered.append(new_item)
