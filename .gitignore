@@ -45,11 +45,11 @@ MANIFEST
 
 
 # Environments
-.env
-.venv
-env/
-venv/
-ENV/
+.env*
+.venv*
+env*/
+venv*/
+ENV*/
 *.bak
 
 # mypy
