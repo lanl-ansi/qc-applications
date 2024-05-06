@@ -19,13 +19,14 @@ from pyLIQTR.utils.qsp_helpers import print_to_openqasm
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 from pyLIQTR.phase_factors.fourier_response.fourier_response import Angler_fourier_response
 
-from qca.utils.utils import circuit_estimate, estimate_cpt_resources
+from qca.utils.utils import circuit_estimate, estimate_cpt_resources, EstimateMetaData
 
 def estimate_qsp(
     pyliqtr_hamiltonian: Hamiltonian,
     evolution_time:float,
     numsteps:int,
     energy_precision:float,
+    metadata: EstimateMetaData,
     outdir:str,
     hamiltonian_name:str='hamiltonian',
     write_circuits:bool=False,
@@ -46,10 +47,10 @@ def estimate_qsp(
     print(f'Time to generate high level QSP circuit: {elapsed} seconds')
     circuit_estimate(
         circuit=qsp_circuit,
+        metadata=metadata,
         outdir=outdir,
         numsteps=numsteps,
         circuit_name=hamiltonian_name,
-        algo_name='QSP_Step',
         write_circuits=write_circuits
     )
     return qsp_circuit
@@ -94,22 +95,25 @@ def estimate_trotter(
     openfermion_hamiltonian: QubitOperator,
     evolution_time: float,
     energy_precision: float,
+    metadata: EstimateMetaData,
     outdir:str,
     hamiltonian_name:str='hamiltonian',
-    write_circuits:bool=False
+    write_circuits:bool=False,
+    nsteps:int=None
 ) -> Circuit:
 
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
-    t0 = time.perf_counter()
-    bounded_error = error_bound(list(openfermion_hamiltonian.get_operators()),tight=False)
-    nsteps = trotter_steps_required(trotter_error_bound = bounded_error,
-                                    time = evolution_time,
-                                    energy_precision = energy_precision)
-    t1 = time.perf_counter()
-    elapsed = t1 - t0
-    print(f'Time to estimate number of trotter steps required ({nsteps}): {elapsed} seconds')
+    if not nsteps:
+        t0 = time.perf_counter()
+        bounded_error = error_bound(list(openfermion_hamiltonian.get_operators()),tight=False)
+        nsteps = trotter_steps_required(trotter_error_bound = bounded_error,
+                                        time = evolution_time,
+                                        energy_precision = energy_precision)
+        t1 = time.perf_counter()
+        elapsed = t1 - t0
+        print(f'Time to estimate number of trotter steps required ({nsteps}): {elapsed} seconds')
 
     t0 = time.perf_counter()
     term_ordering = find_hamiltonian_ordering(openfermion_hamiltonian)
@@ -143,11 +147,11 @@ def estimate_trotter(
             print_to_openqasm(f, cpt_trotter, qubits=cpt_trotter.all_qubits())
 
     estimate_cpt_resources(
-        cpt_trotter,
-        outdir,
+        cpt_circuit=cpt_trotter,
+        metadata=metadata,
+        outdir=outdir,
         is_extrapolated=True,
         circuit_name=hamiltonian_name,
-        algo_name='Trotter_Step',
         trotter_steps=nsteps
     )
     return cpt_trotter
