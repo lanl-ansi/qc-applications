@@ -99,7 +99,7 @@ def gen_resource_estimate(cpt_circuit: AbstractCircuit,
     if the user needs it.
 
     trotter_steps is a flag denoting if the circuit was estimated through trotterization. If so, the
-    user should specify the number of steps required.  
+    user should specify the number of steps required.
     '''
     num_qubits = len(cpt_circuit.all_qubits())
     gate_count = count_gates(cpt_circuit)
@@ -125,7 +125,7 @@ def gen_resource_estimate(cpt_circuit: AbstractCircuit,
         scaling_factor = pow(2, bits_precision - 1)
     else:
         scaling_factor = None
-    
+
     if scaling_factor:
         resource_estimate['t_depth'] = resource_estimate['t_depth'] * scaling_factor
         resource_estimate['t_count'] = resource_estimate['t_count'] * scaling_factor
@@ -151,7 +151,7 @@ def estimate_cpt_resources(
     ):
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    
+
     total_steps = trotter_steps * magnus_steps
     resource_estimate = gen_resource_estimate(cpt_circuit=cpt_circuit,
                                               is_extrapolated=is_extrapolated,
@@ -170,7 +170,7 @@ def estimate_cpt_resources(
             'subcircuit_info': {}
         }
     }
-    
+
     outfile_data = f'{outdir}{circuit_name}_high_level.json'
     re_as_json(resource_estimate, [], outfile_data, '')
 
@@ -185,7 +185,7 @@ def circuit_estimate(
     ) -> AbstractCircuit:
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-
+    import cirq
     subcircuit_counts = {}
     for moment in circuit:
         for operation in moment:
@@ -197,6 +197,7 @@ def circuit_estimate(
                 t0 = time.perf_counter()
                 decomposed_circuit = circuit_decompose_once(circuit_decompose_once(Circuit(operation)))
                 t1 = time.perf_counter()
+                decomposed_circuit = Circuit(cirq.decompose(operation))
                 decomposed_elapsed = t1-t0
                 print(f'   Time to decompose high level {gate_type_name} circuit: {decomposed_elapsed} seconds ')
 
@@ -212,7 +213,7 @@ def circuit_estimate(
                         print_to_openqasm(f, decomposed_circuit, qubits=decomposed_circuit.all_qubits())
                     with open(outfile_qasm_cpt, 'w', encoding='utf-8') as f:
                         print_to_openqasm(f, cpt_circuit, qubits=cpt_circuit.all_qubits())
-                    
+
                 subcircuit_counts[gate_type] = [1, cpt_circuit, gate_type_name]
     total_gate_count = 0
     total_gate_depth = 0
@@ -237,14 +238,14 @@ def circuit_estimate(
         t_depth_wire = resource_estimate['max_t_depth_wire']
         t_count = resource_estimate['t_count']
         clifford_count = resource_estimate['clifford_count']
-        
+
         total_gate_count += subcircuit_counts[gate][0] * gate_count * numsteps
         total_gate_depth += subcircuit_counts[gate][0] * gate_depth * numsteps
         total_T_depth += subcircuit_counts[gate][0] * t_depth * numsteps
         total_T_depth_wire += subcircuit_counts[gate][0] * t_depth_wire * numsteps
         total_T_count += subcircuit_counts[gate][0] * t_count * numsteps
         total_clifford_count += subcircuit_counts[gate][0] * clifford_count * numsteps
-        
+
         # total_gate_count += subcircuit_counts[gate][0] * gate_count * numsteps * pow(2, bits_precision - 1)
         # total_gate_depth += subcircuit_counts[gate][0] * gate_depth * numsteps * pow(2, bits_precision - 1)
         # total_T_depth += subcircuit_counts[gate][0] * t_depth * numsteps * pow(2, bits_precision - 1)
