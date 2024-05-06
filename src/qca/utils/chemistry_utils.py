@@ -1,9 +1,6 @@
 import re
 import sys
 import time
-import os
-from threading import get_native_id
-
 from dataclasses import dataclass
 
 import numpy as np
@@ -14,8 +11,8 @@ from openfermion.ops.representations import InteractionOperator
 
 from pyLIQTR.PhaseEstimation.pe import PhaseEstimation
 
-from qca.utils.utils import circuit_estimate
-
+from qca.utils.utils import circuit_estimate, EstimateMetaData
+import random
 @dataclass
 class molecular_info:
     """Class for keeping track of information for a given state in the molecular orbital basis"""
@@ -23,6 +20,7 @@ class molecular_info:
     unoccupied_qubits: int
     initial_state: np.ndarray[int]
     hf_energy:float
+    active_space_reduction:float
     molecular_hamiltonian: InteractionOperator
 
 def grab_molecular_phase_offset(hf_energy: float):
@@ -165,7 +163,6 @@ def generate_electronic_hamiltonians(
         molecular_unoccupied = round(percent_unoccupied*molecular_hamiltonian.n_qubits)
         initial_state = [0]*molecular_unoccupied + [1]*molecular_occupied
        
-        
         print(f'In the Molecular Orbital Basis: we have {molecular_hamiltonian.n_qubits} qubits')
         print(f'In the Molecular Orbital Basis: we have {molecular_occupied} qubits occupied')
         print(f'In the Molecular Orbital Basis: we have {molecular_unoccupied} qubits unoccupied')
@@ -176,6 +173,7 @@ def generate_electronic_hamiltonians(
                             unoccupied_qubits=molecular_unoccupied,
                             initial_state=initial_state,
                             hf_energy=molecule.hf_energy,
+                            active_space_reduction=active_space_frac,
                             molecular_hamiltonian=molecular_hamiltonian)
         molecular_hamiltonians.append(mi)
         t_coord_end = time.perf_counter()
@@ -183,20 +181,36 @@ def generate_electronic_hamiltonians(
     return molecular_hamiltonians
 
 def gsee_molecular_hamiltonian(
-        fname:str,
+        catalyst_name:str,
         gse_args: dict,
         trotter_steps: int,
         bits_precision: int,
         molecular_hamiltonians: list[molecular_info]
     ) -> int:
+    # random generation of uid
+    uid = int(random.random() % len(molecular_hamiltonian))*1000
     for idx, molecular_hamiltonian_info in enumerate(molecular_hamiltonians):
+
         molecular_hamiltonian = molecular_hamiltonian_info.molecular_hamiltonian
         molecular_hf_energy = molecular_hamiltonian_info.hf_energy
+        active_space_frac = molecular_hamiltonian.active_space_reduction
         
         gse_args['mol_ham'] = molecular_hamiltonian
         phase_offset = grab_molecular_phase_offset(molecular_hf_energy)
         init_state = molecular_hamiltonian_info.initial_state
         
+        molecular_metadata = EstimateMetaData(
+            id = uid,
+            name=f'{catalyst_name}_{idx}',
+            category='scientific',
+            size=f'{molecular_hamiltonian.n_qubits}',
+            task='Ground State Energy Estimation',
+            implementations=f'trotterization subprocess, active_space_reduction={active_space_frac}, bits_precision={bits_precision}',
+            value_per_circuit=6000,
+            repetitions_per_application=100
+        )
+        uid += 1
+
         t0 = time.perf_counter()
         gse_inst = PhaseEstimation(
             precision_order=1,
@@ -214,10 +228,10 @@ def gsee_molecular_hamiltonian(
         t0 = time.perf_counter()
         circuit_estimate(
             circuit=gse_circuit,
+            metadata=molecular_metadata,
             outdir='GSE/Quantum_Chemistry/',
             numsteps=trotter_steps,
-            circuit_name=f'Co2O9H12_{idx}_{fname}',
-            algo_name='GSE_Step',
+            circuit_name=f'{catalyst_name}_{idx}_active_space{active_space_frac}',
             bits_precision=bits_precision,
             write_circuits=False
         )

@@ -12,15 +12,16 @@ class pathway_info:
 def grab_arguments() -> Namespace:
     parser = ArgumentParser('Perform a sweep over different pathways of varying active spaces')
     parser.add_argument(
-        '-P',
-        '--processes',
+        '-A',
+        '--active_space_reduction',
         type=int,
-        help='Number of processes to open up for'
+        help='Factor to reduce the active space'
     )
     args = parser.parse_args()
     return args
 
 def generate_ap_re(
+        catalyst_name:str,
         num_processes:int,
         hamiltonians: list,
         gsee_args:dict,
@@ -32,25 +33,25 @@ def generate_ap_re(
         for idx, hamiltonian in enumerate(hamiltonians):
             future = executor.submit(
                 gsee_molecular_hamiltonian,
-                f'pathway_{idx}', gsee_args, trotter_steps, bits_precision, hamiltonian
+                catalyst_name, gsee_args, trotter_steps, bits_precision, hamiltonian
             )
             results.append(future)
         for future in as_completed(results):
             print(f'completed')
 
 def grab_molecular_hamiltonians_pool(
+        active_space_reduc:float,
         num_processes:int,
         pathways: list,
         basis:str
     ) -> list:
-    active_space = 10
     hamiltonians = []
     results = []
     with ThreadPoolExecutor(max_workers=num_processes) as executor:
         for coords in pathways:
             future = executor.submit(
                 generate_electronic_hamiltonians,
-                basis, active_space, coords, 1
+                basis, active_space_reduc, coords, 1
             )
             results.append(future)
         for future in as_completed(results):
@@ -83,6 +84,7 @@ if __name__ == '__main__':
         load_pathway(pathway.fname, pathway.pathway) for pathway in pathways
     ]
     molecular_hamiltonians = grab_molecular_hamiltonians_pool(
+        active_space_reduc=10,
         num_processes=len(pathways),
         pathways=coords_pathways,
         basis='sto-3g'
@@ -94,6 +96,7 @@ if __name__ == '__main__':
         'trot_num'   : 1
     }
     generate_ap_re(
+        catalyst_name='Co2O9H12',
         num_processes=len(pathways),
         hamiltonians=molecular_hamiltonians,
         gsee_args=gsee_args,
