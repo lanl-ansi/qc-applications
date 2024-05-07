@@ -184,6 +184,7 @@ def circuit_estimate(
     ) -> cirq.AbstractCircuit:
     if not os.path.exists(outdir):
         os.makedirs(outdir)
+
     subcircuit_counts = {}
     for moment in circuit:
         for operation in moment:

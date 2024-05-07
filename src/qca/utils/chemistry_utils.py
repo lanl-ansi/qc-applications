@@ -16,6 +16,7 @@ import random
 @dataclass
 class molecular_info:
     """Class for keeping track of information for a given state in the molecular orbital basis"""
+    basis: str
     occupied_qubits: int
     unoccupied_qubits: int
     initial_state: np.ndarray[int]
@@ -169,12 +170,15 @@ def generate_electronic_hamiltonians(
         
         # shifted by HF energy
         molecular_hamiltonian -= molecule.hf_energy
-        mi = molecular_info(occupied_qubits=molecular_occupied,
-                            unoccupied_qubits=molecular_unoccupied,
-                            initial_state=initial_state,
-                            hf_energy=molecule.hf_energy,
-                            active_space_reduction=active_space_frac,
-                            molecular_hamiltonian=molecular_hamiltonian)
+        mi = molecular_info(
+            basis=basis,
+            occupied_qubits=molecular_occupied,
+            unoccupied_qubits=molecular_unoccupied,
+            initial_state=initial_state,
+            hf_energy=molecule.hf_energy,
+            active_space_reduction=active_space_frac,
+            molecular_hamiltonian=molecular_hamiltonian
+        )
         molecular_hamiltonians.append(mi)
         t_coord_end = time.perf_counter()
         print(f'Time to generate a molecular hamiltonian for molecule {idx} : {t_coord_end-t_coord_start}\n')
@@ -187,25 +191,22 @@ def gsee_molecular_hamiltonian(
         bits_precision: int,
         molecular_hamiltonians: list[molecular_info]
     ) -> int:
-    # random generation of uid
-    uid = int(random.random() % len(molecular_hamiltonian))*1000
+    uid = int(random.random() % len(molecular_hamiltonians))*1000
     for idx, molecular_hamiltonian_info in enumerate(molecular_hamiltonians):
-
         molecular_hamiltonian = molecular_hamiltonian_info.molecular_hamiltonian
         molecular_hf_energy = molecular_hamiltonian_info.hf_energy
-        active_space_frac = molecular_hamiltonian.active_space_reduction
-        
+        active_space_frac = molecular_hamiltonian_info.active_space_reduction
+        basis = molecular_hamiltonian_info.basis
         gse_args['mol_ham'] = molecular_hamiltonian
         phase_offset = grab_molecular_phase_offset(molecular_hf_energy)
         init_state = molecular_hamiltonian_info.initial_state
-        
         molecular_metadata = EstimateMetaData(
             id = uid,
-            name=f'{catalyst_name}_{idx}',
+            name=f'{catalyst_name}_molecule({idx})',
             category='scientific',
             size=f'{molecular_hamiltonian.n_qubits}',
             task='Ground State Energy Estimation',
-            implementations=f'trotterization subprocess, active_space_reduction={active_space_frac}, bits_precision={bits_precision}',
+            implementations=f'trotterization subprocess, basis={basis}, active_space_reduction={active_space_frac}, bits_precision={bits_precision}',
             value_per_circuit=6000,
             repetitions_per_application=100
         )
@@ -237,4 +238,3 @@ def gsee_molecular_hamiltonian(
         )
         t1 = time.perf_counter()
         print(f'Time to estimate Co2O9H12_step({idx}): {t1-t0}')
-    return 0
