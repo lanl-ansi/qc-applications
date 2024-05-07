@@ -114,7 +114,7 @@ def gen_resource_estimate(
     if the user needs it.
 
     trotter_steps is a flag denoting if the circuit was estimated through trotterization. If so, the
-    user should specify the number of steps required.  
+    user should specify the number of steps required.
     '''
     num_qubits = len(cpt_circuit.all_qubits())
     gate_count = count_gates(cpt_circuit)
@@ -138,7 +138,7 @@ def gen_resource_estimate(
         scaling_factor = pow(2, bits_precision - 1)
     else:
         scaling_factor = None
-    
+
     if scaling_factor:
         resource_estimate['t_depth'] = resource_estimate['t_depth'] * scaling_factor
         resource_estimate['t_count'] = resource_estimate['t_count'] * scaling_factor
@@ -160,7 +160,7 @@ def estimate_cpt_resources(
     ):
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    
+
     total_steps = trotter_steps * magnus_steps
     re_metadata = asdict(metadata)
     re_metadata['Logical_Abstract'] = gen_resource_estimate(
@@ -196,6 +196,7 @@ def circuit_estimate(
                 t0 = time.perf_counter()
                 decomposed_circuit = cirq.Circuit(cirq.decompose(operation))
                 t1 = time.perf_counter()
+                decomposed_circuit = cirq.Circuit(cirq.decompose(operation))
                 decomposed_elapsed = t1-t0
                 print(f'   Time to decompose high level {gate_type_name} circuit: {decomposed_elapsed} seconds ')
                 t0 = time.perf_counter()
@@ -210,7 +211,7 @@ def circuit_estimate(
                         print_to_openqasm(f, decomposed_circuit, qubits=decomposed_circuit.all_qubits())
                     with open(outfile_qasm_cpt, 'w', encoding='utf-8') as f:
                         print_to_openqasm(f, cpt_circuit, qubits=cpt_circuit.all_qubits())
-                    
+
                 subcircuit_counts[gate_type] = [1, cpt_circuit, gate_type_name]
 
     total_gate_count = 0
@@ -235,7 +236,7 @@ def circuit_estimate(
         t_depth = resource_estimate['t_depth']
         t_count = resource_estimate['t_count']
         clifford_count = resource_estimate['clifford_count']
-        
+
         total_gate_count += subcircuit_counts[gate][0] * gate_count * numsteps
         total_gate_depth += subcircuit_counts[gate][0] * gate_depth * numsteps
         total_T_depth += subcircuit_counts[gate][0] * t_depth * numsteps
