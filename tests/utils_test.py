@@ -7,7 +7,7 @@ from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 class UtilsTest(unittest.TestCase):
     def test_count_gates(self):
         qubits = [cirq.LineQubit(i) for i in range(4)]
-    
+
         layer_rz = [cirq.Rz(rads = np.pi/4).on(qubit) for qubit in qubits]
         layer_rx = [cirq.Rx(rads = np.pi/4).on(qubit) for qubit in qubits]
         layer_measurement = [cirq.measure(qubit) for qubit in qubits]
@@ -16,10 +16,10 @@ class UtilsTest(unittest.TestCase):
         circuit.append(layer_rx)
         circuit.append(layer_measurement)
         self.assertEqual(count_gates(circuit), 12)
-    
+
     def test_T_gate_info(self):
         qubits = [cirq.LineQubit(i) for i in range(4)]
-    
+
         layer_rz = [cirq.Rz(rads = np.pi/4).on(qubit) for qubit in qubits]
         layer_rx = [cirq.Rx(rads = np.pi/4).on(qubit) for qubit in qubits]
         layer_measurement = [cirq.measure(qubit) for qubit in qubits]
@@ -36,7 +36,7 @@ class UtilsTest(unittest.TestCase):
 
     def test_clifford_info(self):
         qubits = [cirq.LineQubit(i) for i in range(4)]
-    
+
         layer_rz = [cirq.Rz(rads = np.pi/4).on(qubit) for qubit in qubits]
         layer_rx = [cirq.Rx(rads = np.pi/4).on(qubit) for qubit in qubits]
         layer_measurement = [cirq.measure(qubit) for qubit in qubits]
@@ -52,10 +52,10 @@ class UtilsTest(unittest.TestCase):
         circ_depth = len(circ_cpt)
         self.assertEqual(circ_depth, 5)
         self.assertEqual(clifford_count, 12)
-    
+
     def test_get_resource_estimate(self):
         qubits = [cirq.LineQubit(i) for i in range(4)]
-    
+
         layer_rz = [cirq.Rz(rads = np.pi/4).on(qubit) for qubit in qubits]
         layer_rx = [cirq.Rx(rads = np.pi/4).on(qubit) for qubit in qubits]
         layer_measurement = [cirq.measure(qubit) for qubit in qubits]
@@ -68,7 +68,6 @@ class UtilsTest(unittest.TestCase):
         correct_estimate = {'num_qubits': 4,
                             't_count': 8,
                             't_depth': 2,
-                            'max_t_depth_wire': 2,
                             'gate_count': 20,
                             'clifford_count': 12,
                             'circuit_depth': 5}
