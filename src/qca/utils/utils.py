@@ -196,7 +196,6 @@ def circuit_estimate(
                 t0 = time.perf_counter()
                 decomposed_circuit = cirq.Circuit(cirq.decompose(operation))
                 t1 = time.perf_counter()
-                decomposed_circuit = cirq.Circuit(cirq.decompose(operation))
                 decomposed_elapsed = t1-t0
                 print(f'   Time to decompose high level {gate_type_name} circuit: {decomposed_elapsed} seconds ')
                 t0 = time.perf_counter()
