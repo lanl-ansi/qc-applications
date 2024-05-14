@@ -1,5 +1,5 @@
 import os
-import cirq
+from argparse import ArgumentParser
 import numpy as np
 from math import sqrt
 import networkx as nx
@@ -163,33 +163,20 @@ def assign_spin_labels_rucl(lattice_size:int) -> Graph:
     nx.set_node_attributes(g, spin_labels, name='spin')
     return g
 
-def prepare_initial_state_rucl(g:Graph) -> cirq.Circuit:
-    flattened_graph = flatten_nx_graph(g)
-    spins = nx.get_node_attributes(flattened_graph, 'spins')
-    qubits = [cirq.LineQubit(i) for i in flattened_graph.nodes]
-
-    # generating layers of operations to initialize state
-    layer_zig_zag = [cirq.X(qubits[i]) for i in range(len(g)) if spins[i] == -1]
-    layer_rz = [cirq.Rz(rads = np.pi/4).on(qubit) for qubit in qubits]
-    layer_rx = [cirq.Rx(rads = np.pi/4).on(qubit) for qubit in qubits]
-    layer_z = [cirq.Z(qubit) for qubit in qubits]
-    layer_rx_neg = [cirq.Rx(rads=-np.pi/4).on(qubit) for qubit in qubits]
-    layer_rz_neg = [cirq.Rz(rads=-np.pi/4).on(qubit) for qubit in qubits]
-
-    # appending layers to a circuit to return
-    circuit = cirq.Circuit()
-    circuit.append(layer_zig_zag)
-    circuit.append(layer_rz)
-    circuit.append(layer_rx)
-    circuit.append(layer_z)
-    circuit.append(layer_rx_neg)
-    circuit.append(layer_rz_neg)
-    return circuit
-
+def gen_args():
+    parser = ArgumentParser()
+    parser.add_argument(
+        '-L',
+        '--lattice_size',
+        type=int,
+        required=True,
+        help='integer denoting the lattice size'
+    )
+    return parser.parse_args()
 
 def generate_rucl_re(
     energy_precision:float,
-    lattice_size_range: list[int],
+    lattice_size: int,
     evolution_time:float,
     df_rucl:DataFrame,
     outdir:str) -> None:
@@ -199,50 +186,50 @@ def generate_rucl_re(
     total_value = 2500000
     value_per_circuit = total_value/repetitions
     for rucl_idx in range(len(df_rucl)):
-        for lattice_size in lattice_size_range:
-            H_rucl = generate_rucl_hamiltonian(
-                lattice_size,
-                df_rucl.iloc[rucl_idx],
-                field_x = lambda s: 1/sqrt(6)/2,
-                field_y = lambda s: 1/sqrt(6)/2,
-                field_z = lambda s: -2/sqrt(6)/2
-            )
-            H_rucl_pyliqtr = pyH(H_rucl)
-            openfermion_hamiltonian_rucl = pyliqtr_hamiltonian_to_openfermion_qubit_operator(H_rucl_pyliqtr)
-            nsteps = 1500000
-            metadata = EstimateMetaData(
-                id=f'{time.time_ns()}',
-                name=f'RuCl_row_{rucl_idx}',
-                category='scientific',
-                size=f'lattice_size: {lattice_size}',
-                task='Time-Dependent Dynamics',
-                implementations='trotterization, JT=1000, gate_synth_accuracy=1e-10, numsteps=1500000, energy_precision=1e-3',
-                value_per_circuit=value_per_circuit,
-                repetitions_per_application=repetitions
-            )
-            estimate_trotter(
-                openfermion_hamiltonian=openfermion_hamiltonian_rucl,
-                evolution_time=evolution_time,
-                energy_precision=energy_precision,
-                metadata=metadata,
-                outdir=outdir,
-                hamiltonian_name=f'trotter_rucl_size_{lattice_size}_row_{rucl_idx}',
-                nsteps=nsteps
-            )
-            metadata.implementations='QSP, JT=1000, gate_synth_accuracy=1e-10, numsteps=1500000, energy_precision=1e-3'
-            metadata.id = f'{time.time_ns()}'
-            estimate_qsp(
-                pyliqtr_hamiltonian=H_rucl_pyliqtr,
-                evolution_time=evolution_time,
-                numsteps=nsteps,
-                energy_precision=energy_precision,
-                metadata=metadata,
-                outdir=outdir,
-                hamiltonian_name=f'qsp_rucl_size_{lattice_size}_row_{rucl_idx}',
-                write_circuits=False
-            )
+        H_rucl = generate_rucl_hamiltonian(
+            lattice_size,
+            df_rucl.iloc[rucl_idx],
+            field_x = lambda s: 1/sqrt(6)/2,
+            field_y = lambda s: 1/sqrt(6)/2,
+            field_z = lambda s: -2/sqrt(6)/2
+        )
+        H_rucl_pyliqtr = pyH(H_rucl)
+        openfermion_hamiltonian_rucl = pyliqtr_hamiltonian_to_openfermion_qubit_operator(H_rucl_pyliqtr)
+        nsteps = 1500000
+        metadata = EstimateMetaData(
+            id=f'{time.time_ns()}',
+            name=f'RuCl_row_{rucl_idx}',
+            category='scientific',
+            size=f'lattice_size: {lattice_size}',
+            task='Time-Dependent Dynamics',
+            implementations='trotterization, JT=1000, gate_synth_accuracy=1e-10, numsteps=1500000, energy_precision=1e-3',
+            value_per_circuit=value_per_circuit,
+            repetitions_per_application=repetitions
+        )
+        estimate_trotter(
+            openfermion_hamiltonian=openfermion_hamiltonian_rucl,
+            evolution_time=evolution_time,
+            energy_precision=energy_precision,
+            metadata=metadata,
+            outdir=outdir,
+            hamiltonian_name=f'trotter_rucl_size_{lattice_size}_row_{rucl_idx}',
+            nsteps=nsteps
+        )
+        metadata.implementations='QSP, JT=1000, gate_synth_accuracy=1e-10, numsteps=1500000, energy_precision=1e-3'
+        metadata.id = f'{time.time_ns()}'
+        estimate_qsp(
+            pyliqtr_hamiltonian=H_rucl_pyliqtr,
+            evolution_time=evolution_time,
+            numsteps=nsteps,
+            energy_precision=energy_precision,
+            metadata=metadata,
+            outdir=outdir,
+            hamiltonian_name=f'qsp_rucl_size_{lattice_size}_row_{rucl_idx}',
+            write_circuits=False
+        )
 
 def rucl_estimate():
+    args = gen_args()
     rucl_references = ["Winter et al. PRB", "Winter et al. NC", "Wu et al.", "Cookmeyer and Moore", "Kim and Kee", "Suzuki and Suga",
               "Yadav et al.", "Ran et al.", "Hou et al.", "Wang et al.", "Eichstaedt et al.", "Eichstaedt et al.",
               "Eichstaedt et al.", "Banerjee et al.", "Kim et al.", "Kim and Kee", "Winter et al.", "Ozel et al.", "Ozel et al."]
@@ -278,7 +265,7 @@ def rucl_estimate():
     re_dir = 'temp_RE/'
     generate_rucl_re(
         energy_precision=1e-3,
-        lattice_size_range=[70],
+        lattice_size=args.lattice_size,
         evolution_time=1000,
         df_rucl=df_rucl,
         outdir=re_dir
