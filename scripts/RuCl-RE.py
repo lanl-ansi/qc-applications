@@ -14,6 +14,7 @@ from qca.utils.hamiltonian_utils import (
     pyliqtr_hamiltonian_to_openfermion_qubit_operator,
 )
 from pyLIQTR.utils.Hamiltonian import Hamiltonian as pyH
+import time
 
 def nx_rucl_terms(g, data_series):
     H = []
@@ -197,7 +198,6 @@ def generate_rucl_re(
     repetitions = 140 * 15
     total_value = 2500000
     value_per_circuit = total_value/repetitions
-    uid_count = 1000
     for rucl_idx in range(len(df_rucl)):
         for lattice_size in lattice_size_range:
             H_rucl = generate_rucl_hamiltonian(
@@ -211,7 +211,7 @@ def generate_rucl_re(
             openfermion_hamiltonian_rucl = pyliqtr_hamiltonian_to_openfermion_qubit_operator(H_rucl_pyliqtr)
             nsteps = 1500000
             metadata = EstimateMetaData(
-                id=f'{uid_count}',
+                id=f'{time.time_ns()}',
                 name=f'RuCl_row_{rucl_idx}',
                 category='scientific',
                 size=f'lattice_size: {lattice_size}',
@@ -229,9 +229,8 @@ def generate_rucl_re(
                 hamiltonian_name=f'trotter_rucl_size_{lattice_size}_row_{rucl_idx}',
                 nsteps=nsteps
             )
-            uid_count += 1
             metadata.implementations='QSP, JT=1000, gate_synth_accuracy=1e-10, numsteps=1500000, energy_precision=1e-3'
-            metadata.id = f'{uid_count}'
+            metadata.id = f'{time.time_ns()}'
             estimate_qsp(
                 pyliqtr_hamiltonian=H_rucl_pyliqtr,
                 evolution_time=evolution_time,
@@ -240,16 +239,13 @@ def generate_rucl_re(
                 metadata=metadata,
                 outdir=outdir,
                 hamiltonian_name=f'qsp_rucl_size_{lattice_size}_row_{rucl_idx}',
-                write_circuits=True
+                write_circuits=False
             )
-            uid_count += 1
 
 def rucl_estimate():
     rucl_references = ["Winter et al. PRB", "Winter et al. NC", "Wu et al.", "Cookmeyer and Moore", "Kim and Kee", "Suzuki and Suga",
               "Yadav et al.", "Ran et al.", "Hou et al.", "Wang et al.", "Eichstaedt et al.", "Eichstaedt et al.",
               "Eichstaedt et al.", "Banerjee et al.", "Kim et al.", "Kim and Kee", "Winter et al.", "Ozel et al.", "Ozel et al."]
-    print(len(rucl_references))
-    raise ValueError
 
     rucl_methods = ["Ab initio (DFT + exact diag.)", "Ab initio-inspired (INS fit)", "THz spectroscopy fit",
                     "Magnon thermal Hall (sign)", "DFT + t=U expansion", "Magnetic specific heat", "Quantum chemistry (MRCI)",
@@ -282,7 +278,7 @@ def rucl_estimate():
     re_dir = 'temp_RE/'
     generate_rucl_re(
         energy_precision=1e-3,
-        lattice_size_range=[4,6,8,12,16,24,32],
+        lattice_size_range=[70],
         evolution_time=1000,
         df_rucl=df_rucl,
         outdir=re_dir
