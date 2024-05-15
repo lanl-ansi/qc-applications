@@ -16,6 +16,7 @@ from openfermion.circuits.trotter_exp_to_qgates import trotterize_exp_qubop_to_q
 from pyLIQTR.utils.Hamiltonian import Hamiltonian
 from pyLIQTR.utils.utils import open_fermion_to_qasm
 from pyLIQTR.circuits.qsp import generate_QSP_circuit
+from pyLIQTR.PhaseEstimation.pe import PhaseEstimation
 from pyLIQTR.utils.qsp_helpers import print_to_openqasm
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 from pyLIQTR.phase_factors.fourier_response.fourier_response import Angler_fourier_response
@@ -152,7 +153,6 @@ def estimate_trotter(
 
     logical_re = estimate_cpt_resources(
         cpt_circuit=cpt_trotter,
-        metadata=metadata,
         outdir=outdir,
         is_extrapolated=True,
         circuit_name=hamiltonian_name,
@@ -165,3 +165,44 @@ def estimate_trotter(
         logical_re = re_metadata | logical_re
     re_as_json(logical_re, outfile)
     return cpt_trotter
+
+def gsee_resource_estimation(
+        outdir:str,
+        numsteps:int,
+        gsee_args:dict,
+        init_state:list,
+        precision_order:int,
+        bits_precision:int,
+        circuit_name:str='Hamiltonian',
+        metadata:EstimateMetaData=None,
+        include_classical_bits:bool=False,
+        write_circuits:bool=False
+) -> Circuit:
+    t0 = time.perf_counter()
+    gse_circuit = PhaseEstimation(
+        precision_order=precision_order,
+        init_state=init_state,
+        include_classical_bits=include_classical_bits,
+        kwargs=gsee_args
+    )
+    t1 = time.perf_counter()
+    elapsed = t1-t0
+    print(f'Time to generate circuit for GSEE: {elapsed} seconds')
+
+    gse_circuit.generate_circuit()
+    pe_circuit = gse_circuit.pe_circuit
+
+    t0 = time.perf_counter()
+    logical_re = circuit_estimate(
+        circuit=pe_circuit,
+        outdir=outdir,
+        numsteps=numsteps,
+        bits_precision=bits_precision,
+        write_circuits=write_circuits
+    )
+    outfile = f'{outdir}{circuit_name}_re.json'
+    if metadata:
+        re_metadata = asdict(metadata)
+        logical_re = re_metadata | logical_re
+    re_as_json(logical_re, outfile)
+    return pe_circuit
