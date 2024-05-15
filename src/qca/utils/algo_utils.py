@@ -3,6 +3,7 @@ import time
 import random
 import numpy as np
 import networkx as nx
+from dataclasses import asdict
 
 from cirq import Circuit
 from cirq.contrib import qasm_import
@@ -19,16 +20,16 @@ from pyLIQTR.utils.qsp_helpers import print_to_openqasm
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 from pyLIQTR.phase_factors.fourier_response.fourier_response import Angler_fourier_response
 
-from qca.utils.utils import circuit_estimate, estimate_cpt_resources, EstimateMetaData
+from qca.utils.utils import circuit_estimate, estimate_cpt_resources, EstimateMetaData, re_as_json
 
 def estimate_qsp(
     pyliqtr_hamiltonian: Hamiltonian,
     evolution_time:float,
     numsteps:int,
     energy_precision:float,
-    metadata: EstimateMetaData,
     outdir:str,
     hamiltonian_name:str='hamiltonian',
+    metadata: EstimateMetaData = None,
     write_circuits:bool=False,
 ) -> Circuit:
     timestep_of_interest=evolution_time/numsteps
@@ -45,14 +46,17 @@ def estimate_qsp(
     t1 = time.perf_counter()
     elapsed = t1 - t0
     print(f'Time to generate high level QSP circuit: {elapsed} seconds')
-    circuit_estimate(
+    outfile = f'{outdir}{hamiltonian_name}_re.json'
+    logical_re = circuit_estimate(
         circuit=qsp_circuit,
-        metadata=metadata,
         outdir=outdir,
         numsteps=numsteps,
-        circuit_name=hamiltonian_name,
         write_circuits=write_circuits
     )
+    if metadata:
+        re_metadata = asdict(metadata)
+        logical_re = re_metadata | logical_re
+    re_as_json(logical_re, outfile)
     return qsp_circuit
 
 def find_hamiltonian_ordering(of_hamiltonian: QubitOperator) -> list:
@@ -95,8 +99,8 @@ def estimate_trotter(
     openfermion_hamiltonian: QubitOperator,
     evolution_time: float,
     energy_precision: float,
-    metadata: EstimateMetaData,
     outdir:str,
+    metadata: EstimateMetaData=None,
     hamiltonian_name:str='hamiltonian',
     write_circuits:bool=False,
     nsteps:int=None
@@ -146,7 +150,7 @@ def estimate_trotter(
         with open(outfile_qasm_cpt, 'w', encoding='utf-8') as f:
             print_to_openqasm(f, cpt_trotter, qubits=cpt_trotter.all_qubits())
 
-    estimate_cpt_resources(
+    logical_re = estimate_cpt_resources(
         cpt_circuit=cpt_trotter,
         metadata=metadata,
         outdir=outdir,
@@ -154,4 +158,10 @@ def estimate_trotter(
         circuit_name=hamiltonian_name,
         trotter_steps=nsteps
     )
+
+    outfile = f'{outdir}{hamiltonian_name}_re.json'
+    if metadata:
+        re_metadata = asdict(metadata)
+        logical_re = re_metadata | logical_re
+    re_as_json(logical_re, outfile)
     return cpt_trotter

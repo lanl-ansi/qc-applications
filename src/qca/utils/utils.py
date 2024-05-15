@@ -151,7 +151,6 @@ def gen_resource_estimate(
 
 def estimate_cpt_resources(
         cpt_circuit: cirq.AbstractCircuit,
-        metadata: EstimateMetaData,
         outdir: str,
         is_extrapolated:bool,
         circuit_name:str,
@@ -162,23 +161,17 @@ def estimate_cpt_resources(
         os.makedirs(outdir)
 
     total_steps = trotter_steps * magnus_steps
-    re_metadata = asdict(metadata)
-    re_metadata['Logical_Abstract'] = gen_resource_estimate(
+    logical_re = gen_resource_estimate(
         cpt_circuit=cpt_circuit,
         is_extrapolated=is_extrapolated,
         total_steps=total_steps
     )
-    resource_estimate = re_metadata
-
-    outfile_data = f'{outdir}{circuit_name}_re.json'
-    re_as_json(resource_estimate, outfile_data)
+    return logical_re
 
 def circuit_estimate(
         circuit: cirq.AbstractCircuit,
-        metadata: EstimateMetaData,
         outdir: str,
         numsteps: int,
-        circuit_name: str,
         bits_precision:int=1,
         write_circuits:bool = False
     ) -> cirq.AbstractCircuit:
@@ -241,17 +234,16 @@ def circuit_estimate(
         total_T_depth += subcircuit_counts[gate][0] * t_depth * numsteps
         total_T_count += subcircuit_counts[gate][0] * t_count * numsteps
         total_clifford_count += subcircuit_counts[gate][0] * clifford_count * numsteps
-    re_metadata = asdict(metadata)
-    re_metadata['Logical_Abstract'] = {
+    
+    return {'Logical_Abstract': {
         'num_qubits': len(circuit.all_qubits()),
         't_count': total_T_count,
         'circuit_depth': total_gate_depth,
         'gate_count': total_gate_count,
         't_depth': total_T_depth,
         'clifford_count': total_clifford_count
+        }
     }
-    outfile_data = f'{outdir}{circuit_name}_re.json'
-    re_as_json(re_metadata, outfile_data)
 
 def re_as_json(main_estimate:dict, outdir:str) -> None:
     with open(outdir, 'w') as f:
