@@ -189,7 +189,9 @@ def gsee_molecular_hamiltonian(
         gse_args: dict,
         trotter_steps: int,
         bits_precision: int,
-        molecular_hamiltonians: list[molecular_info]
+        molecular_hamiltonians: list[molecular_info],
+        value_per_circuit:float=None,
+        repetitions_per_application:int=None
     ) -> int:
     uid = int(random.random() % len(molecular_hamiltonians))*1000
     for idx, molecular_hamiltonian_info in enumerate(molecular_hamiltonians):
@@ -207,8 +209,8 @@ def gsee_molecular_hamiltonian(
             size=f'{molecular_hamiltonian.n_qubits}',
             task='Ground State Energy Estimation',
             implementations=f'trotterization subprocess, basis={basis}, active_space_reduction={active_space_frac}, bits_precision={bits_precision}',
-            value_per_circuit=6000,
-            repetitions_per_application=100
+            value_per_circuit=value_per_circuit,
+            repetitions_per_application=repetitions_per_application
         )
         uid += 1
 

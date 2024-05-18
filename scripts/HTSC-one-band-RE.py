@@ -50,9 +50,6 @@ def main(args):
     init_state = [0] * lattice_size * lattice_size * 2 #TODO: use Fock state from Hartree-Fock as initial state
     
     print('starting')
-    total_value = 300000
-    repetitions = 40 * 10
-    value_per_circuit = total_value/repetitions
     metadata = EstimateMetaData(
         id=time.time_ns(),
         name=name,
@@ -60,8 +57,6 @@ def main(args):
         size=f'{lattice_size}x{lattice_size}',
         task='Ground State Energy Estimation',
         implementations=f'GSEE, evolution_time={t}, bits_precision={bits_precision}, trotter_order={trotter_order}',
-        value_per_circuit=value_per_circuit,
-        repetitions_per_application=repetitions
     )
     
     t0 = time.perf_counter()

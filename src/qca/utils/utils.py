@@ -23,8 +23,8 @@ class EstimateMetaData:
     size: str
     task: str
     implementations: str
-    value_per_circuit: float
-    repetitions_per_application: int
+    value_per_circuit: float=None
+    repetitions_per_application: int=None
 
 def count_gates(cpt_circuit: cirq.AbstractCircuit) -> int:
     count = 0
@@ -247,6 +247,6 @@ def circuit_estimate(
 
 def re_as_json(main_estimate:dict, outdir:str) -> None:
     with open(outdir, 'w') as f:
-            json.dump(main_estimate, f,
-                    indent=4,
-                    separators=(',', ': '))
+        json.dump(main_estimate, f,
+            indent=4,
+            separators=(',', ': '))

@@ -54,7 +54,6 @@ def main(args):
 
 
     print('starting')
-    value_per_circuit = value/repetitions
 
     metadata = EstimateMetaData(
         id=time.time_ns(),
@@ -63,8 +62,6 @@ def main(args):
         size=f'{lattice_size}x{lattice_size}',
         task='Ground State Energy Estimation',
         implementations=f'GSEE, evolution_time={t}, bits_precision={bits_precision}, trotter_order={trotter_order}',
-        value_per_circuit=value_per_circuit,
-        repetitions_per_application=repetitions
     )
 
     t0 = time.perf_counter()

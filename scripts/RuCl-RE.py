@@ -182,9 +182,6 @@ def generate_rucl_re(
     outdir:str) -> None:
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-    repetitions = 140 * 15
-    total_value = 2500000
-    value_per_circuit = total_value/repetitions
     for rucl_idx in range(len(df_rucl)):
         H_rucl = generate_rucl_hamiltonian(
             lattice_size,
@@ -203,8 +200,6 @@ def generate_rucl_re(
             size=f'lattice_size: {lattice_size}',
             task='Time-Dependent Dynamics',
             implementations='trotterization, JT=1000, gate_synth_accuracy=1e-10, numsteps=1500000, energy_precision=1e-3',
-            value_per_circuit=value_per_circuit,
-            repetitions_per_application=repetitions
         )
         estimate_trotter(
             openfermion_hamiltonian=openfermion_hamiltonian_rucl,
