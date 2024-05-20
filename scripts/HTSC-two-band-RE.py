@@ -106,8 +106,8 @@ def parse_arguments():
     parser.add_argument('-mu', '--param-mu', type=float, default=1)
     parser.add_argument('-n', '--name', type=str, default=f'FermiHubbard-TwoBand', help='name of this circuit instance, becomes prefix for output file')
     parser.add_argument('-d', '--directory', type=str, default='./', help='output file directory')
-    parser.add_argument('-v', '--value', type=float, default=300000, help='value of the total application')
-    parser.add_argument('-r', '--repetitions', type=int, default=400, help='repetitions needed to achieve value of computatation (not runs of this script)')
+    parser.add_argument('-v', '--value', type=float, default=0, help='value of the total application')
+    parser.add_argument('-r', '--repetitions', type=int, default=1, help='repetitions needed to achieve value of computatation (not runs of this script)')
     parser.add_argument('-c', '--circuit_write', default=False, action='store_true')
     return parser
 

@@ -23,21 +23,21 @@ def main(args):
     value = args.value
     repetitions = args.repetitions
     circuit_write = args.circuit_write
-    
+
     ham = of.fermi_hubbard(lattice_size, lattice_size, tunneling=tunneling, coulomb=coulomb, periodic=False) #returns an aperiodic fermionic hamiltonian
-    
+
     trotter_order = 2
     trotter_steps = 1 #Using one trotter step for a strict lower bound with this method
-    
+
     #this scales the circuit depth proportional to 2 ^ bits_precision
     bits_precision = estimate_bits_precision(error_precision)
-    
+
     E_min = -len(ham.terms) * max(abs(tunneling), abs(coulomb))
     E_max = 0
     omega = E_max-E_min
     t = 2*np.pi/omega
     phase_offset = E_max*t
-    
+
     args = {
         'trotterize' : True,
         'mol_ham'    : ham,
@@ -45,10 +45,10 @@ def main(args):
         'trot_ord'   : trotter_order,
         'trot_num'   : 1 #handling adjustment in resource estimate to save time - scales circuit depth linearly.
     }
-    
-    
+
+
     init_state = [0] * lattice_size * lattice_size * 2 #TODO: use Fock state from Hartree-Fock as initial state
-    
+
     print('starting')
     metadata = EstimateMetaData(
         id=time.time_ns(),
@@ -58,7 +58,7 @@ def main(args):
         task='Ground State Energy Estimation',
         implementations=f'GSEE, evolution_time={t}, bits_precision={bits_precision}, trotter_order={trotter_order}',
     )
-    
+
     t0 = time.perf_counter()
     gse_inst = PhaseEstimation(
         precision_order=1, #actual precision bits accounted as scaling factors in the resource estimate
@@ -69,9 +69,9 @@ def main(args):
     gse_inst.generate_circuit()
     t1 = time.perf_counter()
     print(f'One band GSEE time to generate high level Circuit: {t1 - t0}')
-    
+
     gse_circuit = gse_inst.pe_circuit
-    
+
     print('Estimating one_band')
     t0 = time.perf_counter()
     estimate = circuit_estimate(
@@ -100,8 +100,8 @@ def parse_arguments():
     parser.add_argument('-mu', '--param-mu', type=float, default=1)
     parser.add_argument('-n', '--name', type=str, default=f'FermiHubbard-OneBand', help='name of this circuit instance, becomes prefix for output file')
     parser.add_argument('-d', '--directory', type=str, default='./', help='output file directory')
-    parser.add_argument('-v', '--value', type=float, default=300000, help='value of the total application')
-    parser.add_argument('-r', '--repetitions', type=int, default=400, help='repetitions needed to achieve value of computatation (not runs of this script)')
+    parser.add_argument('-v', '--value', type=float, default=0, help='value of the total application')
+    parser.add_argument('-r', '--repetitions', type=int, default=1, help='repetitions needed to achieve value of computatation (not runs of this script)')
     parser.add_argument('-c', '--circuit_write', default=False, action='store_true')
     return parser
 
