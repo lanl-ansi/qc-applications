@@ -3,7 +3,7 @@ import re
 import json
 import time
 from statistics import median
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 
 import pandas as pd
 
@@ -174,7 +174,7 @@ def circuit_estimate(
         numsteps: int,
         bits_precision:int=1,
         write_circuits:bool = False
-    ) -> cirq.AbstractCircuit:
+    ) -> dict:
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
@@ -235,13 +235,14 @@ def circuit_estimate(
         total_T_count += subcircuit_counts[gate][0] * t_count * numsteps
         total_clifford_count += subcircuit_counts[gate][0] * clifford_count * numsteps
     
-    return {'Logical_Abstract': {
-        'num_qubits': len(circuit.all_qubits()),
-        't_count': total_T_count,
-        'circuit_depth': total_gate_depth,
-        'gate_count': total_gate_count,
-        't_depth': total_T_depth,
-        'clifford_count': total_clifford_count
+    return {
+        'Logical_Abstract': {
+            'num_qubits': len(circuit.all_qubits()),
+            't_count': total_T_count,
+            'circuit_depth': total_gate_depth,
+            'gate_count': total_gate_count,
+            't_depth': total_T_depth,
+            'clifford_count': total_clifford_count
         }
     }
 
