@@ -205,7 +205,6 @@ def assign_hexagon_labels(graph:Graph, x:str='X', y:str='Y', z:str='Z'):
         if r2 - r1 < 0 or c2 - c1 < 0:
             r1, r2 = r2, r1
             c1, c2 = c2, c1
-
         # now that they are ordered correctly, we can assign labels
         label = ''
         if c1 == c2:
