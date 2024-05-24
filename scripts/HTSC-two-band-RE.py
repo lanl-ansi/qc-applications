@@ -8,6 +8,7 @@ import numpy as np
 import math
 from pyLIQTR.PhaseEstimation.pe import PhaseEstimation
 from networkx import get_node_attributes, draw, draw_networkx_edge_labels
+from qca.utils.algo_utils import gsee_resource_estimation
 from qca.utils.utils import circuit_estimate, EstimateMetaData
 from qca.utils.hamiltonian_utils import generate_two_orbital_nx, nx_to_two_orbital_hamiltonian
 
@@ -44,7 +45,7 @@ def main(args):
 
     init_state = [0] * n_qubits
 
-    pe_args = {
+    gsee_args = {
         'trotterize' : True,
         'mol_ham'    : ham,
         'ev_time'    : t,
@@ -64,29 +65,18 @@ def main(args):
         implementations=f'GSEE, evolution_time={t}, bits_precision={bits_precision}, trotter_order={trotter_order}',
     )
 
-    t0 = time.perf_counter()
-    gse_inst = PhaseEstimation(
-        precision_order=1,
-        init_state=init_state,
-        phase_offset=phase_offset,
-        include_classical_bits=False, # Do this so print to openqasm works
-        kwargs=pe_args)
-    gse_inst.generate_circuit()
-    t1 = time.perf_counter()
-    print(f'time to generate high level: {t1 - t0}')
-
-    gse_circuit = gse_inst.pe_circuit
-
     print('Estimating Circuit Resources')
     t0 = time.perf_counter()
-    estimate = circuit_estimate(
-                     circuit=gse_circuit,
-                     metadata = metadata,
-                     outdir=directory,
-                     circuit_name=name,
-                     write_circuits=args.circuit_write,
-                     bits_precision=bits_precision,
-                     numsteps=trotter_steps)
+    estimate = gsee_resource_estimation(
+            outdir=directory,
+            numsteps=trotter_steps,
+            gsee_args=gsee_args,
+            init_state=init_state,
+            precision_order=1,
+            bits_precision=bits_precision,
+            circuit_name=name,
+            metadata=metadata,
+            write_circuits=args.circuit_write)
     t1 = time.perf_counter()
     return estimate
 
@@ -96,14 +86,16 @@ def estimate_bits_precision(epsilon):
 def parse_arguments():
     parser = argparse.ArgumentParser(prog='HTSC-two-band-RE')
     parser.add_argument('-l', '--lattice-size', type=int, default=10)
-    parser.add_argument('-e', '--error-precision', type=float, default=1e-3)
+    parser.add_argument('-e', '--error-precision', type=float, default=1e-5)
     parser.add_argument('-t', '--trotter-steps', type=int, default=1)
     parser.add_argument('-to', '--trotter-order', type=int, default=2)
+
     parser.add_argument('-t1', '--param-t1', type=float, default=-1)
     parser.add_argument('-t2', '--param-t2', type=float, default=1.3)
     parser.add_argument('-t3', '--param-t3', type=float, default=0.85)
     parser.add_argument('-t4', '--param-t4', type=float, default=0.85)
     parser.add_argument('-mu', '--param-mu', type=float, default=1)
+
     parser.add_argument('-n', '--name', type=str, default=f'FermiHubbard-TwoBand', help='name of this circuit instance, becomes prefix for output file')
     parser.add_argument('-d', '--directory', type=str, default='./', help='output file directory')
     parser.add_argument('-v', '--value', type=float, default=0, help='value of the total application')

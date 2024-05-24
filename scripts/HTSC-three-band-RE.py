@@ -10,48 +10,57 @@ from pyLIQTR.PhaseEstimation.pe import PhaseEstimation
 from networkx import get_node_attributes, draw, draw_networkx_edge_labels
 from qca.utils.algo_utils import gsee_resource_estimation
 from qca.utils.utils import circuit_estimate, EstimateMetaData
-from qca.utils.hamiltonian_utils import generate_two_orbital_nx, nx_to_two_orbital_hamiltonian
+from qca.utils.hamiltonian_utils import generate_three_orbital_nx, nx_to_three_orbital_hamiltonian
+
+## Three band
 
 def main(args):
-    lattice_size = args.lattice_size
-    tunneling = args.param_t1
-    coulomb = args.param_mu
+    t1 = args.param_t1
+    t2 = args.param_t2
+    t3 = args.param_t3
+    t4 = args.param_t4
+    t5 = args.param_t5
+    t6 = args.param_t6
+    t7 = args.param_t7
+    t8 = args.param_t8
+    mu = args.param_mu
+    delta = args.param_delta
 
-    error_precision = args.error_precision
     trotter_steps = args.trotter_steps
     trotter_order = args.trotter_order
-    name = args.name
-    directory = args.directory
+
+    lattice_size = args.lattice_size
+
     value = args.value
     repetitions = args.repetitions
-    circuit_write = args.circuit_write
+    directory = args.directory
+    name = args.name
 
-    ham = of.fermi_hubbard(lattice_size, lattice_size, tunneling=tunneling, coulomb=coulomb, periodic=False) #returns an aperiodic fermionic hamiltonian
+    bits_precision = estimate_bits_precision(args.error_precision)
+    g = generate_three_orbital_nx(lattice_size,lattice_size)
+    n_qubits = len(g)
 
-    trotter_order = 2
-    trotter_steps = 1 #Using one trotter step for a strict lower bound with this method
+    ham = nx_to_three_orbital_hamiltonian(g,t1,t2,t3,t4,t5,t6,t7,t8,mu,delta)
 
-    #this scales the circuit depth proportional to 2 ^ bits_precision
-    bits_precision = estimate_bits_precision(error_precision)
-
-    E_min = -len(ham.terms) * max(abs(tunneling), abs(coulomb))
+    E_min = -len(ham.terms) * max(abs(t1), abs(t2), abs(t3), abs(t4), abs(mu))
     E_max = 0
     omega = E_max-E_min
     t = 2*np.pi/omega
     phase_offset = E_max*t
+
+    init_state = [0] * n_qubits
 
     gsee_args = {
         'trotterize' : True,
         'mol_ham'    : ham,
         'ev_time'    : t,
         'trot_ord'   : trotter_order,
-        'trot_num'   : 1 #handling adjustment in resource estimate to save time - scales circuit depth linearly.
+        'trot_num'   : 1 #Accounted for in a scaling argument later
     }
 
 
-    init_state = [0] * lattice_size * lattice_size * 2 #TODO: use Fock state from Hartree-Fock as initial state
-
     print('starting')
+
     metadata = EstimateMetaData(
         id=time.time_ns(),
         name=name,
@@ -61,7 +70,7 @@ def main(args):
         implementations=f'GSEE, evolution_time={t}, bits_precision={bits_precision}, trotter_order={trotter_order}',
     )
 
-    print('Estimating one_band')
+    print('Estimating Circuit Resources')
     t0 = time.perf_counter()
     estimate = gsee_resource_estimation(
             outdir=directory,
@@ -74,21 +83,30 @@ def main(args):
             metadata=metadata,
             write_circuits=args.circuit_write)
     t1 = time.perf_counter()
-    print(f'Time to estimate one_band: {t1-t0}')
     return estimate
 
 def estimate_bits_precision(epsilon):
     return math.ceil(math.log2(1.0/epsilon))
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(prog='HTSC-two-band-RE')
-    parser.add_argument('-l', '--lattice-size', type=int, default=20)
+    parser = argparse.ArgumentParser(prog='HTSC-three-band-RE')
+    parser.add_argument('-l', '--lattice-size', type=int, default=10)
     parser.add_argument('-e', '--error-precision', type=float, default=1e-5)
     parser.add_argument('-t', '--trotter-steps', type=int, default=1)
     parser.add_argument('-to', '--trotter-order', type=int, default=2)
-    parser.add_argument('-t1', '--param-t1', type=float, default=-1)
+
+    parser.add_argument('-t1', '--param-t1', type=float, default=0.02)
+    parser.add_argument('-t2', '--param-t2', type=float, default=0.06)
+    parser.add_argument('-t3', '--param-t3', type=float, default=0.03)
+    parser.add_argument('-t4', '--param-t4', type=float, default=-0.01)
+    parser.add_argument('-t5', '--param-t5', type=float, default=0.2)
+    parser.add_argument('-t6', '--param-t6', type=float, default=0.3)
+    parser.add_argument('-t7', '--param-t7', type=float, default=-0.2)
+    parser.add_argument('-t8', '--param-t8', type=float, default=0.1)
     parser.add_argument('-mu', '--param-mu', type=float, default=1)
-    parser.add_argument('-n', '--name', type=str, default=f'FermiHubbard-OneBand', help='name of this circuit instance, becomes prefix for output file')
+    parser.add_argument('-delta', '--param-delta', type=float, default=0.4)
+
+    parser.add_argument('-n', '--name', type=str, default=f'FermiHubbard-ThreeBand', help='name of this circuit instance, becomes prefix for output file')
     parser.add_argument('-d', '--directory', type=str, default='./', help='output file directory')
     parser.add_argument('-v', '--value', type=float, default=0, help='value of the total application')
     parser.add_argument('-r', '--repetitions', type=int, default=1, help='repetitions needed to achieve value of computatation (not runs of this script)')
