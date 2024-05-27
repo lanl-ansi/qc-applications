@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import os
 import argparse
 import time
@@ -7,6 +8,7 @@ import numpy as np
 import math
 from pyLIQTR.PhaseEstimation.pe import PhaseEstimation
 from networkx import get_node_attributes, draw, draw_networkx_edge_labels
+from qca.utils.algo_utils import gsee_resource_estimation
 from qca.utils.utils import circuit_estimate, EstimateMetaData
 from qca.utils.hamiltonian_utils import generate_two_orbital_nx, nx_to_two_orbital_hamiltonian
 
@@ -38,7 +40,7 @@ def main(args):
     t = 2*np.pi/omega
     phase_offset = E_max*t
 
-    args = {
+    gsee_args = {
         'trotterize' : True,
         'mol_ham'    : ham,
         'ev_time'    : t,
@@ -56,33 +58,23 @@ def main(args):
         category='scientific',
         size=f'{lattice_size}x{lattice_size}',
         task='Ground State Energy Estimation',
+        value_per_circuit=value,
+        repetitions_per_application=repetitions,
         implementations=f'GSEE, evolution_time={t}, bits_precision={bits_precision}, trotter_order={trotter_order}',
     )
 
-    t0 = time.perf_counter()
-    gse_inst = PhaseEstimation(
-        precision_order=1, #actual precision bits accounted as scaling factors in the resource estimate
-        init_state=init_state,
-        phase_offset=phase_offset,
-        include_classical_bits=False, # Do this so print to openqasm works
-        kwargs=args)
-    gse_inst.generate_circuit()
-    t1 = time.perf_counter()
-    print(f'One band GSEE time to generate high level Circuit: {t1 - t0}')
-
-    gse_circuit = gse_inst.pe_circuit
-
     print('Estimating one_band')
     t0 = time.perf_counter()
-    estimate = circuit_estimate(
-        circuit=gse_circuit,
-        metadata = metadata,
-        outdir=directory,
-        circuit_name=name,
-        write_circuits=circuit_write,
-        bits_precision=bits_precision,
-        numsteps=trotter_steps
-    )
+    estimate = gsee_resource_estimation(
+            outdir=directory,
+            numsteps=trotter_steps,
+            gsee_args=gsee_args,
+            init_state=init_state,
+            precision_order=1,
+            bits_precision=bits_precision,
+            circuit_name=name,
+            metadata=metadata,
+            write_circuits=args.circuit_write)
     t1 = time.perf_counter()
     print(f'Time to estimate one_band: {t1-t0}')
     return estimate

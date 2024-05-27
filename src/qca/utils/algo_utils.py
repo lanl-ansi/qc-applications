@@ -173,6 +173,7 @@ def gsee_resource_estimation(
         init_state:list,
         precision_order:int,
         bits_precision:int,
+        phase_offset:float,
         circuit_name:str='Hamiltonian',
         metadata:EstimateMetaData=None,
         include_classical_bits:bool=False,
@@ -183,6 +184,7 @@ def gsee_resource_estimation(
         precision_order=precision_order,
         init_state=init_state,
         include_classical_bits=include_classical_bits,
+        phase_offset=phase_offset,
         kwargs=gsee_args
     )
     t1 = time.perf_counter()
