@@ -1,4 +1,4 @@
-![pylint](https://img.shields.io/badge/PyLint-9.46-yellow?logo=python&logoColor=white)
+![pylint](https://img.shields.io/badge/PyLint-9.45-yellow?logo=python&logoColor=white)
 # Quantum Computing Application Specifications
 
 Documentation of Applications for Quantum Computers
