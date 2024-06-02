@@ -32,6 +32,7 @@ def estimate_qsp(
     hamiltonian_name:str='hamiltonian',
     metadata: EstimateMetaData = None,
     write_circuits:bool=False,
+    include_nested_resources:bool=True
 ) -> Circuit:
     timestep_of_interest=evolution_time/numsteps
     random.seed(0)
@@ -52,7 +53,9 @@ def estimate_qsp(
         circuit=qsp_circuit,
         outdir=outdir,
         numsteps=numsteps,
-        write_circuits=write_circuits
+        algo_name='QSP',
+        write_circuits=write_circuits,
+        include_nested_resources=include_nested_resources
     )
     if metadata:
         re_metadata = asdict(metadata)
@@ -104,7 +107,8 @@ def estimate_trotter(
     metadata: EstimateMetaData=None,
     hamiltonian_name:str='hamiltonian',
     write_circuits:bool=False,
-    nsteps:int=None
+    nsteps:int=None,
+    include_nested_resources:bool=True
 ) -> Circuit:
 
     if not os.path.exists(outdir):
@@ -155,8 +159,9 @@ def estimate_trotter(
         cpt_circuit=cpt_trotter,
         outdir=outdir,
         is_extrapolated=True,
-        circuit_name=hamiltonian_name,
-        trotter_steps=nsteps
+        algo_name='TrotterStep',
+        trotter_steps=nsteps,
+        include_nested_resources=include_nested_resources
     )
 
     outfile = f'{outdir}{hamiltonian_name}_re.json'
@@ -175,6 +180,7 @@ def gsee_resource_estimation(
         bits_precision:int,
         phase_offset:float,
         circuit_name:str='Hamiltonian',
+        include_nested_resources:bool=True,
         metadata:EstimateMetaData=None,
         include_classical_bits:bool=False,
         write_circuits:bool=False
@@ -199,6 +205,8 @@ def gsee_resource_estimation(
         circuit=pe_circuit,
         outdir=outdir,
         numsteps=numsteps,
+        algo_name='GSEE',
+        include_nested_resources=include_nested_resources,
         bits_precision=bits_precision,
         write_circuits=write_circuits
     )
