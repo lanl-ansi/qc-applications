@@ -77,6 +77,21 @@ def generate_two_orbital_nx(Lx: int, Ly: int) -> MultiGraph:
                     g.add_edge(n3, n4, label="-t4")
     return g
 
+def nx_heisenberg_terms(graph:Graph) -> list:
+    # Given some J1-J2 Heisenberg graph, we will transform it into a series of Pauli strings
+    # representing the Hamiltonian. 
+    hamiltonian = []
+    n = len(graph.nodes)
+    for (n1, n2, d) in graph.edges(data=True):
+        weight = d['weight']
+        pauli_string = n * 'I'
+        for pauli in ['X', 'Y', 'Z']:
+            for i in range(len(graph)):
+                if i == n1 or i == n2:
+                    pauli_string = f'{pauli_string[:i]}{pauli}{pauli_string[i+1:]}'
+        hamiltonian.append((pauli_string, weight))
+        
+    return hamiltonian
 
 def nx_to_two_orbital_hamiltonian(
         graph: MultiGraph,
