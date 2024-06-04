@@ -3,7 +3,7 @@
 # Quantum Computing Application Specifications
 
 This projct focuses on the documentation of applications for Quantum Computers. Currently, we have four notebooks exploring four different applications, which can be found in
-the notebooks/ directory. For taking a look at notebooks that are going through ongoing development, one can take a look at the `feature/exotic-phases-nb` and `feature/dicke-model-nb`
+the notebooks/ directory. For taking a look at notebooks that are going through ongoing development, one can take a look at the `notebook/exotic-phases-nb` and `notebook/dicke-model-nb`
 branches.
 
 ## License
