@@ -160,7 +160,7 @@ def estimate_cpt_resources(
         algo_name:str,
         include_nested_resources:bool,
         magnus_steps:int=1,
-        trotter_steps:int=1,
+        trotter_steps:int=1
     ):
     if not os.path.exists(outdir):
         os.makedirs(outdir)
@@ -206,7 +206,7 @@ def circuit_estimate(
         algo_name: str,
         include_nested_resources:bool,
         bits_precision:int=1,
-        write_circuits:bool = False,
+        write_circuits:bool = False
     ) -> dict:
     if not os.path.exists(outdir):
         os.makedirs(outdir)
@@ -269,7 +269,7 @@ def circuit_estimate(
         total_T_depth += subcircuit_counts[gate][0] * t_depth * numsteps
         total_T_count += subcircuit_counts[gate][0] * t_count * numsteps
         total_clifford_count += subcircuit_counts[gate][0] * clifford_count * numsteps
-    
+
     main_estimates = {
         'Logical_Abstract': {
             'num_qubits': len(circuit.all_qubits()),
