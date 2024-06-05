@@ -75,6 +75,7 @@ def main(args):
             gsee_args=gsee_args,
             init_state=init_state,
             precision_order=1,
+            phase_offset=phase_offset,
             bits_precision=bits_precision,
             circuit_name=name,
             metadata=metadata,
