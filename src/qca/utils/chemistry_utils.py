@@ -194,7 +194,7 @@ def gsee_molecular_hamiltonian(
         value_per_circuit:float=None,
         repetitions_per_application:int=None
     ) -> int:
-    uid = int(random.random() % len(molecular_hamiltonians))*1000
+    uid = int(random.random()) % len(molecular_hamiltonians)*1000
     for idx, molecular_hamiltonian_info in enumerate(molecular_hamiltonians):
         molecular_hamiltonian = molecular_hamiltonian_info.molecular_hamiltonian
         molecular_hf_energy = molecular_hamiltonian_info.hf_energy
