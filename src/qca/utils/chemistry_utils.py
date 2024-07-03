@@ -203,16 +203,6 @@ def gsee_molecular_hamiltonian(
         gse_args['mol_ham'] = molecular_hamiltonian
         phase_offset = grab_molecular_phase_offset(molecular_hf_energy)
         init_state = molecular_hamiltonian_info.initial_state
-        molecular_metadata = EstimateMetaData(
-            id = uid,
-            name=f'{catalyst_name}_molecule({idx})',
-            category='scientific',
-            size=f'{molecular_hamiltonian.n_qubits}',
-            task='Ground State Energy Estimation',
-            implementations=f'trotterization subprocess, basis={basis}, active_space_reduction={active_space_frac}, bits_precision={bits_precision}',
-            value_per_circuit=value_per_circuit,
-            repetitions_per_application=repetitions_per_application
-        )
         uid += 1
 
         t0 = time.perf_counter()
@@ -232,10 +222,10 @@ def gsee_molecular_hamiltonian(
         t0 = time.perf_counter()
         circuit_estimate(
             circuit=gse_circuit,
-            metadata=molecular_metadata,
             outdir='GSE/Quantum_Chemistry/',
             numsteps=trotter_steps,
-            circuit_name=f'{catalyst_name}_{idx}_active_space{active_space_frac}',
+            algo_name='gsee',
+            include_nested_resources=True,
             bits_precision=bits_precision,
             write_circuits=False
         )
