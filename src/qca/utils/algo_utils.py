@@ -98,6 +98,10 @@ def find_hamiltonian_ordering(of_hamiltonian: QubitOperator) -> list:
         two_body_terms_ordered.append(new_item)
     return one_body_terms_ordered + two_body_terms_ordered
 
+def find_hamiltonian_ordering_random(of_hamiltonian: QubitOperator) -> list:
+    terms = list(of_hamiltonian.terms.keys())
+    random.shuffle(terms)
+    return terms
 
 def estimate_trotter(
     openfermion_hamiltonian: QubitOperator,
@@ -109,6 +113,7 @@ def estimate_trotter(
     write_circuits:bool=False,
     nsteps:int=None,
     include_nested_resources:bool=True
+    ordering=find_hamiltonian_ordering
 ) -> Circuit:
 
     if not os.path.exists(outdir):
@@ -125,7 +130,7 @@ def estimate_trotter(
         print(f'Time to estimate number of trotter steps required ({nsteps}): {elapsed} seconds')
 
     t0 = time.perf_counter()
-    term_ordering = find_hamiltonian_ordering(openfermion_hamiltonian)
+    term_ordering = ordering(openfermion_hamiltonian)
     t1 = time.perf_counter()
     elapsed = t1 - t0
     print(f'Time to find term ordering: {elapsed} seconds')
