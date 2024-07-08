@@ -112,7 +112,7 @@ def estimate_trotter(
     hamiltonian_name:str='hamiltonian',
     write_circuits:bool=False,
     nsteps:int=None,
-    include_nested_resources:bool=True
+    include_nested_resources:bool=True,
     ordering=find_hamiltonian_ordering
 ) -> Circuit:
 
