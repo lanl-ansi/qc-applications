@@ -17,11 +17,16 @@ from pyLIQTR.utils.Hamiltonian import Hamiltonian
 from pyLIQTR.utils.utils import open_fermion_to_qasm
 from pyLIQTR.circuits.qsp import generate_QSP_circuit
 from pyLIQTR.PhaseEstimation.pe import PhaseEstimation
-from pyLIQTR.utils.qsp_helpers import print_to_openqasm
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 from pyLIQTR.phase_factors.fourier_response.fourier_response import Angler_fourier_response
 
-from qca.utils.utils import circuit_estimate, estimate_cpt_resources, EstimateMetaData, re_as_json
+from qca.utils.utils import (
+    re_as_json,
+    write_qasm,
+    circuit_estimate,
+    estimate_cpt_resources,
+    EstimateMetaData
+)
 
 def estimate_qsp(
     pyliqtr_hamiltonian: Hamiltonian,
@@ -149,11 +154,15 @@ def estimate_trotter(
 
     if write_circuits:
         outfile_qasm_trotter = f'{outdir}Trotter_Unitary.qasm'
+        write_qasm(
+            circuit=trotter_circuit_qasm,
+            fname=outfile_qasm_trotter
+        )
         outfile_qasm_cpt = f'{outdir}Trotter_Unitary.cpt.qasm'
-        with open(outfile_qasm_trotter, 'w', encoding='utf-8') as f:
-            print_to_openqasm(f, trotter_circuit_qasm, trotter_circuit_qasm.all_qubits())
-        with open(outfile_qasm_cpt, 'w', encoding='utf-8') as f:
-            print_to_openqasm(f, cpt_trotter, qubits=cpt_trotter.all_qubits())
+        write_qasm(
+            circuit=cpt_trotter,
+            fname=outfile_qasm_cpt
+        )
 
     logical_re = estimate_cpt_resources(
         cpt_circuit=cpt_trotter,
