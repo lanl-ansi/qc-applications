@@ -11,8 +11,8 @@ import matplotlib.pyplot as plt
 
 import cirq
 
+from pyLIQTR.utils.printing import openqasm
 from pyLIQTR.utils.utils import count_T_gates
-from pyLIQTR.utils.qsp_helpers import print_to_openqasm
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 
 @dataclass
@@ -199,6 +199,18 @@ def grab_single_step_estimates(num_qubits: int, main_estimates: dict, algo_name:
         }
     }
 
+def write_qasm(
+        circuit: cirq.AbstractCircuit,
+        fname: str
+    ):
+    qasm_iter = openqasm(
+        circuit=circuit,
+        rotation_allowed=True,
+    )
+    qasm_str = ' \n'.join([qasm for qasm in qasm_iter])
+    with open(fname, 'w', encoding='utf-8') as file:
+        file.write(qasm_str)
+
 def circuit_estimate(
         circuit: cirq.AbstractCircuit,
         outdir: str,
@@ -231,11 +243,15 @@ def circuit_estimate(
                 print(f'   Time to transform decomposed {gate_type_name} circuit to Clifford+T: {cpt_elapsed} seconds')
                 if write_circuits:
                     outfile_qasm_decomposed = f'{outdir}{gate_type_name}.decomposed.qasm'
+                    write_qasm(
+                        circuit=decomposed_circuit,
+                        fname=outfile_qasm_decomposed
+                    )
                     outfile_qasm_cpt = f'{outdir}{gate_type_name}.cpt.qasm'
-                    with open(outfile_qasm_decomposed, 'w', encoding='utf-8') as f:
-                        print_to_openqasm(f, decomposed_circuit, qubits=decomposed_circuit.all_qubits())
-                    with open(outfile_qasm_cpt, 'w', encoding='utf-8') as f:
-                        print_to_openqasm(f, cpt_circuit, qubits=cpt_circuit.all_qubits())
+                    write_qasm(
+                        circuit=cpt_circuit,
+                        fname=outfile_qasm_cpt
+                    )
 
                 subcircuit_counts[gate_type] = [1, cpt_circuit, gate_type_name]
 
