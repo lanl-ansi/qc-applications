@@ -17,11 +17,16 @@ from pyLIQTR.utils.Hamiltonian import Hamiltonian
 from pyLIQTR.utils.utils import open_fermion_to_qasm
 from pyLIQTR.circuits.qsp import generate_QSP_circuit
 from pyLIQTR.PhaseEstimation.pe import PhaseEstimation
-from pyLIQTR.utils.qsp_helpers import print_to_openqasm
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 from pyLIQTR.phase_factors.fourier_response.fourier_response import Angler_fourier_response
 
-from qca.utils.utils import circuit_estimate, estimate_cpt_resources, EstimateMetaData, re_as_json
+from qca.utils.utils import (
+    re_as_json,
+    write_qasm,
+    circuit_estimate,
+    estimate_cpt_resources,
+    EstimateMetaData
+)
 
 def estimate_qsp(
     pyliqtr_hamiltonian: Hamiltonian,
@@ -32,6 +37,7 @@ def estimate_qsp(
     hamiltonian_name:str='hamiltonian',
     metadata: EstimateMetaData = None,
     write_circuits:bool=False,
+    include_nested_resources:bool=True
 ) -> Circuit:
     timestep_of_interest=evolution_time/numsteps
     random.seed(0)
@@ -52,7 +58,9 @@ def estimate_qsp(
         circuit=qsp_circuit,
         outdir=outdir,
         numsteps=numsteps,
-        write_circuits=write_circuits
+        algo_name='QSP',
+        write_circuits=write_circuits,
+        include_nested_resources=include_nested_resources
     )
     if metadata:
         re_metadata = asdict(metadata)
@@ -104,7 +112,8 @@ def estimate_trotter(
     metadata: EstimateMetaData=None,
     hamiltonian_name:str='hamiltonian',
     write_circuits:bool=False,
-    nsteps:int=None
+    nsteps:int=None,
+    include_nested_resources:bool=True
 ) -> Circuit:
 
     if not os.path.exists(outdir):
@@ -145,18 +154,23 @@ def estimate_trotter(
 
     if write_circuits:
         outfile_qasm_trotter = f'{outdir}Trotter_Unitary.qasm'
+        write_qasm(
+            circuit=trotter_circuit_qasm,
+            fname=outfile_qasm_trotter
+        )
         outfile_qasm_cpt = f'{outdir}Trotter_Unitary.cpt.qasm'
-        with open(outfile_qasm_trotter, 'w', encoding='utf-8') as f:
-            print_to_openqasm(f, trotter_circuit_qasm, trotter_circuit_qasm.all_qubits())
-        with open(outfile_qasm_cpt, 'w', encoding='utf-8') as f:
-            print_to_openqasm(f, cpt_trotter, qubits=cpt_trotter.all_qubits())
+        write_qasm(
+            circuit=cpt_trotter,
+            fname=outfile_qasm_cpt
+        )
 
     logical_re = estimate_cpt_resources(
         cpt_circuit=cpt_trotter,
         outdir=outdir,
         is_extrapolated=True,
-        circuit_name=hamiltonian_name,
-        trotter_steps=nsteps
+        algo_name='TrotterStep',
+        trotter_steps=nsteps,
+        include_nested_resources=include_nested_resources
     )
 
     outfile = f'{outdir}{hamiltonian_name}_re.json'
@@ -175,6 +189,7 @@ def gsee_resource_estimation(
         bits_precision:int,
         phase_offset:float,
         circuit_name:str='Hamiltonian',
+        include_nested_resources:bool=True,
         metadata:EstimateMetaData=None,
         include_classical_bits:bool=False,
         write_circuits:bool=False
@@ -199,6 +214,8 @@ def gsee_resource_estimation(
         circuit=pe_circuit,
         outdir=outdir,
         numsteps=numsteps,
+        algo_name='GSEE',
+        include_nested_resources=include_nested_resources,
         bits_precision=bits_precision,
         write_circuits=write_circuits
     )
