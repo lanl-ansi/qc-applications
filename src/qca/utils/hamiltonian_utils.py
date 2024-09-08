@@ -1,6 +1,7 @@
 import random
 from pyLIQTR.utils import Hamiltonian
-from networkx import relabel_nodes, Graph, MultiGraph, grid_graph, compose
+from networkx import (relabel_nodes, Graph, MultiGraph, grid_graph,
+                      compose, path_graph, set_node_attributes, get_node_attributes)
 from networkx.generators.lattice import grid_2d_graph
 from openfermion import FermionOperator, QubitOperator
 
@@ -77,6 +78,21 @@ def generate_two_orbital_nx(Lx: int, Ly: int) -> MultiGraph:
                     g.add_edge(n3, n4, label="-t4")
     return g
 
+def nx_heisenberg_terms(graph:Graph) -> list:
+    # Given some J1-J2 Heisenberg graph, we will transform it into a series of Pauli strings
+    # representing the Hamiltonian. 
+    hamiltonian = []
+    n = len(graph.nodes)
+    for (n1, n2, d) in graph.edges(data=True):
+        weight = d['weight']
+        pauli_string = n * 'I'
+        for pauli in ['X', 'Y', 'Z']:
+            for i in range(len(graph)):
+                if i == n1 or i == n2:
+                    pauli_string = f'{pauli_string[:i]}{pauli}{pauli_string[i+1:]}'
+        hamiltonian.append((pauli_string, weight))
+        
+    return hamiltonian
 
 def nx_to_two_orbital_hamiltonian(
         graph: MultiGraph,
@@ -481,3 +497,74 @@ def assign_directional_triangular_labels(g:Graph, lattice_size:int) -> None:
         g[(i,lattice_size-1)][(i+1,lattice_size-1)]['label'] = 'Z'
     for j in range(lattice_size - 1):
         g[(lattice_size-1,j)][(lattice_size-1,j+1)]['label'] = 'X'
+
+def dicke_model_qubit_hamiltonian(n_s:int=10, 
+                                  n_b:int=5,
+                                  omega_c:float=1.3,
+                                  omega_o:float=1, #offset that won't affect ground state
+                                  lam:float=1.5,
+                                  h_bar:float=1):
+    #H = h_bar * omega_c * a'a + (h_bar * \omega_o)/2 * \sum_{n = 1}^{n_spins} (\sigma^z_n + I) + h_bar \lambda
+    creation = bosonic_creation_operator(n_b)
+    annihilation = bosonic_annihilation_operator(n_b)
+    number = bosonic_number_operator(n_b)
+
+    H = h_bar * omega_c * number
+    for spin_site in range(n_b + 1, n_b + n_s+1):
+        H += (h_bar * omega_o / 2) * (QubitOperator(f'Z{spin_site}') + 1)
+        H += (h_bar * lam * (annihilation + creation)) * (sigma_minus(spin_site) + sigma_plus(spin_site))
+    return H
+
+def tavis_cummings_model_qubit_hamiltonian(n_s:int=10, 
+                                  n_b:int=5,
+                                  omega_c:float=1.3,
+                                  omega_o:float=1, #offset that won't affect ground state
+                                  lam:float=1.5,
+                                  h_bar:float=1):
+    #H = h_bar * omega_c * a'a + (h_bar * \omega_o)/2 * \sum_{n = 1}^{n_spins} (\sigma^z_n + I) + h_bar \lambda
+    creation = bosonic_creation_operator(n_b)
+    annihilation = bosonic_annihilation_operator(n_b)
+    number = bosonic_number_operator(n_b)
+
+    H = h_bar * omega_c * number
+    for spin_site in range(n_b + 1, n_b + n_s+1):
+        H += (h_bar * omega_o / 2) * (QubitOperator(f'Z{spin_site}') + 1)
+        H += h_bar * lam * (creation * sigma_minus(spin_site) + annihilation * sigma_plus(spin_site))
+    return H
+
+def sigma_plus(n):
+    return (QubitOperator(f'X{n}') + 1j * QubitOperator(f'Y{n}')) / 2
+
+def sigma_minus(n):
+    return (QubitOperator(f'X{n}') - 1j * QubitOperator(f'Y{n}')) / 2
+
+def bosonic_creation_operator(n_b):
+    H = QubitOperator() #we have states 0 -> n_b (n_b+1 states)
+    for i in range(n_b):
+        H += pow(i+1, 0.5) * sigma_plus(i+1) * sigma_minus(i)
+    return H
+
+def bosonic_annihilation_operator(n_b):
+    H = QubitOperator()
+    for i in range(n_b): #we have states 0 -> n_b (n_b+1 states)
+        H += pow(i+1, 0.5) * sigma_minus(i+1) * sigma_plus(i)
+    return H
+
+def bosonic_number_operator(n_b):
+    H = QubitOperator()
+    for i in range(n_b+1): #accounting for this being a line rather than a ring
+        H += (i) * 0.5 * (QubitOperator(f'Z{i}') + 1)
+    return H
+
+def generate_dicke_model_nx(n_s:int=10, n_b:int=5):
+    g = path_graph(n_b + 1) #levels 0 -> n_b
+    boson_labels = {b: 'b' for b in range(n_b+1)}
+    boson_positions = {b: (0, b) for b in range(n_b+1)}
+    set_node_attributes(g, boson_labels, 'label')
+    set_node_attributes(g, boson_positions, 'pos')
+    #adding spins
+    for spin_node in range(n_b+1, n_s+n_b+1):
+        g.add_node(spin_node, label='s', pos=(1, spin_node - n_b))
+        for boson_node in range(n_b+1):
+            g.add_edge(boson_node, spin_node)
+    return g
