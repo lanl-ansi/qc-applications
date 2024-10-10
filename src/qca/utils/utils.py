@@ -311,7 +311,7 @@ def circuit_estimate(
     return main_estimates
 
 
-def re_as_json(main_estimate:dict, outdir:str, estimates:list[dict]=None) -> None:
+def re_as_json(main_estimate:dict, outdir:str) -> None:
     with open(outdir, 'w') as f:
         json.dump(main_estimate, f,
             indent=4,
