@@ -107,7 +107,7 @@ def main():
 	n_neutrinos = args.n_neutrinos
 	site_interactions = args.site_inter
 	
-	hamiltonian = generate_forward_scattering(int(np.ceil(np.sqrt(n_neutrinos))), site_interactions)
+	hamiltonian = generate_forward_scattering(int(np.sqrt(n_neutrinos)), site_interactions)
 	
 	evolution_time = np.sqrt(n_neutrinos)
 	h_neutrino_pyliqtr = pyH(hamiltonian)
