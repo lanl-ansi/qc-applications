@@ -36,9 +36,9 @@ def define_forward_scattering_term(n_neutrinos, curr_momentum, neighbor_momentum
     normalized_couplings = normalization_factor*couplings
     return normalized_couplings
 
-def gen_couplings(n_neutrinos: int, curr_coords: tuple[int], neighbor_coords: tuple[int], momentum: dict) -> float:
-    curr_momentum = momentum[curr_coords]
-    neighbor_momentum = momentum[neighbor_coords]
+def gen_couplings(n_neutrinos: int, curr_id: int, neighbor_id: int, momentum: dict) -> float:
+    curr_momentum = momentum[curr_id]
+    neighbor_momentum = momentum[neighbor_id]
     return define_forward_scattering_term(
         n_neutrinos=n_neutrinos,
         curr_momentum=curr_momentum,
@@ -62,34 +62,28 @@ def nx_heisenberg_terms(g:nx.Graph) -> list:
 def generate_heisenberg_graph(n_neutrinos: int, site_interaction:float=0) -> nx.Graph:
     graph = nx.Graph()
     momentum = {}
-    for i in range(n_neutrinos):
-        for j in range(n_neutrinos):
-            coords = (i, j)
-            graph.add_node(coords, weight=site_interaction)
-            momentum[coords] = generate_spherical_momentum()
+    seen = {}
+    node_id = 0
+    for _ in range(n_neutrinos):
+        graph.add_node(node_id, weight=site_interaction)
+        momentum[node_id] = generate_spherical_momentum()
+        seen[node_id] = []
+        node_id += 1
 
     for node in graph.nodes:
-        r, c = node
-        coords = (r, c)
-        if (r, c+1) in graph:
-            neighbor_coords = (r, c+1)
-            coupling_terms = gen_couplings(
-                n_neutrinos=len(graph.nodes),
-                curr_coords=coords,
-                neighbor_coords=neighbor_coords,
-                momentum=momentum
-            )
-            graph.add_edge(node, (r, c+1), weight=coupling_terms)
-
-        if (r+1, c) in graph:
-            neighbor_coords = (r+1, c)
-            coupling_terms = gen_couplings(
-                n_neutrinos=len(graph.nodes),
-                curr_coords=coords,
-                neighbor_coords=neighbor_coords,
-                momentum=momentum
-            )
-            graph.add_edge(node, (r+1, c), weight=coupling_terms)
+        curr_id = node
+        for neighbor in graph.nodes:
+            neighbor_id = neighbor
+            if neighbor != node and curr_id not in seen[neighbor_id] and neighbor_id not in seen[curr_id]:
+                coupling_terms = gen_couplings(
+                    n_neutrinos = n_neutrinos,
+                    curr_id = curr_id,
+                    neighbor_id = neighbor_id,
+                    momentum=momentum
+                )
+                graph.add_edge(node, neighbor, weight=coupling_terms)
+                seen[curr_id].append(neighbor_id)
+                seen[neighbor_id].append(curr_id)
     return graph
 
 def generate_forward_scattering(n_neutrinos: int, site_interactions:float=0):
@@ -107,7 +101,7 @@ def main():
     n_neutrinos = args.n_neutrinos
     num_steps = args.trotter_steps
     site_interactions = args.site_inter
-    hamiltonian = generate_forward_scattering(int(np.sqrt(n_neutrinos)), site_interactions)
+    hamiltonian = generate_forward_scattering(n_neutrinos, site_interactions)
 	
     evolution_time = np.sqrt(n_neutrinos)
     h_neutrino_pyliqtr = pyH(hamiltonian)
