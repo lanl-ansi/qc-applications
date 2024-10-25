@@ -189,6 +189,7 @@ def gsee_resource_estimation(
         bits_precision:int,
         phase_offset:float,
         circuit_name:str='Hamiltonian',
+        is_extrapolated:bool=False,
         include_nested_resources:bool=True,
         metadata:EstimateMetaData=None,
         include_classical_bits:bool=False,

@@ -221,6 +221,7 @@ def circuit_estimate(
         algo_name: str,
         include_nested_resources:bool,
         bits_precision:int=1,
+        is_extrapolated:bool=False,
         write_circuits:bool = False
     ) -> dict:
     if not os.path.exists(outdir):
@@ -270,7 +271,7 @@ def circuit_estimate(
         subcircuit_name = subcircuit_counts[gate][2]
         resource_estimate = gen_resource_estimate(
             subcircuit,
-            is_extrapolated=False,
+            is_extrapolated=is_extrapolated,
             circ_occurences=occurence,
             bits_precision=bits_precision
         )
