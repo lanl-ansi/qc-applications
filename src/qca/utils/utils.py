@@ -23,6 +23,9 @@ class EstimateMetaData:
     size: str
     task: str
     implementations: str
+    is_extrapolated: bool
+    bits_precision: int
+    trotter_layers: int
     value_per_circuit: float=None
     repetitions_per_application: int=None
 
