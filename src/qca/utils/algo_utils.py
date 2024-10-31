@@ -34,8 +34,9 @@ def estimate_qsp(
     numsteps:int,
     energy_precision:float,
     outdir:str,
-    hamiltonian_name:str='hamiltonian',
     metadata: EstimateMetaData = None,
+    algo_name: str = 'QSP',
+    hamiltonian_name:str='hamiltonian',
     write_circuits:bool=False,
     include_nested_resources:bool=True
 ) -> Circuit:
@@ -58,7 +59,7 @@ def estimate_qsp(
         circuit=qsp_circuit,
         outdir=outdir,
         numsteps=numsteps,
-        algo_name='QSP',
+        algo_name=algo_name,
         write_circuits=write_circuits,
         include_nested_resources=include_nested_resources
     )
@@ -111,10 +112,10 @@ def estimate_trotter(
     outdir:str,
     trotter_order: int = 2,
     metadata: EstimateMetaData=None,
-    hamiltonian_name:str='hamiltonian',
-    write_circuits:bool=False,
-    is_extrapolated: bool = True,
     algo_name: str = 'TrotterStep',
+    hamiltonian_name:str='hamiltonian',
+    is_extrapolated: bool = True,
+    write_circuits:bool=False,
     nsteps:int=None,
     include_nested_resources:bool=True
 ) -> Circuit:
@@ -192,11 +193,12 @@ def gsee_resource_estimation(
         precision_order:int,
         bits_precision:int,
         phase_offset:float,
+        metadata:EstimateMetaData=None,
+        algo_name='GSEE',
         circuit_name:str='Hamiltonian',
         is_extrapolated:bool=False,
-        algo_name='GSEE',
         include_nested_resources:bool=True,
-        metadata:EstimateMetaData=None,
+
         include_classical_bits:bool=False,
         write_circuits:bool=False
 ) -> Circuit:
