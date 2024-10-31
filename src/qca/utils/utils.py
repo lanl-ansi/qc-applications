@@ -3,7 +3,7 @@ import re
 import json
 import time
 from statistics import median
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import pandas as pd
 
@@ -15,6 +15,7 @@ from pyLIQTR.utils.printing import openqasm
 from pyLIQTR.utils.utils import count_T_gates
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 
+#TODO: Figure out issue with partent class with default values and child classes don't have them
 @dataclass
 class EstimateMetaData:
     id: str
@@ -22,8 +23,8 @@ class EstimateMetaData:
     category: str
     size: str
     task: str
-    value_per_circuit: float=None
-    repetitions_per_application: int=None
+    value_per_circuit: float=field(default=None, kw_only=True)
+    repetitions_per_application: int=field(default=None, kw_only=True)
 
 @dataclass
 class GSEEMetaData(EstimateMetaData):
@@ -31,6 +32,7 @@ class GSEEMetaData(EstimateMetaData):
     evolution_time: float
     bits_precision: int
     trotter_order: int
+    trotter_layers: int
     is_extrapolated: bool
     implementation: str = "GSEE" 
 @dataclass
