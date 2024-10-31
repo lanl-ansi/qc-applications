@@ -8,7 +8,7 @@ import numpy as np
 from pyLIQTR.PhaseEstimation.pe import PhaseEstimation
 from networkx import path_graph, set_node_attributes, get_node_attributes, draw, draw_networkx_edge_labels
 from qca.utils.algo_utils import gsee_resource_estimation
-from qca.utils.utils import circuit_estimate, EstimateMetaData
+from qca.utils.utils import circuit_estimate, GSEEMetaData
 from qca.utils.hamiltonian_utils import (generate_two_orbital_nx, nx_to_two_orbital_hamiltonian,
                                          dicke_model_qubit_hamiltonian)
 
@@ -56,18 +56,23 @@ def main(args):
     print('starting')
     value_per_circuit = value/repetitions
     value_per_circuit=6
-    dicke_metadata = EstimateMetaData(
+    #TODO: See if I need to refactor the size string to include the variable names
+    dicke_metadata = GSEEMetaData(
         id=time.time_ns(),
         name=name,
         category='scientific',
         size=f'{n_b} + 1 + {n_s}',
         task='Ground State Energy Estimation',
-        implementations=f'GSEE, evolution_time={t_dicke}, trotter_order={trotter_order_dicke}, n_s={n_s}, n_b={n_b}',
+        value_per_circuit=value_per_circuit,
+        repetitions_per_application=repetitions,
+
+        
+        evolution_time=t_dicke,
+        trotter_order = trotter_order_dicke,
         is_extrapolated=is_extrapolated,
         bits_precision = bits_precision_dicke,
         trotter_layers=trotter_steps_dicke,
-        value_per_circuit=value_per_circuit,
-        repetitions_per_application=repetitions
+        implementation='GSEE'
     )
 
     print('Estimating Dicke')
