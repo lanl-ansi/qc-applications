@@ -194,6 +194,7 @@ def gsee_resource_estimation(
         phase_offset:float,
         circuit_name:str='Hamiltonian',
         is_extrapolated:bool=False,
+        algo_name='GSEE',
         include_nested_resources:bool=True,
         metadata:EstimateMetaData=None,
         include_classical_bits:bool=False,
@@ -214,13 +215,12 @@ def gsee_resource_estimation(
     gse_circuit.generate_circuit()
     pe_circuit = gse_circuit.pe_circuit
 
-   #TODO: Fix Hardcoding if is_extrapolated and algo_name 
     t0 = time.perf_counter()
     logical_re = circuit_estimate(
         circuit=pe_circuit,
         outdir=outdir,
         numsteps=numsteps,
-        algo_name='GSEE',
+        algo_name=algo_name,
         include_nested_resources=include_nested_resources,
         bits_precision=bits_precision,
         is_extrapolated=is_extrapolated,
