@@ -22,12 +22,33 @@ class EstimateMetaData:
     category: str
     size: str
     task: str
-    implementations: str
-    is_extrapolated: bool
-    bits_precision: int
-    trotter_layers: int
     value_per_circuit: float=None
     repetitions_per_application: int=None
+
+@dataclass
+class GSEEMetaData(EstimateMetaData):
+    
+    evolution_time: float
+    bits_precision: int
+    trotter_order: int
+    is_extrapolated: bool
+    implementation: str = "GSEE" 
+@dataclass
+class TrotterizationMetaData(EstimateMetaData):
+    evolution_time: float #NOTE: This is JT in the current implementation
+    trotter_layers: int
+    trotter_order: int
+    energy_precision: float
+    is_extrapolated:bool
+    implementation: str= "Trotterization"
+
+@dataclass
+class QSPMetaData(EstimateMetaData):
+    evolution_time: float #NOTE: This is JT in the current implementation
+    trotter_layers: int
+    trotter_order: int
+    energy_precision: float
+    implementation:str = "QSP"
 
 def count_gates(cpt_circuit: cirq.AbstractCircuit) -> int:
     count = 0
