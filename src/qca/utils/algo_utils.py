@@ -25,7 +25,10 @@ from qca.utils.utils import (
     write_qasm,
     circuit_estimate,
     estimate_cpt_resources,
-    EstimateMetaData
+    EstimateMetaData,
+    GSEEMetaData,
+    TrotterizationMetaData,
+    QSPMetaData
 )
 
 def estimate_qsp(
@@ -34,7 +37,7 @@ def estimate_qsp(
     numsteps:int,
     energy_precision:float,
     outdir:str,
-    metadata: EstimateMetaData = None,
+    metadata: QSPMetaData = None,
     algo_name: str = 'QSP',
     hamiltonian_name:str='hamiltonian',
     write_circuits:bool=False,
@@ -111,7 +114,7 @@ def estimate_trotter(
     energy_precision: float,
     outdir:str,
     trotter_order: int = 2,
-    metadata: EstimateMetaData=None,
+    metadata: TrotterizationMetaData=None,
     algo_name: str = 'TrotterStep',
     hamiltonian_name:str='hamiltonian',
     is_extrapolated: bool = True,
@@ -193,7 +196,7 @@ def gsee_resource_estimation(
         precision_order:int,
         bits_precision:int,
         phase_offset:float,
-        metadata:EstimateMetaData=None,
+        metadata:GSEEMetaData=None,
         algo_name='GSEE',
         circuit_name:str='Hamiltonian',
         is_extrapolated:bool=False,
