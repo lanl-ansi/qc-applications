@@ -9,7 +9,7 @@ import math
 from pyLIQTR.PhaseEstimation.pe import PhaseEstimation
 from networkx import get_node_attributes, draw, draw_networkx_edge_labels
 from qca.utils.algo_utils import gsee_resource_estimation
-from qca.utils.utils import circuit_estimate, EstimateMetaData
+from qca.utils.utils import circuit_estimate, GSEEMetaData
 from qca.utils.hamiltonian_utils import generate_two_orbital_nx, nx_to_two_orbital_hamiltonian
 
 ## Two band
@@ -30,6 +30,7 @@ def main(args):
     repetitions = args.repetitions
     directory = args.directory
     name = args.name
+    is_extrapolated=args.extrapolate
 
     bits_precision = estimate_bits_precision(args.error_precision)
     g = generate_two_orbital_nx(lattice_size,lattice_size)
@@ -40,15 +41,15 @@ def main(args):
     E_min = -len(ham.terms) * max(abs(t1), abs(t2), abs(t3), abs(t4), abs(mu))
     E_max = 0
     omega = E_max-E_min
-    t = 2*np.pi/omega
-    phase_offset = E_max*t
+    evolution_time = 2*np.pi/omega
+    phase_offset = E_max*evolution_time
 
     init_state = [0] * n_qubits
 
     gsee_args = {
         'trotterize' : True,
         'mol_ham'    : ham,
-        'ev_time'    : t,
+        'ev_time'    : evolution_time,
         'trot_ord'   : trotter_order,
         'trot_num'   : 1 #Accounted for in a scaling argument later
     }
@@ -56,7 +57,7 @@ def main(args):
 
     print('starting')
 
-    metadata = EstimateMetaData(
+    metadata = GSEEMetaData(
         id=time.time_ns(),
         name=name,
         category='scientific',
@@ -64,7 +65,13 @@ def main(args):
         task='Ground State Energy Estimation',
         value_per_circuit=value,
         repetitions_per_application=repetitions,
-        implementations=f'GSEE, evolution_time={t}, bits_precision={bits_precision}, trotter_order={trotter_order}',
+
+        evolution_time=evolution_time,
+        trotter_order=trotter_order,
+        is_extrapolated=is_extrapolated,
+        bits_precision=bits_precision,
+        trotter_layers=trotter_steps,
+        implementation="GSEE"
     )
 
     print('Estimating Circuit Resources')
@@ -104,6 +111,7 @@ def parse_arguments():
     parser.add_argument('-v', '--value', type=float, default=0, help='value of the total application')
     parser.add_argument('-r', '--repetitions', type=int, default=1, help='repetitions needed to achieve value of computatation (not runs of this script)')
     parser.add_argument('-c', '--circuit_write', default=False, action='store_true')
+    parser.add_argument('-x', '--extrapolate', default=False, action='store_true')
     return parser
 
 if __name__ == "__main__":
