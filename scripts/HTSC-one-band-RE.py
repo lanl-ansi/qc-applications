@@ -83,6 +83,7 @@ def main(args):
             bits_precision=bits_precision,
             circuit_name=name,
             metadata=metadata,
+            is_extrapolated=is_extrapolated,
             write_circuits=args.circuit_write)
     t1 = time.perf_counter()
     print(f'Time to estimate one_band: {t1-t0}')

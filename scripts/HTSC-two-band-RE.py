@@ -85,6 +85,7 @@ def main(args):
             phase_offset=phase_offset,
             bits_precision=bits_precision,
             circuit_name=name,
+            is_extrapolated=is_extrapolated,
             metadata=metadata,
             write_circuits=args.circuit_write)
     t1 = time.perf_counter()
