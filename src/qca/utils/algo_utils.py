@@ -109,9 +109,12 @@ def estimate_trotter(
     evolution_time: float,
     energy_precision: float,
     outdir:str,
+    trotter_order: int = 2,
     metadata: EstimateMetaData=None,
     hamiltonian_name:str='hamiltonian',
     write_circuits:bool=False,
+    is_extrapolated: bool = True,
+    algo_name: str = 'TrotterStep',
     nsteps:int=None,
     include_nested_resources:bool=True
 ) -> Circuit:
@@ -119,6 +122,7 @@ def estimate_trotter(
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
+    #TODO: Modify MetaData object in this case
     if not nsteps:
         t0 = time.perf_counter()
         bounded_error = error_bound(list(openfermion_hamiltonian.get_operators()),tight=False)
@@ -134,10 +138,10 @@ def estimate_trotter(
     t1 = time.perf_counter()
     elapsed = t1 - t0
     print(f'Time to find term ordering: {elapsed} seconds')
-
     t0 = time.perf_counter()
+    #generates the circuit for a single trotter step and extrapolates the rest
     trotter_circuit_of = trotterize_exp_qubop_to_qasm(openfermion_hamiltonian,
-                                                      trotter_order=2,
+                                                      trotter_order=trotter_order,
                                                       evolution_time=evolution_time/nsteps,
                                                       term_ordering=term_ordering)
     t1 = time.perf_counter()
@@ -167,8 +171,8 @@ def estimate_trotter(
     logical_re = estimate_cpt_resources(
         cpt_circuit=cpt_trotter,
         outdir=outdir,
-        is_extrapolated=True,
-        algo_name='TrotterStep',
+        is_extrapolated=is_extrapolated,
+        algo_name= algo_name,
         trotter_steps=nsteps,
         include_nested_resources=include_nested_resources
     )
@@ -210,6 +214,7 @@ def gsee_resource_estimation(
     gse_circuit.generate_circuit()
     pe_circuit = gse_circuit.pe_circuit
 
+   #TODO: Fix Hardcoding if is_extrapolated and algo_name 
     t0 = time.perf_counter()
     logical_re = circuit_estimate(
         circuit=pe_circuit,
@@ -218,6 +223,7 @@ def gsee_resource_estimation(
         algo_name='GSEE',
         include_nested_resources=include_nested_resources,
         bits_precision=bits_precision,
+        is_extrapolated=is_extrapolated,
         write_circuits=write_circuits
     )
     outfile = f'{outdir}{circuit_name}_re.json'
