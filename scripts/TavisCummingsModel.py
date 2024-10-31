@@ -8,7 +8,7 @@ import numpy as np
 from pyLIQTR.PhaseEstimation.pe import PhaseEstimation
 from networkx import path_graph, set_node_attributes, get_node_attributes, draw, draw_networkx_edge_labels
 from qca.utils.algo_utils import gsee_resource_estimation
-from qca.utils.utils import circuit_estimate, EstimateMetaData
+from qca.utils.utils import circuit_estimate, GSEEMetaData
 from qca.utils.hamiltonian_utils import (generate_two_orbital_nx, nx_to_two_orbital_hamiltonian,
                                          tavis_cummings_model_qubit_hamiltonian)
 
@@ -29,6 +29,7 @@ def main(args):
     value = args.value
     repetitions = args.repetitions
     circuit_write = args.circuit_write
+    is_extrapolated = args.extrapolate
 
     ham_tavis_cummings = tavis_cummings_model_qubit_hamiltonian(n_s = n_s, n_b = n_b, omega_c = omega_c, omega_o = omega_o, lam = lam)
 
@@ -53,15 +54,22 @@ def main(args):
 
     print('starting')
     value_per_circuit = value/repetitions
-    tavis_cummings_metadata = EstimateMetaData(
+    tavis_cummings_metadata = GSEEMetaData(
         id=time.time_ns(),
         name=name,
         category='scientific',
         size=f'{n_b} + 1 + {n_s}',
         task='Ground State Energy Estimation',
-        implementations=f'GSEE, evolution_time={t_tavis_cummings}, bits_precision={bits_precision_tavis_cummings}, trotter_order={trotter_order_tavis_cummings}, n_s={n_s}, n_b={n_b}',
         value_per_circuit=value_per_circuit,
-        repetitions_per_application=repetitions
+        repetitions_per_application=repetitions,
+
+        
+        evolution_time=t_tavis_cummings,
+        trotter_order = trotter_order_tavis_cummings,
+        is_extrapolated=is_extrapolated,
+        bits_precision = bits_precision_tavis_cummings,
+        trotter_layers=trotter_steps_tavis_cummings,
+        implementation='GSEE'
     )
 
     print('Estimating tavis_cummings')
@@ -76,6 +84,7 @@ def main(args):
         bits_precision=bits_precision_tavis_cummings,
         circuit_name=name,
         metadata = tavis_cummings_metadata,
+        is_extrapolated=is_extrapolated,
         write_circuits=circuit_write
     )
     t1 = time.perf_counter()
@@ -103,6 +112,7 @@ def parse_arguments():
     parser.add_argument('-v', '--value', type=float, default=0, help='value of the total application')
     parser.add_argument('-r', '--repetitions', type=int, default=1, help='repetitions needed to achieve value of computatation (not runs of this script)')
     parser.add_argument('-c', '--circuit_write', default=False, action='store_true')
+    parser.add_argument('-x', '--extrapolate', default=False, action='store_true')
     return parser
 
 if __name__ == "__main__":
