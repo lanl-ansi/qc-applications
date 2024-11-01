@@ -28,27 +28,26 @@ class EstimateMetaData:
 
 @dataclass
 class GSEEMetaData(EstimateMetaData):
-    
     evolution_time: float
     bits_precision: int
     trotter_order: int
-    trotter_layers: int
+    nsteps: int
     is_extrapolated: bool
     implementation: str = "GSEE" 
 #TODO: Potentially add gate_synth_accuracy to the following two dataclasses
 @dataclass
 class TrotterizationMetaData(EstimateMetaData):
     evolution_time: float #NOTE: This is JT in the current implementation
-    trotter_layers: int
     trotter_order: int
     energy_precision: float
     is_extrapolated:bool
+    nsteps: int=None
     implementation: str= "Trotterization"
 
 @dataclass
 class QSPMetaData(EstimateMetaData):
     evolution_time: float #NOTE: This is JT in the current implementation
-    trotter_layers: int
+    nsteps: int
     energy_precision: float
     implementation:str = "QSP"
 
