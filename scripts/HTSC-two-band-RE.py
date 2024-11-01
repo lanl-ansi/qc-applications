@@ -70,7 +70,7 @@ def main(args):
         trotter_order=trotter_order,
         is_extrapolated=is_extrapolated,
         bits_precision=bits_precision,
-        trotter_layers=trotter_steps,
+        nsteps=trotter_steps,
         implementation="GSEE"
     )
 
@@ -78,7 +78,7 @@ def main(args):
     t0 = time.perf_counter()
     estimate = gsee_resource_estimation(
             outdir=directory,
-            numsteps=trotter_steps,
+            nsteps=trotter_steps,
             gsee_args=gsee_args,
             init_state=init_state,
             precision_order=1,

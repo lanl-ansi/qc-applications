@@ -68,7 +68,7 @@ def main(args):
         trotter_order = trotter_order_tavis_cummings,
         is_extrapolated=is_extrapolated,
         bits_precision = bits_precision_tavis_cummings,
-        trotter_layers=trotter_steps_tavis_cummings,
+        nsteps=trotter_steps_tavis_cummings,
         implementation='GSEE'
     )
 
@@ -76,7 +76,7 @@ def main(args):
     t0 = time.perf_counter()
     estimate = gsee_resource_estimation(
         outdir=directory,
-        numsteps=trotter_steps_tavis_cummings,
+        nsteps=trotter_steps_tavis_cummings,
         gsee_args=args_tavis_cummings,
         init_state=init_state_tavis_cummings,
         precision_order=1, #actual precision bits accounted as scaling factors in the resource estimate

@@ -34,7 +34,7 @@ from qca.utils.utils import (
 def estimate_qsp(
     pyliqtr_hamiltonian: Hamiltonian,
     evolution_time:float,
-    numsteps:int,
+    nsteps:int,
     energy_precision:float,
     outdir:str,
     metadata: QSPMetaData = None,
@@ -43,7 +43,7 @@ def estimate_qsp(
     write_circuits:bool=False,
     include_nested_resources:bool=True
 ) -> Circuit:
-    timestep_of_interest=evolution_time/numsteps
+    timestep_of_interest=evolution_time/nsteps
     random.seed(0)
     np.random.seed(0)
     t0 = time.perf_counter()
@@ -61,7 +61,7 @@ def estimate_qsp(
     logical_re = circuit_estimate(
         circuit=qsp_circuit,
         outdir=outdir,
-        numsteps=numsteps,
+        numsteps=nsteps,
         algo_name=algo_name,
         write_circuits=write_circuits,
         include_nested_resources=include_nested_resources
@@ -190,7 +190,7 @@ def estimate_trotter(
 
 def gsee_resource_estimation(
         outdir:str,
-        numsteps:int,
+        nsteps:int,
         gsee_args:dict,
         init_state:list,
         precision_order:int,
@@ -224,7 +224,7 @@ def gsee_resource_estimation(
     logical_re = circuit_estimate(
         circuit=pe_circuit,
         outdir=outdir,
-        numsteps=numsteps,
+        numsteps=nsteps,
         algo_name=algo_name,
         include_nested_resources=include_nested_resources,
         bits_precision=bits_precision,

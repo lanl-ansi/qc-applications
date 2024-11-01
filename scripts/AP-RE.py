@@ -4,6 +4,8 @@ from argparse import ArgumentParser, Namespace
 from concurrent.futures import ThreadPoolExecutor, as_completed, ProcessPoolExecutor
 from qca.utils.chemistry_utils import load_pathway, generate_electronic_hamiltonians, gsee_molecular_hamiltonian
 
+#TODO: Integrate the MetaData classes into this functionality
+
 @dataclass
 class pathway_info:
     pathway: list[int]
