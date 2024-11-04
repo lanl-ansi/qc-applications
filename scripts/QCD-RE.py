@@ -12,16 +12,16 @@ from pyLIQTR.utils.Hamiltonian import Hamiltonian as pyH
 def parse_args():
 	parser = ArgumentParser(prog='QCD Resource Estimate Generator')
 	parser.add_argument('-N', '--n_neutrinos', type=int, help='Number of neutrinos in the forward scattering model')
-	parser.add_argument('-T', '--trotter_steps', type=int, default=1, help='Number of trotter steps')
+	parser.add_argument('-T', '--trotter_steps', type=int, default=None, help='Number of trotter steps')
 	parser.add_argument('-d', '--directory', type=str, default='./', help='output file directory')
 	parser.add_argument('-S', '--site_inter', type=float, default=0.0, help='site interaction terms')
 	return parser.parse_args()
 
 def generate_spherical_momentum() -> list[float]:
     rng = np.random.default_rng()
-    x = np.exp(-rng.normal()**2)
-    y = np.exp(-rng.normal()**2)
-    z = np.exp(-rng.normal()**2)
+    x = rng.normal(0, 1)
+    y = rng.normal(0, 1)
+    z = rng.normal(0, 1)
     constant = 1/(np.sqrt(x**2 + y**2 + z**2))
     ith_momentum = [
         constant*x,
@@ -36,9 +36,9 @@ def define_forward_scattering_term(n_neutrinos, curr_momentum, neighbor_momentum
     normalized_couplings = normalization_factor*couplings
     return normalized_couplings
 
-def gen_couplings(n_neutrinos: int, curr_coords: tuple[int], neighbor_coords: tuple[int], momentum: dict) -> float:
-    curr_momentum = momentum[curr_coords]
-    neighbor_momentum = momentum[neighbor_coords]
+def gen_couplings(n_neutrinos: int, curr_id: int, neighbor_id: int, momentum: dict) -> float:
+    curr_momentum = momentum[curr_id]
+    neighbor_momentum = momentum[neighbor_id]
     return define_forward_scattering_term(
         n_neutrinos=n_neutrinos,
         curr_momentum=curr_momentum,
@@ -62,34 +62,28 @@ def nx_heisenberg_terms(g:nx.Graph) -> list:
 def generate_heisenberg_graph(n_neutrinos: int, site_interaction:float=0) -> nx.Graph:
     graph = nx.Graph()
     momentum = {}
-    for i in range(n_neutrinos):
-        for j in range(n_neutrinos):
-            coords = (i, j)
-            graph.add_node(coords, weight=site_interaction)
-            momentum[coords] = generate_spherical_momentum()
+    seen = {}
+    node_id = 0
+    for _ in range(n_neutrinos):
+        graph.add_node(node_id, weight=site_interaction)
+        momentum[node_id] = generate_spherical_momentum()
+        seen[node_id] = []
+        node_id += 1
 
     for node in graph.nodes:
-        r, c = node
-        coords = (r, c)
-        if (r, c+1) in graph:
-            neighbor_coords = (r, c+1)
-            coupling_terms = gen_couplings(
-                n_neutrinos=len(graph.nodes),
-                curr_coords=coords,
-                neighbor_coords=neighbor_coords,
-                momentum=momentum
-            )
-            graph.add_edge(node, (r, c+1), weight=coupling_terms)
-
-        if (r+1, c) in graph:
-            neighbor_coords = (r+1, c)
-            coupling_terms = gen_couplings(
-                n_neutrinos=len(graph.nodes),
-                curr_coords=coords,
-                neighbor_coords=neighbor_coords,
-                momentum=momentum
-            )
-            graph.add_edge(node, (r+1, c), weight=coupling_terms)
+        curr_id = node
+        for neighbor in graph.nodes:
+            neighbor_id = neighbor
+            if neighbor != node and curr_id not in seen[neighbor_id] and neighbor_id not in seen[curr_id]:
+                coupling_terms = gen_couplings(
+                    n_neutrinos = n_neutrinos,
+                    curr_id = curr_id,
+                    neighbor_id = neighbor_id,
+                    momentum=momentum
+                )
+                graph.add_edge(node, neighbor, weight=coupling_terms)
+                seen[curr_id].append(neighbor_id)
+                seen[neighbor_id].append(curr_id)
     return graph
 
 def generate_forward_scattering(n_neutrinos: int, site_interactions:float=0):
@@ -103,22 +97,24 @@ def generate_forward_scattering(n_neutrinos: int, site_interactions:float=0):
 
 	
 def main():
-	args = parse_args()
-	n_neutrinos = args.n_neutrinos
-	site_interactions = args.site_inter
+    args = parse_args()
+    n_neutrinos = args.n_neutrinos
+    num_steps = args.trotter_steps
+    site_interactions = args.site_inter
+    hamiltonian = generate_forward_scattering(n_neutrinos, site_interactions)
 	
-	hamiltonian = generate_forward_scattering(int(np.sqrt(n_neutrinos)), site_interactions)
-	
-	evolution_time = np.sqrt(n_neutrinos)
-	h_neutrino_pyliqtr = pyH(hamiltonian)
-	qb_op_hamiltonian = pyliqtr_hamiltonian_to_openfermion_qubit_operator(h_neutrino_pyliqtr)
-	estimate_trotter(
+    evolution_time = np.sqrt(n_neutrinos)
+    h_neutrino_pyliqtr = pyH(hamiltonian)
+    qb_op_hamiltonian = pyliqtr_hamiltonian_to_openfermion_qubit_operator(h_neutrino_pyliqtr)
+
+    fname = f'{num_steps}_step_fs_{n_neutrinos}' if num_steps else f'estimated_fs_{n_neutrinos}'
+    estimate_trotter(
     	qb_op_hamiltonian,
     	evolution_time,
     	1e-3,
     	'QCD/',
-    	hamiltonian_name=f'single_step_fs_{n_neutrinos}',
-    	nsteps=1
+    	hamiltonian_name=fname,
+    	nsteps=num_steps
 	)
 
 if __name__ == '__main__':
