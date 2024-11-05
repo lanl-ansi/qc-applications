@@ -126,7 +126,6 @@ def estimate_trotter(
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
-    #TODO: Modify MetaData object in this case
     if not nsteps:
         t0 = time.perf_counter()
         bounded_error = error_bound(list(openfermion_hamiltonian.get_operators()),tight=False)
@@ -136,6 +135,7 @@ def estimate_trotter(
         t1 = time.perf_counter()
         elapsed = t1 - t0
         print(f'Time to estimate number of trotter steps required ({nsteps}): {elapsed} seconds')
+        metadata.nsteps=nsteps
 
     t0 = time.perf_counter()
     term_ordering = find_hamiltonian_ordering(openfermion_hamiltonian)
