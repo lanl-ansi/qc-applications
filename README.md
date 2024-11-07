@@ -1,10 +1,8 @@
-![pylint](https://img.shields.io/badge/PyLint-9.42-yellow?logo=python&logoColor=white)
+![pylint](https://img.shields.io/badge/PyLint-9.29-yellow?logo=python&logoColor=white)
 
 # Quantum Computing Application Specifications
 
-This projct focuses on the documentation of applications for Quantum Computers. Currently, we have four notebooks exploring four different applications, which can be found in
-the notebooks/ directory. For taking a look at notebooks that are going through ongoing development, one can take a look at the `notebook/exotic-phases-nb` and `notebook/dicke-model-nb`
-branches.
+This projct focuses on the documentation of applications for Quantum Computers.
 
 # Citation
 
