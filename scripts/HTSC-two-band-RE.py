@@ -71,7 +71,6 @@ def main(args):
         is_extrapolated=is_extrapolated,
         bits_precision=bits_precision,
         nsteps=trotter_steps,
-        implementation="GSEE"
     )
 
     print('Estimating Circuit Resources')

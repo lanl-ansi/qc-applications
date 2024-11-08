@@ -212,7 +212,6 @@ def generate_rucl_re(
             trotter_order = trotter_order,
             energy_precision=energy_precision,
             is_extrapolated=is_extrapolated,
-            implementation = 'Trotterization' 
         )
         estimate_trotter(
             openfermion_hamiltonian=openfermion_hamiltonian_rucl,
@@ -237,7 +236,6 @@ def generate_rucl_re(
             evolution_time = evolution_time, 
             nsteps = nsteps,
             energy_precision=energy_precision,
-            implementation = 'Trotterization' 
         )
 
         estimate_qsp(

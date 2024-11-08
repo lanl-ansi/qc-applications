@@ -72,7 +72,6 @@ def main(args):
         is_extrapolated=is_extrapolated,
         bits_precision = bits_precision_dicke,
         nsteps=trotter_steps_dicke,
-        implementation='GSEE'
     )
 
     print('Estimating Dicke')

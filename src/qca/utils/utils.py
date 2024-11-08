@@ -33,7 +33,7 @@ class GSEEMetaData(EstimateMetaData):
     trotter_order: int
     nsteps: int
     is_extrapolated: bool
-    implementation: str = "GSEE" 
+    
 #TODO: Potentially add gate_synth_accuracy to the following two dataclasses
 @dataclass
 class TrotterizationMetaData(EstimateMetaData):
@@ -41,15 +41,13 @@ class TrotterizationMetaData(EstimateMetaData):
     trotter_order: int
     energy_precision: float
     is_extrapolated:bool
-    nsteps: int=None
-    implementation: str= "Trotterization"
+    nsteps: int=None 
 
 @dataclass
 class QSPMetaData(EstimateMetaData):
     evolution_time: float #NOTE: This is JT in the current implementation
     nsteps: int
     energy_precision: float
-    implementation:str = "QSP"
 
 def count_gates(cpt_circuit: cirq.AbstractCircuit) -> int:
     count = 0

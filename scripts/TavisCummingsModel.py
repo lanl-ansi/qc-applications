@@ -68,8 +68,7 @@ def main(args):
         trotter_order = trotter_order_tavis_cummings,
         is_extrapolated=is_extrapolated,
         bits_precision = bits_precision_tavis_cummings,
-        nsteps=trotter_steps_tavis_cummings,
-        implementation='GSEE'
+        nsteps=trotter_steps_tavis_cummings, 
     )
 
     print('Estimating tavis_cummings')
