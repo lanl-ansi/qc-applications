@@ -37,7 +37,7 @@ def estimate_qsp(
     nsteps:int,
     energy_precision:float,
     outdir:str,
-    metadata: QSPMetaData = None,
+    metadata: QSPMetaData | None=None,
     algo_name: str = 'QSP',
     hamiltonian_name:str='hamiltonian',
     write_circuits:bool=False,
@@ -114,7 +114,7 @@ def estimate_trotter(
     energy_precision: float,
     outdir:str,
     trotter_order: int = 2,
-    metadata: TrotterizationMetaData=None,
+    metadata: TrotterizationMetaData | None=None,
     algo_name: str = 'TrotterStep',
     hamiltonian_name:str='hamiltonian',
     is_extrapolated: bool = True,
@@ -196,7 +196,7 @@ def gsee_resource_estimation(
         precision_order:int,
         bits_precision:int,
         phase_offset:float,
-        metadata:GSEEMetaData=None,
+        metadata:GSEEMetaData | None =None,
         algo_name='GSEE',
         circuit_name:str='Hamiltonian',
         is_extrapolated:bool=False,
@@ -227,8 +227,7 @@ def gsee_resource_estimation(
         numsteps=nsteps,
         algo_name=algo_name,
         include_nested_resources=include_nested_resources,
-        bits_precision=bits_precision,
-        is_extrapolated=is_extrapolated,
+        bits_precision=bits_precision, 
         write_circuits=write_circuits
     )
     outfile = f'{outdir}{circuit_name}_re.json'
