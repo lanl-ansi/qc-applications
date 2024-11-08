@@ -27,7 +27,7 @@ from qca.utils.utils import (
     estimate_cpt_resources,
     EstimateMetaData,
     GSEEMetaData,
-    TrotterizationMetaData,
+    TrotterMetaData,
     QSPMetaData
 )
 
@@ -114,7 +114,7 @@ def estimate_trotter(
     energy_precision: float,
     outdir:str,
     trotter_order: int = 2,
-    metadata: TrotterizationMetaData | None=None,
+    metadata: TrotterMetaData | None=None,
     algo_name: str = 'TrotterStep',
     hamiltonian_name:str='hamiltonian',
     is_extrapolated: bool = True,

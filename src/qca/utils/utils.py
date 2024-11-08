@@ -36,7 +36,7 @@ class GSEEMetaData(EstimateMetaData):
     
 #TODO: Potentially add gate_synth_accuracy to the following two dataclasses
 @dataclass
-class TrotterizationMetaData(EstimateMetaData):
+class TrotterMetaData(EstimateMetaData):
     evolution_time: float #NOTE: This is JT in the current implementation
     trotter_order: int
     energy_precision: float

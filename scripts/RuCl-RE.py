@@ -6,7 +6,7 @@ import networkx as nx
 from networkx import Graph
 from pandas import DataFrame
 from networkx.generators.lattice import hexagonal_lattice_graph
-from qca.utils.utils import TrotterizationMetaData, QSPMetaData
+from qca.utils.utils import TrotterMetaData, QSPMetaData
 from qca.utils.algo_utils import estimate_trotter, estimate_qsp
 from qca.utils.hamiltonian_utils import (
     flatten_nx_graph,
@@ -200,7 +200,7 @@ def generate_rucl_re(
         is_extrapolated=True
 
 
-        trotter_metadata = TrotterizationMetaData(
+        trotter_metadata = TrotterMetaData(
             id=f'{time.time_ns()}',
             name=f'RuCl_row_{rucl_idx}',
             category='scientific',
