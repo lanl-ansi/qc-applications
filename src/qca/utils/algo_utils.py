@@ -109,10 +109,11 @@ def estimate_trotter(
     evolution_time: float,
     energy_precision: float,
     outdir:str,
-    metadata: EstimateMetaData=None,
+    metadata: EstimateMetaData | None =None,
     hamiltonian_name:str='hamiltonian',
     write_circuits:bool=False,
-    nsteps:int=None,
+    nsteps:int | None =None,
+    trotter_order: int | None = 2,
     include_nested_resources:bool=True
 ) -> Circuit:
 
@@ -137,7 +138,7 @@ def estimate_trotter(
 
     t0 = time.perf_counter()
     trotter_circuit_of = trotterize_exp_qubop_to_qasm(openfermion_hamiltonian,
-                                                      trotter_order=2,
+                                                      trotter_order=trotter_order,
                                                       evolution_time=evolution_time/nsteps,
                                                       term_ordering=term_ordering)
     t1 = time.perf_counter()
