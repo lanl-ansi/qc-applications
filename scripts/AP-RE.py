@@ -97,7 +97,7 @@ if __name__ == '__main__':
         )
     ]
     coords_pathways = [
-        load_pathway(pathway_directory+pathway.fname, pathway.pathway) for pathway in pathways
+        load_pathway(pathway.fname, pathway.pathway) for pathway in pathways
     ]
     molecular_hamiltonians = grab_molecular_hamiltonians_pool(
         active_space_reduc=active_space_reduc,
