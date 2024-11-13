@@ -29,10 +29,6 @@ def main(args):
 
     ham = of.fermi_hubbard(lattice_size, lattice_size, tunneling=tunneling, coulomb=coulomb, periodic=False) #returns an aperiodic fermionic hamiltonian
 
-    #TODO: Fix this Hardcoding
-    trotter_order = 2
-    trotter_steps = 1 #Using one trotter step for a strict lower bound with this method
-
     #this scales the circuit depth proportional to 2 ^ bits_precision
     bits_precision = estimate_bits_precision(error_precision)
 
