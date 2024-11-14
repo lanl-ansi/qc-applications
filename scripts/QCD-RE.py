@@ -64,12 +64,10 @@ def nx_heisenberg_terms(g:nx.Graph) -> list:
 def generate_heisenberg_graph(n_neutrinos: int, site_interaction:float=0) -> nx.Graph:
     graph = nx.Graph()
     momentum = {}
-    seen = {}
     node_id = 0
     for _ in range(n_neutrinos):
         graph.add_node(node_id, weight=site_interaction)
         momentum[node_id] = generate_spherical_momentum()
-        seen[node_id] = []
         node_id += 1
 
     for idx, node in enumerate(graph.nodes):
