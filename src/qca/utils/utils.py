@@ -15,7 +15,6 @@ from pyLIQTR.utils.printing import openqasm
 from pyLIQTR.utils.utils import count_T_gates
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 
-#TODO: Figure out issue with partent class with default values and child classes don't have them
 @dataclass
 class EstimateMetaData:
     id: str
@@ -23,8 +22,10 @@ class EstimateMetaData:
     category: str
     size: str
     task: str
-    value_per_circuit: float=field(default=None, kw_only=True)
-    repetitions_per_application: int=field(default=None, kw_only=True)
+    is_extrapolated: bool=field(default=False, kw_only=True)
+    gate_synth_accuracy: float| str | None=field(default='1e-10',kw_only=True)
+    value_per_circuit: float | None=field(default=None, kw_only=True)
+    repetitions_per_application: int | None=field(default=None, kw_only=True)
 
 @dataclass
 class GSEEMetaData(EstimateMetaData):
@@ -32,15 +33,11 @@ class GSEEMetaData(EstimateMetaData):
     bits_precision: int
     trotter_order: int
     nsteps: int
-    is_extrapolated: bool
-    
-#TODO: Potentially add gate_synth_accuracy to the following two dataclasses
 @dataclass
 class TrotterMetaData(EstimateMetaData):
     evolution_time: float #NOTE: This is JT in the current implementation
     trotter_order: int
     energy_precision: float
-    is_extrapolated:bool
     nsteps: int=None 
 
 @dataclass
@@ -48,7 +45,6 @@ class QSPMetaData(EstimateMetaData):
     evolution_time: float #NOTE: This is JT in the current implementation
     nsteps: int
     energy_precision: float
-    implementation:str = "QSP"
 
 def count_gates(cpt_circuit: cirq.AbstractCircuit) -> int:
     count = 0
@@ -138,7 +134,7 @@ def gen_resource_estimate(
     from the circuit and then write it to disk. The function also returns the resource dictionary
     if the user needs it.
 
-    trotter_steps is a flag denoting if the circuit was estimated through trotterization. If so, the
+    total_steps is a flag denoting if the circuit was estimated through trotterization. If so, the
     user should specify the number of steps required.
     '''
     num_qubits = len(cpt_circuit.all_qubits())
