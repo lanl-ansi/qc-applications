@@ -117,9 +117,11 @@ def estimate_trotter(
     outdir:str,
     trotter_order: int = 2,
     metadata: TrotterMetaData | None=None,
+
     hamiltonian_name:str='hamiltonian',
     is_extrapolated: bool = True,
     write_circuits:bool=False,
+
     nsteps:int|None=None,
     include_nested_resources:bool=True
 ) -> Circuit:

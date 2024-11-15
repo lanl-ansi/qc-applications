@@ -199,9 +199,6 @@ def generate_rucl_re(
         H_rucl_pyliqtr = pyH(H_rucl)
         openfermion_hamiltonian_rucl = pyliqtr_hamiltonian_to_openfermion_qubit_operator(H_rucl_pyliqtr)
 
-        #TODO: Handle the Hardcoding here - I just pulled the hardcoded values up from internal functions and centralized them here
-
-
 
         trotter_metadata = TrotterMetaData(
             id=f'{time.time_ns()}',
