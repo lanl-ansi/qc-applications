@@ -221,7 +221,6 @@ def generate_rucl_re(
             metadata=trotter_metadata,
             outdir=outdir,
             trotter_order=trotter_order,
-            gate_synth_accuracy=gate_synth_accuracy,
             hamiltonian_name=f'trotter_rucl_size_{lattice_size}_row_{rucl_idx}',
             nsteps=nsteps,
             is_extrapolated=is_extrapolated
