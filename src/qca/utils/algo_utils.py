@@ -38,7 +38,6 @@ def estimate_qsp(
     energy_precision:float,
     outdir:str,
     metadata: QSPMetaData | None=None,
-    algo_name: str = 'QSP',
     hamiltonian_name:str='hamiltonian',
     write_circuits:bool=False,
     include_nested_resources:bool=True
@@ -62,7 +61,7 @@ def estimate_qsp(
         circuit=qsp_circuit,
         outdir=outdir,
         numsteps=nsteps,
-        algo_name=algo_name,
+        algo_name='QSP',
         write_circuits=write_circuits,
         include_nested_resources=include_nested_resources
     )
@@ -115,11 +114,10 @@ def estimate_trotter(
     outdir:str,
     trotter_order: int = 2,
     metadata: TrotterMetaData | None=None,
-    algo_name: str = 'TrotterStep',
     hamiltonian_name:str='hamiltonian',
     is_extrapolated: bool = True,
     write_circuits:bool=False,
-    nsteps:int=None,
+    nsteps:int|None=None,
     include_nested_resources:bool=True
 ) -> Circuit:
 
@@ -135,7 +133,7 @@ def estimate_trotter(
         t1 = time.perf_counter()
         elapsed = t1 - t0
         print(f'Time to estimate number of trotter steps required ({nsteps}): {elapsed} seconds')
-        metadata.nsteps=nsteps
+    metadata.nsteps=nsteps
 
     t0 = time.perf_counter()
     term_ordering = find_hamiltonian_ordering(openfermion_hamiltonian)
@@ -176,7 +174,7 @@ def estimate_trotter(
         cpt_circuit=cpt_trotter,
         outdir=outdir,
         is_extrapolated=is_extrapolated,
-        algo_name= algo_name,
+        algo_name= 'TrotterStep',
         trotter_steps=nsteps,
         include_nested_resources=include_nested_resources
     )
@@ -197,7 +195,6 @@ def gsee_resource_estimation(
         bits_precision:int,
         phase_offset:float,
         metadata:GSEEMetaData | None =None,
-        algo_name='GSEE',
         circuit_name:str='Hamiltonian',
         is_extrapolated:bool=False,
         include_nested_resources:bool=True,
@@ -225,7 +222,7 @@ def gsee_resource_estimation(
         circuit=pe_circuit,
         outdir=outdir,
         numsteps=nsteps,
-        algo_name=algo_name,
+        algo_name='GSEE',
         include_nested_resources=include_nested_resources,
         bits_precision=bits_precision, 
         write_circuits=write_circuits
