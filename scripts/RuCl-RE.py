@@ -180,6 +180,12 @@ def generate_rucl_re(
     evolution_time:float,
     df_rucl:DataFrame,
     outdir:str) -> None:
+
+    nsteps = 1500000
+    gate_synth_accuracy = 10
+    trotter_order = 2
+    is_extrapolated=True
+
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     for rucl_idx in range(len(df_rucl)):
@@ -194,10 +200,7 @@ def generate_rucl_re(
         openfermion_hamiltonian_rucl = pyliqtr_hamiltonian_to_openfermion_qubit_operator(H_rucl_pyliqtr)
 
         #TODO: Handle the Hardcoding here - I just pulled the hardcoded values up from internal functions and centralized them here
-        nsteps = 1500000
-        gate_synth_accuracy = 1e-10
-        trotter_order = 2
-        is_extrapolated=True
+
 
 
         trotter_metadata = TrotterMetaData(
@@ -207,6 +210,7 @@ def generate_rucl_re(
             size=f'lattice_size: {lattice_size}',
             task='Time-Dependent Dynamics',
 
+            gate_synth_accuracy=gate_synth_accuracy,
             evolution_time = evolution_time, 
             nsteps = nsteps,
             trotter_order = trotter_order,
@@ -220,7 +224,7 @@ def generate_rucl_re(
             metadata=trotter_metadata,
             outdir=outdir,
             trotter_order=trotter_order,
-
+            gate_synth_accuracy=gate_synth_accuracy,
             hamiltonian_name=f'trotter_rucl_size_{lattice_size}_row_{rucl_idx}',
             nsteps=nsteps,
             is_extrapolated=is_extrapolated

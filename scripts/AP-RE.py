@@ -80,19 +80,19 @@ if __name__ == '__main__':
     pathways = [
         pathway_info(
             pathway=[27, 1, 14, 15, 16, 24, 25, 26],
-            fname=pathway_directory+'water_oxidation_Co2O9H12.xyz'
+            fname=f'{pathway_directory}water_oxidation_Co2O9H12.xyz'
         ),
         pathway_info(
             pathway=[3, 1, 14, 15, 16, 20, 21, 22, 23],
-            fname=pathway_directory+'water_oxidation_Co2O9H12.xyz'
+            fname=f'{pathway_directory}water_oxidation_Co2O9H12.xyz'
         ),
         pathway_info(
             pathway=[2, 1, 14, 15, 16, 17, 18, 19],
-            fname=pathway_directory+'water_oxidation_Co2O9H12.xyz'
+            fname='{pathway_directory}water_oxidation_Co2O9H12.xyz'
         ),
         pathway_info(
             pathway=[5, 10, 28, 29, 30, 31, 32, 33],
-            fname=pathway_directory+'water_oxidation_Co2O9H12.xyz'
+            fname='{pathway_directory}water_oxidation_Co2O9H12.xyz'
         )
     ]
     coords_pathways = [
