@@ -23,7 +23,7 @@ class EstimateMetaData:
     size: str
     task: str
     is_extrapolated: bool=field(default=False, kw_only=True)
-    gate_synth_accuracy: float| str | None=field(default='1e-10',kw_only=True)
+    gate_synth_accuracy: int | float = field(default=10,kw_only=True)
     value_per_circuit: float | None=field(default=None, kw_only=True)
     repetitions_per_application: int | None=field(default=None, kw_only=True)
 
@@ -237,6 +237,7 @@ def circuit_estimate(
         numsteps: int,
         algo_name: str,
         include_nested_resources:bool,
+        gate_synth_accuracy: int | float = 10,
         bits_precision:int=1,
         write_circuits:bool = False
     ) -> dict:
@@ -257,7 +258,7 @@ def circuit_estimate(
                 decomposed_elapsed = t1-t0
                 print(f'   Time to decompose high level {gate_type_name} circuit: {decomposed_elapsed} seconds ')
                 t0 = time.perf_counter()
-                cpt_circuit = clifford_plus_t_direct_transform(decomposed_circuit)
+                cpt_circuit = clifford_plus_t_direct_transform(circuit = decomposed_circuit, gate_precision=gate_synth_accuracy)
                 t1 = time.perf_counter()
                 cpt_elapsed = t1-t0
                 print(f'   Time to transform decomposed {gate_type_name} circuit to Clifford+T: {cpt_elapsed} seconds')
@@ -330,7 +331,7 @@ def circuit_estimate(
                 main_estimates['Logical_Abstract']['subcircuit_info'][algo_name]['subcircuit_info'][op_key] = op[op_key]
     return main_estimates
 
-
+#TODO: Implement method to properly format gate_synth_accuracy
 def re_as_json(main_estimate:dict, outdir:str) -> None:
     with open(outdir, 'w') as f:
         json.dump(main_estimate, f,

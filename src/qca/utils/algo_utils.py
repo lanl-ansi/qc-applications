@@ -57,11 +57,14 @@ def estimate_qsp(
     elapsed = t1 - t0
     print(f'Time to generate high level QSP circuit: {elapsed} seconds')
     outfile = f'{outdir}{hamiltonian_name}_re.json'
+
+    gate_synth_accuracy=metadata.gate_synth_accuracy
     logical_re = circuit_estimate(
         circuit=qsp_circuit,
         outdir=outdir,
         numsteps=nsteps,
         algo_name='QSP',
+        gate_synth_accuracy=gate_synth_accuracy,
         write_circuits=write_circuits,
         include_nested_resources=include_nested_resources
     )
@@ -120,7 +123,7 @@ def estimate_trotter(
     nsteps:int|None=None,
     include_nested_resources:bool=True
 ) -> Circuit:
-
+      
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
@@ -150,10 +153,11 @@ def estimate_trotter(
     elapsed = t1 - t0
     print(f'Time to generate trotter circuit from openfermion: {elapsed} seconds')
 
+    gate_synth_accuracy = metadata.gate_synth_accuracy
     qasm_str_trotter = open_fermion_to_qasm(count_qubits(openfermion_hamiltonian), trotter_circuit_of)
     trotter_circuit_qasm = qasm_import.circuit_from_qasm(qasm_str_trotter)
     t0 = time.perf_counter()
-    cpt_trotter = clifford_plus_t_direct_transform(trotter_circuit_qasm)
+    cpt_trotter = clifford_plus_t_direct_transform(circuit=trotter_circuit_qasm, gate_precision=gate_synth_accuracy)
     t1 = time.perf_counter()
     elapsed = t1-t0
     print(f'Time to generate a clifford + T circuit from trotter circuit: {elapsed} seconds')
@@ -217,6 +221,8 @@ def gsee_resource_estimation(
     gse_circuit.generate_circuit()
     pe_circuit = gse_circuit.pe_circuit
 
+    gate_synth_accuracy=metadata.gate_synth_accuracy
+
     t0 = time.perf_counter()
     logical_re = circuit_estimate(
         circuit=pe_circuit,
@@ -224,6 +230,7 @@ def gsee_resource_estimation(
         numsteps=nsteps,
         algo_name='GSEE',
         include_nested_resources=include_nested_resources,
+        gate_synth_accuracy=gate_synth_accuracy,
         bits_precision=bits_precision, 
         write_circuits=write_circuits
     )
