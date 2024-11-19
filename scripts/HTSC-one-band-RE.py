@@ -24,8 +24,6 @@ def main(args):
     directory = args.directory
     value = args.value
     repetitions = args.repetitions
-    circuit_write = args.circuit_write
-    is_extrapolated= args.extrapolate
 
     ham = of.fermi_hubbard(lattice_size, lattice_size, tunneling=tunneling, coulomb=coulomb, periodic=False) #returns an aperiodic fermionic hamiltonian
 
@@ -61,7 +59,6 @@ def main(args):
 
         evolution_time=evolution_time,
         trotter_order=trotter_order,
-        is_extrapolated=is_extrapolated,
         bits_precision=bits_precision,
         nsteps=trotter_steps,
     )
@@ -78,7 +75,6 @@ def main(args):
             bits_precision=bits_precision,
             circuit_name=name,
             metadata=metadata,
-            is_extrapolated=is_extrapolated,
             write_circuits=args.circuit_write)
     t1 = time.perf_counter()
     print(f'Time to estimate one_band: {t1-t0}')
@@ -100,7 +96,7 @@ def parse_arguments():
     parser.add_argument('-v', '--value', type=float, default=0, help='value of the total application')
     parser.add_argument('-r', '--repetitions', type=int, default=1, help='repetitions needed to achieve value of computatation (not runs of this script)')
     parser.add_argument('-c', '--circuit_write', default=False, action='store_true')
-    parser.add_argument('-x', '--extrapolate', default=False, action='store_true')
+
     return parser
 
 if __name__ == "__main__":

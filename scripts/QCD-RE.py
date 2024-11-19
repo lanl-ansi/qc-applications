@@ -106,15 +106,13 @@ def main():
     site_interactions = args.site_inter
     extrapolate = args.extrapolate
 
-    hamiltonian_name='forward_scattering'
-
     hamiltonian = generate_forward_scattering(n_neutrinos, site_interactions)
     
     evolution_time = np.sqrt(n_neutrinos)
     h_neutrino_pyliqtr = pyH(hamiltonian)
     qb_op_hamiltonian = pyliqtr_hamiltonian_to_openfermion_qubit_operator(h_neutrino_pyliqtr)
 
-    fname = f'{num_steps}_step_fs_{n_neutrinos}' if num_steps else f'estimated_fs_{n_neutrinos}'
+    hamiltonian_name = f'{num_steps}_step_fs_{n_neutrinos}' if num_steps else f'estimated_fs_{n_neutrinos}'
     outdir = args.directory
     energy_precision = args.energy_precision
 

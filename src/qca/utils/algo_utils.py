@@ -25,7 +25,6 @@ from qca.utils.utils import (
     write_qasm,
     circuit_estimate,
     estimate_cpt_resources,
-    EstimateMetaData,
     GSEEMetaData,
     TrotterMetaData,
     QSPMetaData
@@ -202,9 +201,7 @@ def gsee_resource_estimation(
         phase_offset:float,
         metadata:GSEEMetaData | None =None,
         circuit_name:str='Hamiltonian',
-        is_extrapolated:bool=False,
         include_nested_resources:bool=True,
-
         include_classical_bits:bool=False,
         write_circuits:bool=False
 ) -> Circuit:

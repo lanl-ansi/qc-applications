@@ -35,7 +35,6 @@ def main(args):
     repetitions = args.repetitions
     directory = args.directory
     name = args.name
-    is_extrapolated = args.extrapolate
 
     bits_precision = estimate_bits_precision(args.error_precision)
     g = generate_three_orbital_nx(lattice_size,lattice_size)
@@ -73,7 +72,6 @@ def main(args):
 
         evolution_time=evolution_time,
         trotter_order=trotter_order,
-        is_extrapolated=is_extrapolated,
         bits_precision=bits_precision,
         nsteps=trotter_steps,
     )
@@ -89,7 +87,6 @@ def main(args):
             phase_offset=phase_offset,
             bits_precision=bits_precision,
             circuit_name=name,
-            is_extrapolated = is_extrapolated,
             metadata=metadata,
             write_circuits=args.circuit_write)
     t1 = time.perf_counter()
@@ -121,7 +118,6 @@ def parse_arguments():
     parser.add_argument('-v', '--value', type=float, default=0, help='value of the total application')
     parser.add_argument('-r', '--repetitions', type=int, default=1, help='repetitions needed to achieve value of computatation (not runs of this script)')
     parser.add_argument('-c', '--circuit_write', default=False, action='store_true')
-    parser.add_argument('-x', '--extrapolate', default=False, action='store_true')
     return parser
 
 if __name__ == "__main__":

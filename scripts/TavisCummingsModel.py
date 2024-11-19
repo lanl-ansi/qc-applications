@@ -66,7 +66,6 @@ def main(args):
         
         evolution_time=t_tavis_cummings,
         trotter_order = trotter_order_tavis_cummings,
-        is_extrapolated=is_extrapolated,
         bits_precision = bits_precision_tavis_cummings,
         nsteps=trotter_steps_tavis_cummings, 
     )
@@ -83,7 +82,6 @@ def main(args):
         bits_precision=bits_precision_tavis_cummings,
         circuit_name=name,
         metadata = tavis_cummings_metadata,
-        is_extrapolated=is_extrapolated,
         write_circuits=circuit_write
     )
     t1 = time.perf_counter()
