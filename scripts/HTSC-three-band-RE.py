@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 
-import os
 import argparse
 import time
-import openfermion as of
 import numpy as np
 import math
-from pyLIQTR.PhaseEstimation.pe import PhaseEstimation
-from networkx import get_node_attributes, draw, draw_networkx_edge_labels
+
 from qca.utils.algo_utils import gsee_resource_estimation
-from qca.utils.utils import circuit_estimate, GSEEMetaData
+from qca.utils.utils import GSEEMetaData
 from qca.utils.hamiltonian_utils import generate_three_orbital_nx, nx_to_three_orbital_hamiltonian
 
 ## Three band
@@ -77,7 +74,7 @@ def main(args):
     )
 
     print('Estimating Circuit Resources')
-    t0 = time.perf_counter()
+    t_start = time.perf_counter()
     estimate = gsee_resource_estimation(
             outdir=directory,
             nsteps=trotter_steps,
@@ -89,7 +86,8 @@ def main(args):
             circuit_name=name,
             metadata=metadata,
             write_circuits=args.circuit_write)
-    t1 = time.perf_counter()
+    t_finish = time.perf_counter()
+    print(f'Time to estimate three_band: {t_finish-t_start}')
     return estimate
 
 def estimate_bits_precision(epsilon):

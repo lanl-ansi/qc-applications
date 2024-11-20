@@ -2,23 +2,18 @@
 import argparse
 import math
 import time
-import openfermion as of
-import cmath
 import numpy as np
-from pyLIQTR.PhaseEstimation.pe import PhaseEstimation
-from networkx import path_graph, set_node_attributes, get_node_attributes, draw, draw_networkx_edge_labels
+
 from qca.utils.algo_utils import gsee_resource_estimation
-from qca.utils.utils import circuit_estimate, GSEEMetaData
-from qca.utils.hamiltonian_utils import (generate_two_orbital_nx, nx_to_two_orbital_hamiltonian,
-                                         tavis_cummings_model_qubit_hamiltonian)
+from qca.utils.utils import GSEEMetaData
+from qca.utils.hamiltonian_utils import tavis_cummings_model_qubit_hamiltonian
 
 def main(args):
     n_s = args.param_n_s
     n_b = args.param_n_b
     omega_c = args.param_omega_c
     omega_o = args.param_omega_o
-    lam = args.param_lambda
-    h_bar = args.param_h_bar  
+    lam = args.param_lambda 
 
     bits_precision_tavis_cummings = estimate_bits_precision(args.error_precision)
     trotter_order_tavis_cummings = args.trotter_order
@@ -29,7 +24,6 @@ def main(args):
     value = args.value
     repetitions = args.repetitions
     circuit_write = args.circuit_write
-    is_extrapolated = args.extrapolate
 
     ham_tavis_cummings = tavis_cummings_model_qubit_hamiltonian(n_s = n_s, n_b = n_b, omega_c = omega_c, omega_o = omega_o, lam = lam)
 

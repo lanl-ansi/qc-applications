@@ -2,15 +2,11 @@
 import argparse
 import math
 import time
-import openfermion as of
-import cmath
 import numpy as np
-from pyLIQTR.PhaseEstimation.pe import PhaseEstimation
-from networkx import path_graph, set_node_attributes, get_node_attributes, draw, draw_networkx_edge_labels
+
 from qca.utils.algo_utils import gsee_resource_estimation
-from qca.utils.utils import circuit_estimate, GSEEMetaData
-from qca.utils.hamiltonian_utils import (generate_two_orbital_nx, nx_to_two_orbital_hamiltonian,
-                                         dicke_model_qubit_hamiltonian)
+from qca.utils.utils import GSEEMetaData
+from qca.utils.hamiltonian_utils import dicke_model_qubit_hamiltonian
 
 
 def main(args):
@@ -19,7 +15,6 @@ def main(args):
     omega_c = args.param_omega_c
     omega_o = args.param_omega_o
     lam = args.param_lambda
-    h_bar = args.param_h_bar  
 
     bits_precision_dicke = estimate_bits_precision(args.error_precision)
     trotter_order_dicke = args.trotter_order
@@ -35,10 +30,12 @@ def main(args):
 
     #this scales the circuit depth proportional to 2 ^ bits_precision
 
-    E_min_dicke = -len(ham_dicke.terms) * max(abs(n_s), abs(n_b), abs(omega_c), abs(omega_o), abs(lam))
+    #E_min_dicke = -len(ham_dicke.terms) * max(abs(n_s), abs(n_b), abs(omega_c), abs(omega_o), abs(lam))
     E_max_dicke = 0
-    dicke_omega = E_max_dicke-E_min_dicke
+
+    #dicke_omega = E_max_dicke-E_min_dicke
     #t_dicke = 2*np.pi/dicke_omega
+
     t_dicke = 2*np.pi/1000
     dicke_phase_offset = E_max_dicke*t_dicke
 
@@ -83,7 +80,6 @@ def main(args):
         phase_offset=dicke_phase_offset,
         bits_precision=bits_precision_dicke,
         circuit_name=name,
-        is_extrapolated = is_extrapolated,
         metadata = dicke_metadata,
         write_circuits=circuit_write
     )

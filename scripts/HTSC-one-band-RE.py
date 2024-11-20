@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 
-import os
 import argparse
 import time
 import openfermion as of
 import numpy as np
 import math
-from pyLIQTR.PhaseEstimation.pe import PhaseEstimation
-from networkx import get_node_attributes, draw, draw_networkx_edge_labels
+
 from qca.utils.algo_utils import gsee_resource_estimation
-from qca.utils.utils import circuit_estimate, GSEEMetaData
-from qca.utils.hamiltonian_utils import generate_two_orbital_nx, nx_to_two_orbital_hamiltonian
+from qca.utils.utils import  GSEEMetaData
 
 def main(args):
     lattice_size = args.lattice_size
