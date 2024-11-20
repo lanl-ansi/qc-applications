@@ -25,21 +25,23 @@ from qca.utils.utils import (
     write_qasm,
     circuit_estimate,
     estimate_cpt_resources,
-    EstimateMetaData
+    GSEEMetaData,
+    TrotterMetaData,
+    QSPMetaData
 )
 
 def estimate_qsp(
     pyliqtr_hamiltonian: Hamiltonian,
     evolution_time:float,
-    numsteps:int,
+    nsteps:int,
     energy_precision:float,
     outdir:str,
+    metadata: QSPMetaData | None=None,
     hamiltonian_name:str='hamiltonian',
-    metadata: EstimateMetaData = None,
     write_circuits:bool=False,
     include_nested_resources:bool=True
 ) -> Circuit:
-    timestep_of_interest=evolution_time/numsteps
+    timestep_of_interest=evolution_time/nsteps
     random.seed(0)
     np.random.seed(0)
     t0 = time.perf_counter()
@@ -54,11 +56,14 @@ def estimate_qsp(
     elapsed = t1 - t0
     print(f'Time to generate high level QSP circuit: {elapsed} seconds')
     outfile = f'{outdir}{hamiltonian_name}_re.json'
+
+    gate_synth_accuracy=metadata.gate_synth_accuracy
     logical_re = circuit_estimate(
         circuit=qsp_circuit,
         outdir=outdir,
-        numsteps=numsteps,
+        numsteps=nsteps,
         algo_name='QSP',
+        gate_synth_accuracy=gate_synth_accuracy,
         write_circuits=write_circuits,
         include_nested_resources=include_nested_resources
     )
@@ -109,14 +114,17 @@ def estimate_trotter(
     evolution_time: float,
     energy_precision: float,
     outdir:str,
-    metadata: EstimateMetaData | None =None,
+    trotter_order: int = 2,
+    metadata: TrotterMetaData | None=None,
+
     hamiltonian_name:str='hamiltonian',
+    is_extrapolated: bool = True,
     write_circuits:bool=False,
-    nsteps:int | None =None,
-    trotter_order: int | None = 2,
+
+    nsteps:int|None=None,
     include_nested_resources:bool=True
 ) -> Circuit:
-
+      
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
@@ -129,14 +137,15 @@ def estimate_trotter(
         t1 = time.perf_counter()
         elapsed = t1 - t0
         print(f'Time to estimate number of trotter steps required ({nsteps}): {elapsed} seconds')
+    metadata.nsteps=nsteps
 
     t0 = time.perf_counter()
     term_ordering = find_hamiltonian_ordering(openfermion_hamiltonian)
     t1 = time.perf_counter()
     elapsed = t1 - t0
     print(f'Time to find term ordering: {elapsed} seconds')
-
     t0 = time.perf_counter()
+    #generates the circuit for a single trotter step and extrapolates the rest
     trotter_circuit_of = trotterize_exp_qubop_to_qasm(openfermion_hamiltonian,
                                                       trotter_order=trotter_order,
                                                       evolution_time=evolution_time/nsteps,
@@ -145,10 +154,11 @@ def estimate_trotter(
     elapsed = t1 - t0
     print(f'Time to generate trotter circuit from openfermion: {elapsed} seconds')
 
+    gate_synth_accuracy = metadata.gate_synth_accuracy
     qasm_str_trotter = open_fermion_to_qasm(count_qubits(openfermion_hamiltonian), trotter_circuit_of)
     trotter_circuit_qasm = qasm_import.circuit_from_qasm(qasm_str_trotter)
     t0 = time.perf_counter()
-    cpt_trotter = clifford_plus_t_direct_transform(trotter_circuit_qasm)
+    cpt_trotter = clifford_plus_t_direct_transform(circuit=trotter_circuit_qasm, gate_precision=gate_synth_accuracy)
     t1 = time.perf_counter()
     elapsed = t1-t0
     print(f'Time to generate a clifford + T circuit from trotter circuit: {elapsed} seconds')
@@ -168,8 +178,8 @@ def estimate_trotter(
     logical_re = estimate_cpt_resources(
         cpt_circuit=cpt_trotter,
         outdir=outdir,
-        is_extrapolated=True,
-        algo_name='TrotterStep',
+        is_extrapolated=is_extrapolated,
+        algo_name= 'TrotterStep',
         trotter_steps=nsteps,
         include_nested_resources=include_nested_resources
     )
@@ -183,15 +193,15 @@ def estimate_trotter(
 
 def gsee_resource_estimation(
         outdir:str,
-        numsteps:int,
+        nsteps:int,
         gsee_args:dict,
         init_state:list,
         precision_order:int,
         bits_precision:int,
         phase_offset:float,
+        metadata:GSEEMetaData | None =None,
         circuit_name:str='Hamiltonian',
         include_nested_resources:bool=True,
-        metadata:EstimateMetaData=None,
         include_classical_bits:bool=False,
         write_circuits:bool=False
 ) -> Circuit:
@@ -210,14 +220,17 @@ def gsee_resource_estimation(
     gse_circuit.generate_circuit()
     pe_circuit = gse_circuit.pe_circuit
 
+    gate_synth_accuracy=metadata.gate_synth_accuracy
+
     t0 = time.perf_counter()
     logical_re = circuit_estimate(
         circuit=pe_circuit,
         outdir=outdir,
-        numsteps=numsteps,
+        numsteps=nsteps,
         algo_name='GSEE',
         include_nested_resources=include_nested_resources,
-        bits_precision=bits_precision,
+        gate_synth_accuracy=gate_synth_accuracy,
+        bits_precision=bits_precision, 
         write_circuits=write_circuits
     )
     outfile = f'{outdir}{circuit_name}_re.json'

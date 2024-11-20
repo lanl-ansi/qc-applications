@@ -4,6 +4,7 @@ from argparse import ArgumentParser, Namespace
 from concurrent.futures import ThreadPoolExecutor, as_completed, ProcessPoolExecutor
 from qca.utils.chemistry_utils import load_pathway, generate_electronic_hamiltonians, gsee_molecular_hamiltonian
 
+
 @dataclass
 class pathway_info:
     pathway: list[int]
@@ -17,6 +18,13 @@ def grab_arguments() -> Namespace:
         type=int,
         help='Factor to reduce the active space',
         default=10
+    )
+    parser.add_argument(
+        '-d', 
+        '--directory', 
+        type=str, 
+        help='Directoty with pathway datafiles.',
+        default='./data/'
     )
     args = parser.parse_args()
     return args
@@ -68,22 +76,23 @@ if __name__ == '__main__':
     pid = os.getpid()
     args = grab_arguments()
     active_space_reduc = args.active_space_reduction
+    pathway_directory= args.directory
     pathways = [
         pathway_info(
             pathway=[27, 1, 14, 15, 16, 24, 25, 26],
-            fname='water_oxidation_Co2O9H12.xyz'
+            fname=f'{pathway_directory}water_oxidation_Co2O9H12.xyz'
         ),
         pathway_info(
             pathway=[3, 1, 14, 15, 16, 20, 21, 22, 23],
-            fname='water_oxidation_Co2O9H12.xyz'
+            fname=f'{pathway_directory}water_oxidation_Co2O9H12.xyz'
         ),
         pathway_info(
             pathway=[2, 1, 14, 15, 16, 17, 18, 19],
-            fname='water_oxidation_Co2O9H12.xyz'
+            fname='{pathway_directory}water_oxidation_Co2O9H12.xyz'
         ),
         pathway_info(
             pathway=[5, 10, 28, 29, 30, 31, 32, 33],
-            fname='water_oxidation_Co2O9H12.xyz'
+            fname='{pathway_directory}water_oxidation_Co2O9H12.xyz'
         )
     ]
     coords_pathways = [

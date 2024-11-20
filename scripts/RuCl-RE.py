@@ -6,7 +6,7 @@ import networkx as nx
 from networkx import Graph
 from pandas import DataFrame
 from networkx.generators.lattice import hexagonal_lattice_graph
-from qca.utils.utils import EstimateMetaData
+from qca.utils.utils import TrotterMetaData, QSPMetaData
 from qca.utils.algo_utils import estimate_trotter, estimate_qsp
 from qca.utils.hamiltonian_utils import (
     flatten_nx_graph,
@@ -180,6 +180,12 @@ def generate_rucl_re(
     evolution_time:float,
     df_rucl:DataFrame,
     outdir:str) -> None:
+
+    nsteps = 1500000
+    gate_synth_accuracy = 10
+    trotter_order = 2
+    is_extrapolated=True
+
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     for rucl_idx in range(len(df_rucl)):
@@ -192,32 +198,52 @@ def generate_rucl_re(
         )
         H_rucl_pyliqtr = pyH(H_rucl)
         openfermion_hamiltonian_rucl = pyliqtr_hamiltonian_to_openfermion_qubit_operator(H_rucl_pyliqtr)
-        nsteps = 1500000
-        metadata = EstimateMetaData(
+
+
+        trotter_metadata = TrotterMetaData(
             id=f'{time.time_ns()}',
             name=f'RuCl_row_{rucl_idx}',
             category='scientific',
             size=f'lattice_size: {lattice_size}',
             task='Time-Dependent Dynamics',
-            implementations='trotterization, JT=1000, gate_synth_accuracy=1e-10, numsteps=1500000, energy_precision=1e-3',
+
+            gate_synth_accuracy=gate_synth_accuracy,
+            evolution_time = evolution_time, 
+            nsteps = nsteps,
+            trotter_order = trotter_order,
+            energy_precision=energy_precision,
+            is_extrapolated=is_extrapolated,
         )
         estimate_trotter(
             openfermion_hamiltonian=openfermion_hamiltonian_rucl,
             evolution_time=evolution_time,
             energy_precision=energy_precision,
-            metadata=metadata,
+            metadata=trotter_metadata,
             outdir=outdir,
+            trotter_order=trotter_order,
             hamiltonian_name=f'trotter_rucl_size_{lattice_size}_row_{rucl_idx}',
-            nsteps=nsteps
+            nsteps=nsteps,
+            is_extrapolated=is_extrapolated
         )
-        metadata.implementations='QSP, JT=1000, gate_synth_accuracy=1e-10, numsteps=1500000, energy_precision=1e-3'
-        metadata.id = f'{time.time_ns()}'
+
+        qsp_metadata = QSPMetaData(
+            id =f'{time.time_ns()}',
+            name=f'RuCl_row_{rucl_idx}',
+            category='scientific',
+            size=f'lattice_size: {lattice_size}',
+            task='Time-Dependent Dynamics',
+
+            evolution_time = evolution_time, 
+            nsteps = nsteps,
+            energy_precision=energy_precision,
+        )
+
         estimate_qsp(
             pyliqtr_hamiltonian=H_rucl_pyliqtr,
             evolution_time=evolution_time,
-            numsteps=nsteps,
+            nsteps=nsteps,
             energy_precision=energy_precision,
-            metadata=metadata,
+            metadata=qsp_metadata,
             outdir=outdir,
             hamiltonian_name=f'qsp_rucl_size_{lattice_size}_row_{rucl_idx}',
             write_circuits=False

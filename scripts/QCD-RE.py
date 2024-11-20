@@ -4,6 +4,9 @@ import numpy as np
 
 import networkx as nx
 
+from time import time_ns
+
+from qca.utils.utils import TrotterMetaData
 from qca.utils.algo_utils import estimate_trotter
 from qca.utils.hamiltonian_utils import flatten_nx_graph, pyliqtr_hamiltonian_to_openfermion_qubit_operator
 
@@ -17,6 +20,8 @@ def parse_args():
     parser.add_argument('-S', '--site_inter', type=float, default=0.0, help='site interaction terms')
     parser.add_argument('-P', '--energy_precision', type=float, required=True, help='acceptable shift in state energy')
     parser.add_argument('-O', '--trotter_order', type=int, help='Specify the trotter order used', default=2)
+    parser.add_argument('-x', '--extrapolate', default=False, action='store_true')
+
     return parser.parse_args()
 
 def generate_spherical_momentum() -> list[float]:
@@ -99,23 +104,41 @@ def main():
     num_steps = args.trotter_steps
     trotter_order = args.trotter_order
     site_interactions = args.site_inter
+    extrapolate = args.extrapolate
+
     hamiltonian = generate_forward_scattering(n_neutrinos, site_interactions)
     
     evolution_time = np.sqrt(n_neutrinos)
     h_neutrino_pyliqtr = pyH(hamiltonian)
     qb_op_hamiltonian = pyliqtr_hamiltonian_to_openfermion_qubit_operator(h_neutrino_pyliqtr)
 
-    fname = f'{num_steps}_step_fs_{n_neutrinos}' if num_steps else f'estimated_fs_{n_neutrinos}'
+    hamiltonian_name = f'{num_steps}_step_fs_{n_neutrinos}' if num_steps else f'estimated_fs_{n_neutrinos}'
     outdir = args.directory
     energy_precision = args.energy_precision
+
+    pid = time_ns()
+    metadata = TrotterMetaData(
+        id= pid,
+        name=hamiltonian_name,
+        category='scientific',
+        size=f'Neutrino Count: {n_neutrinos}',
+        task='Time-Dependent Dynamics',
+        evolution_time=evolution_time,
+        trotter_order=trotter_order,
+        nsteps=num_steps,
+        energy_precision=energy_precision,
+        is_extrapolated=extrapolate,
+    )
+
     estimate_trotter(
         openfermion_hamiltonian=qb_op_hamiltonian,
         evolution_time=evolution_time,
         energy_precision=energy_precision,
         outdir=outdir,
-        hamiltonian_name=fname,
+        hamiltonian_name=hamiltonian_name,
         nsteps=num_steps,
-        trotter_order=trotter_order
+        trotter_order=trotter_order,
+        metadata=metadata
     )
 
 if __name__ == '__main__':
