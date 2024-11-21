@@ -1,7 +1,6 @@
 import os
 from dataclasses import dataclass
 from argparse import ArgumentParser, Namespace
-from concurrent.futures import ThreadPoolExecutor, as_completed, ProcessPoolExecutor
 from qca.utils.chemistry_utils import load_pathway, generate_electronic_hamiltonians, gsee_molecular_hamiltonian
 
 
@@ -17,7 +16,63 @@ def grab_arguments() -> Namespace:
         '--active_space_reduction',
         type=int,
         help='Factor to reduce the active space',
-        default=10
+        default=1
+    )
+    parser.add_argument(
+        '-F',
+        '--fname',
+        type=str,
+        help='absolute filepath pointing to xyz file for extracting molecular hamiltonian along a reaction pathway',
+        required=True
+    )
+    parser.add_argument(
+        '-B',
+        '--basis',
+        type=str,
+        help='basis working in',
+        default='sto-3g'
+    )
+    parser.add_argument(
+        '-T',
+        '--evolution_time',
+        type=float,
+        help='Float representing total evolution time if approximating exp^{iHt} for phase estimation',
+        default=1
+    )
+    parser.add_argument(
+        '-O',
+        '--trotter_order',
+        type=int,
+        help='specify trotter order if using a trotter subprocess for phase estimation',
+        default=2
+    )
+    parser.add_argument(
+        '-S',
+        '--trotter_steps',
+        type=int,
+        help='Number of trotter steps if using a trotter subprocess for phase estimation',
+        default=1
+    )
+    parser.add_argument(
+        '-P',
+        '--pathway',
+        metavar='N',
+        type=int,
+        nargs='*',
+        help='reaction pathway of interest'
+    )
+    parser.add_argument(
+        '-D',
+        '--dir',
+        type=str,
+        default=os.path.dirname(os.path.realpath(__file__)),
+        help='directory to store generated resource estimates')
+    parser.add_argument(
+        '-BP',
+        '--bits_prec',
+        type=int,
+        default=10,
+        help='Number of bits to estimate phase to'
     )
     parser.add_argument(
         '-d', 
@@ -29,92 +84,68 @@ def grab_arguments() -> Namespace:
     args = parser.parse_args()
     return args
 
-def generate_ap_re(
-        catalyst_name:str,
-        num_processes:int,
-        hamiltonians: list,
-        gsee_args:dict,
-        trotter_steps:int,
-        bits_precision: int
-    ):
-    results = []
-    with ProcessPoolExecutor(max_workers=num_processes) as executor:
-        for idx, hamiltonian in enumerate(hamiltonians):
-            future = executor.submit(
-                gsee_molecular_hamiltonian,
-                f'pathway({idx})_{catalyst_name}',
-                gsee_args,
-                trotter_steps,
-                bits_precision,
-                hamiltonian
-            )
-            results.append(future)
-        for future in as_completed(results):
-            print(f'completed')
-
-def grab_molecular_hamiltonians_pool(
+def trotter_subprocess(
+        outdir:str,
+        fname:str,
+        pathway: list[int],
+        basis:str,
+        ev_time:float,
         active_space_reduc:float,
-        num_processes:int,
-        pathways: list,
-        basis:str
-    ) -> list:
-    hamiltonians = []
-    results = []
-    with ThreadPoolExecutor(max_workers=num_processes) as executor:
-        for coords in pathways:
-            future = executor.submit(
-                generate_electronic_hamiltonians,
-                basis, active_space_reduc, coords, 1
-            )
-            results.append(future)
-        for future in as_completed(results):
-            hamiltonians.append(future.result())
-    return hamiltonians
+        trotter_order:int,
+        trotter_steps:int,
+        bits_precision:int
+):
+    coords_pathways = load_pathway(fname, pathway)
+    molecular_hamiltonians = generate_electronic_hamiltonians(
+        basis=basis,
+        active_space_frac=active_space_reduc,
+        coordinates_pathway=coords_pathways,
+        run_scf=1
+    )
+    catalyst_name = fname.split('.xyz')[0]
+    gsee_args = {
+        'trotterize' : True,
+        'ev_time'    : ev_time,
+        'trot_ord'   : trotter_order,
+        'trot_num'   : trotter_steps
+    }
+    gsee_molecular_hamiltonian(
+        outdir=outdir,
+        catalyst_name=catalyst_name,
+        gse_args=gsee_args,
+        trotter_steps=trotter_steps,
+        bits_precision=bits_precision,
+        molecular_hamiltonians=molecular_hamiltonians
+    )
 
 
 if __name__ == '__main__':
     pid = os.getpid()
     args = grab_arguments()
+    pathway = args.pathway
+    if not pathway:
+        raise LookupError('Unspecified reaction pathway')
+    
+    outdir = args.outdir
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
+    fname = args.fname
+    bits_precision = args.bits_prec
     active_space_reduc = args.active_space_reduction
-    pathway_directory= args.directory
-    pathways = [
-        pathway_info(
-            pathway=[27, 1, 14, 15, 16, 24, 25, 26],
-            fname=f'{pathway_directory}water_oxidation_Co2O9H12.xyz'
-        ),
-        pathway_info(
-            pathway=[3, 1, 14, 15, 16, 20, 21, 22, 23],
-            fname=f'{pathway_directory}water_oxidation_Co2O9H12.xyz'
-        ),
-        pathway_info(
-            pathway=[2, 1, 14, 15, 16, 17, 18, 19],
-            fname='{pathway_directory}water_oxidation_Co2O9H12.xyz'
-        ),
-        pathway_info(
-            pathway=[5, 10, 28, 29, 30, 31, 32, 33],
-            fname='{pathway_directory}water_oxidation_Co2O9H12.xyz'
-        )
-    ]
-    coords_pathways = [
-        load_pathway(pathway.fname, pathway.pathway) for pathway in pathways
-    ]
-    molecular_hamiltonians = grab_molecular_hamiltonians_pool(
+    basis = args.basis
+    evolution_time = args.evolution_time
+    trotter_order = args.trotter_order
+    trotter_steps = args.trotter_steps 
+    
+    trotter_subprocess(
+        outdir=outdir,
+        fname=fname,
+        pathway=pathway,
+        basis=basis,
+        ev_time=evolution_time,
         active_space_reduc=active_space_reduc,
-        num_processes=len(pathways),
-        pathways=coords_pathways,
-        basis='sto-3g'
-    )
-    gsee_args = {
-        'trotterize' : True,
-        'ev_time'    : 1,
-        'trot_ord'   : 2,
-        'trot_num'   : 1
-    }
-    generate_ap_re(
-        catalyst_name='Co2O9H12',
-        num_processes=len(pathways),
-        hamiltonians=molecular_hamiltonians,
-        gsee_args=gsee_args,
-        trotter_steps=1,
-        bits_precision=10
-    )
+        trotter_order=trotter_order,
+        trotter_steps=trotter_steps,
+        bits_precision=bits_precision
+    )    
