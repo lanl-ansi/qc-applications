@@ -3,7 +3,7 @@ import re
 import json
 import time
 from statistics import median
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 
 import pandas as pd
 
@@ -33,6 +33,13 @@ class GSEEMetaData(EstimateMetaData):
     bits_precision: int
     trotter_order: int
     nsteps: int
+
+@dataclass
+class CatalystMetaData(GSEEMetaData):
+    basis: str
+    occupied_orbitals:int
+    unoccupied_orbitals:int
+
 @dataclass
 class TrotterMetaData(EstimateMetaData):
     evolution_time: float #NOTE: This is JT in the current implementation
@@ -117,17 +124,14 @@ def get_T_depth(cpt_circuit: cirq.AbstractCircuit):
     for moment in cpt_circuit:
         for operator in moment:
             opstr = str(operator)
-            if opstr[0] == 'T':
+            if opstr.startswith('T'):
                 t_depth += 1
                 break
     return t_depth
 
 def gen_resource_estimate(
         cpt_circuit: cirq.AbstractCircuit,
-        is_extrapolated: bool,
-        circ_occurences:int=-1,
-        total_steps:int = -1,
-        bits_precision:int=1
+        circ_occurences:int | None=None,
     ) -> dict:
     '''
     Given some clifford + T circuit and a given filename, we grab the logical resource estimates
@@ -143,7 +147,7 @@ def gen_resource_estimate(
     t_depth = get_T_depth(cpt_circuit)
     clifford_count = gate_count - t_count
     circuit_depth = len(cpt_circuit)
-
+    
     resource_estimate = {
         'num_qubits': num_qubits,
         't_count': t_count,
@@ -153,48 +157,51 @@ def gen_resource_estimate(
         'clifford_count': clifford_count,
     }
 
-    if total_steps > 0 and is_extrapolated:
-        scaling_factor = total_steps
-    elif bits_precision > 0:
-        scaling_factor = pow(2, bits_precision - 1)
-    else:
-        scaling_factor = None
-
-    if scaling_factor:
-        resource_estimate['t_depth'] = resource_estimate['t_depth'] * scaling_factor
-        resource_estimate['t_count'] = resource_estimate['t_count'] * scaling_factor
-        resource_estimate['gate_count'] = resource_estimate['gate_count'] * scaling_factor
-        resource_estimate['circuit_depth'] = resource_estimate['circuit_depth'] * scaling_factor
-        resource_estimate['clifford_count'] = resource_estimate['clifford_count'] * scaling_factor
-
-    if circ_occurences > 0:
+    if circ_occurences:
         resource_estimate['subcircuit_occurences'] = circ_occurences
 
     return resource_estimate
 
+def scale_resource(resource: int, total_steps: int | None=None, bits_precision: float | None = None) -> int:
+    scaling_factor = 0
+    if resource != 0:
+        scaled_steps = 0
+        scaled_bits = 0
+        if total_steps and total_steps > 0:
+            scaled_steps = total_steps
+        if bits_precision and bits_precision > 0:
+            scaled_bits = pow(2, bits_precision - 1)
+        
+        if scaled_steps and scaled_bits:
+            scaling_factor = scaled_steps * scaled_bits
+        elif scaled_steps and not scaled_bits:
+            scaling_factor = scaled_steps
+        elif scaled_bits and not scaled_steps:
+            scaling_factor = scaled_bits
+        if scaling_factor:
+            return int(resource * scaling_factor)
+    return resource
+
 
 def estimate_cpt_resources(
         cpt_circuit: cirq.AbstractCircuit,
-        outdir: str,
-        is_extrapolated:bool,
         algo_name:str,
+        is_extrapolated:bool,
         include_nested_resources:bool,
-        magnus_steps:int=1,
-        trotter_steps:int=1
+        total_steps: int|None=None
     ):
-    if not os.path.exists(outdir):
-        os.makedirs(outdir)
-
-    total_steps = trotter_steps * magnus_steps
     logical_re = {
         'Logical_Abstract':  gen_resource_estimate(
             cpt_circuit=cpt_circuit,
-            is_extrapolated=is_extrapolated,
-            total_steps=total_steps
         )
     }
+    if total_steps and is_extrapolated:
+        highest_scope = logical_re['Logical_Abstract']
+        for key in highest_scope:
+            highest_scope[key] = scale_resource(highest_scope[key], total_steps)
+
     logical_re['Logical_Abstract']['subcircuit_occurences'] = 1
-    if include_nested_resources:
+    if include_nested_resources and total_steps:
         logical_re['Logical_Abstract']['subcircuit_info'] = grab_single_step_estimates(
             len(cpt_circuit.all_qubits()),
             logical_re['Logical_Abstract'],
@@ -237,6 +244,7 @@ def circuit_estimate(
         numsteps: int,
         algo_name: str,
         include_nested_resources:bool,
+        is_extrapolated:bool,
         gate_synth_accuracy: int | float = 10,
         bits_precision:int=1,
         write_circuits:bool = False
@@ -283,14 +291,12 @@ def circuit_estimate(
     total_clifford_count = 0
     subcircuit_re = []
     for gate in subcircuit_counts:
-        occurence = subcircuit_counts[gate][0]
+        subcircuit_occurences = subcircuit_counts[gate][0]
         subcircuit = subcircuit_counts[gate][1]
         subcircuit_name = subcircuit_counts[gate][2]
         resource_estimate = gen_resource_estimate(
             subcircuit,
-            is_extrapolated=False,
-            circ_occurences=occurence,
-            bits_precision=bits_precision
+            circ_occurences=subcircuit_occurences,
         )
         subcircuit_info = {subcircuit_name:resource_estimate}
         subcircuit_re.append(subcircuit_info)
@@ -300,13 +306,20 @@ def circuit_estimate(
         t_depth = resource_estimate['t_depth']
         t_count = resource_estimate['t_count']
         clifford_count = resource_estimate['clifford_count']
+        
+        curr_gate_count = subcircuit_occurences * gate_count
+        curr_gate_depth = subcircuit_occurences * gate_depth 
+        curr_t_depth = subcircuit_occurences * t_depth
+        curr_t_count = subcircuit_occurences * t_count
+        curr_clifford_count = subcircuit_occurences * clifford_count
 
-        total_gate_count += subcircuit_counts[gate][0] * gate_count * numsteps
-        total_gate_depth += subcircuit_counts[gate][0] * gate_depth * numsteps
-        total_T_depth += subcircuit_counts[gate][0] * t_depth * numsteps
-        total_T_count += subcircuit_counts[gate][0] * t_count * numsteps
-        total_clifford_count += subcircuit_counts[gate][0] * clifford_count * numsteps
-
+        if (numsteps or bits_precision) and is_extrapolated:
+            total_gate_count += scale_resource(curr_gate_count, numsteps, bits_precision)
+            total_gate_depth += scale_resource(curr_gate_depth, numsteps, bits_precision)
+            total_T_depth += scale_resource(curr_t_depth, numsteps, bits_precision)
+            total_T_count += scale_resource(curr_t_count, numsteps, bits_precision)
+            total_clifford_count += scale_resource(curr_clifford_count, numsteps, bits_precision)
+ 
     main_estimates = {
         'Logical_Abstract': {
             'num_qubits': len(circuit.all_qubits()),
@@ -319,7 +332,7 @@ def circuit_estimate(
             'subcircuit_info': {}
         }
     }
-    if include_nested_resources and subcircuit_re:
+    if include_nested_resources and subcircuit_re and numsteps:
         main_estimates['Logical_Abstract']['subcircuit_info'] = grab_single_step_estimates(
             len(circuit.all_qubits()),
             main_estimates['Logical_Abstract'],
@@ -337,3 +350,35 @@ def re_as_json(main_estimate:dict, outdir:str) -> None:
         json.dump(main_estimate, f,
             indent=4,
             separators=(',', ': '))
+
+def gen_json(main_estimate: dict, outfile:str, metadatata: EstimateMetaData|None=None):
+    if metadatata:
+        re_metadata = asdict(metadatata)
+        main_estimate = re_metadata | main_estimate
+    re_as_json(main_estimate, outfile)
+
+def grab_circuit_resources(circuit: cirq.AbstractCircuit,
+                           outdir: str,
+                           algo_name: str,
+                           fname: str,
+                           is_extrapolated:bool,
+                           numsteps: int|None=None,
+                           bits_precision:int|None=None,
+                           metadata: EstimateMetaData|None=None,
+                           write_circuits:bool=False,
+                           include_nested_resources:bool=False,
+                           gate_synth_accuracy: int | float=10) -> None:
+    estimates = circuit_estimate(
+        circuit=circuit,
+        outdir=outdir,
+        numsteps=numsteps,
+        algo_name=algo_name,
+        is_extrapolated=is_extrapolated,
+        include_nested_resources=include_nested_resources,
+        gate_synth_accuracy=gate_synth_accuracy,
+        bits_precision=bits_precision,
+        write_circuits=write_circuits,
+    )
+    
+    outfile = f'{outdir}{fname}_re.json'
+    gen_json(estimates, outfile, metadata)

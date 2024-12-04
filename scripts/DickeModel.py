@@ -30,7 +30,7 @@ def main(args):
 
     #this scales the circuit depth proportional to 2 ^ bits_precision
 
-    #E_min_dicke = -len(ham_dicke.terms) * max(abs(n_s), abs(n_b), abs(omega_c), abs(omega_o), abs(lam))
+    # E_min_dicke = -len(ham_dicke.terms) * max(abs(n_s), abs(n_b), abs(omega_c), abs(omega_o), abs(lam))
     E_max_dicke = 0
 
     #dicke_omega = E_max_dicke-E_min_dicke

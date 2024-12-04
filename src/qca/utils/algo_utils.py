@@ -3,8 +3,8 @@ import time
 import random
 import numpy as np
 import networkx as nx
-from dataclasses import asdict
 
+import cirq
 from cirq import Circuit
 from cirq.contrib import qasm_import
 
@@ -21,57 +21,14 @@ from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 from pyLIQTR.phase_factors.fourier_response.fourier_response import Angler_fourier_response
 
 from qca.utils.utils import (
-    re_as_json,
+    gen_json,
     write_qasm,
-    circuit_estimate,
+    grab_circuit_resources,
     estimate_cpt_resources,
     GSEEMetaData,
     TrotterMetaData,
     QSPMetaData
 )
-
-def estimate_qsp(
-    pyliqtr_hamiltonian: Hamiltonian,
-    evolution_time:float,
-    nsteps:int,
-    energy_precision:float,
-    outdir:str,
-    metadata: QSPMetaData | None=None,
-    hamiltonian_name:str='hamiltonian',
-    write_circuits:bool=False,
-    include_nested_resources:bool=True
-) -> Circuit:
-    timestep_of_interest=evolution_time/nsteps
-    random.seed(0)
-    np.random.seed(0)
-    t0 = time.perf_counter()
-    angles_response = Angler_fourier_response(tau=timestep_of_interest*pyliqtr_hamiltonian.alpha,
-                                              eps=energy_precision,
-                                              random=True,
-                                              silent=True)
-    angles_response.generate()
-    angles = angles_response.phases
-    qsp_circuit = generate_QSP_circuit(pyliqtr_hamiltonian, angles, pyliqtr_hamiltonian.problem_size)
-    t1 = time.perf_counter()
-    elapsed = t1 - t0
-    print(f'Time to generate high level QSP circuit: {elapsed} seconds')
-    outfile = f'{outdir}{hamiltonian_name}_re.json'
-
-    gate_synth_accuracy=metadata.gate_synth_accuracy
-    logical_re = circuit_estimate(
-        circuit=qsp_circuit,
-        outdir=outdir,
-        numsteps=nsteps,
-        algo_name='QSP',
-        gate_synth_accuracy=gate_synth_accuracy,
-        write_circuits=write_circuits,
-        include_nested_resources=include_nested_resources
-    )
-    if metadata:
-        re_metadata = asdict(metadata)
-        logical_re = re_metadata | logical_re
-    re_as_json(logical_re, outfile)
-    return qsp_circuit
 
 def find_hamiltonian_ordering(of_hamiltonian: QubitOperator) -> list:
     """
@@ -108,19 +65,63 @@ def find_hamiltonian_ordering(of_hamiltonian: QubitOperator) -> list:
         two_body_terms_ordered.append(new_item)
     return one_body_terms_ordered + two_body_terms_ordered
 
+def estimate_qsp(
+    pyliqtr_hamiltonian: Hamiltonian,
+    evolution_time:float,
+    nsteps:int,
+    energy_precision:float,
+    outdir:str,
+    is_extrapolated:bool=False,
+    metadata: QSPMetaData | None=None,
+    hamiltonian_name:str='hamiltonian',
+    write_circuits:bool=False,
+    include_nested_resources:bool=True
+) -> Circuit:
+    timestep_of_interest=evolution_time/nsteps
+    random.seed(0)
+    np.random.seed(0)
+    t0 = time.perf_counter()
+    angles_response = Angler_fourier_response(tau=timestep_of_interest*pyliqtr_hamiltonian.alpha,
+                                              eps=energy_precision,
+                                              random=True,
+                                              silent=True)
+    angles_response.generate()
+    angles = angles_response.phases
+    qsp_circuit = generate_QSP_circuit(pyliqtr_hamiltonian, angles, pyliqtr_hamiltonian.problem_size)
+    t1 = time.perf_counter()
+    elapsed = t1 - t0
+    print(f'Time to generate high level QSP circuit: {elapsed} seconds')
+
+    if nsteps and not is_extrapolated:
+        is_extrapolated=True
+
+    gate_synth_accuracy=metadata.gate_synth_accuracy
+    grab_circuit_resources(
+        circuit=qsp_circuit,
+        outdir=outdir,
+        algo_name='QSP',
+        fname=hamiltonian_name,
+        is_extrapolated=is_extrapolated,
+        numsteps=nsteps,
+        metadata=metadata,
+        write_circuits=write_circuits,
+        include_nested_resources=include_nested_resources,
+        gate_synth_accuracy=gate_synth_accuracy
+    )
+
+    return qsp_circuit
+
 
 def estimate_trotter(
     openfermion_hamiltonian: QubitOperator,
     evolution_time: float,
     energy_precision: float,
     outdir:str,
+    is_extrapolated: bool=True,
     trotter_order: int = 2,
     metadata: TrotterMetaData | None=None,
-
     hamiltonian_name:str='hamiltonian',
-    is_extrapolated: bool = True,
     write_circuits:bool=False,
-
     nsteps:int|None=None,
     include_nested_resources:bool=True
 ) -> Circuit:
@@ -137,6 +138,7 @@ def estimate_trotter(
         t1 = time.perf_counter()
         elapsed = t1 - t0
         print(f'Time to estimate number of trotter steps required ({nsteps}): {elapsed} seconds')
+
     metadata.nsteps=nsteps
 
     t0 = time.perf_counter()
@@ -145,6 +147,7 @@ def estimate_trotter(
     elapsed = t1 - t0
     print(f'Time to find term ordering: {elapsed} seconds')
     t0 = time.perf_counter()
+
     #generates the circuit for a single trotter step and extrapolates the rest
     trotter_circuit_of = trotterize_exp_qubop_to_qasm(openfermion_hamiltonian,
                                                       trotter_order=trotter_order,
@@ -157,6 +160,7 @@ def estimate_trotter(
     gate_synth_accuracy = metadata.gate_synth_accuracy
     qasm_str_trotter = open_fermion_to_qasm(count_qubits(openfermion_hamiltonian), trotter_circuit_of)
     trotter_circuit_qasm = qasm_import.circuit_from_qasm(qasm_str_trotter)
+
     t0 = time.perf_counter()
     cpt_trotter = clifford_plus_t_direct_transform(circuit=trotter_circuit_qasm, gate_precision=gate_synth_accuracy)
     t1 = time.perf_counter()
@@ -177,18 +181,14 @@ def estimate_trotter(
 
     logical_re = estimate_cpt_resources(
         cpt_circuit=cpt_trotter,
-        outdir=outdir,
         is_extrapolated=is_extrapolated,
         algo_name= 'TrotterStep',
-        trotter_steps=nsteps,
+        total_steps=nsteps,
         include_nested_resources=include_nested_resources
     )
-
     outfile = f'{outdir}{hamiltonian_name}_re.json'
-    if metadata:
-        re_metadata = asdict(metadata)
-        logical_re = re_metadata | logical_re
-    re_as_json(logical_re, outfile)
+
+    gen_json(logical_re, outfile, metadata )
     return cpt_trotter
 
 def gsee_resource_estimation(
@@ -199,11 +199,12 @@ def gsee_resource_estimation(
         precision_order:int,
         bits_precision:int,
         phase_offset:float,
+        is_extrapolated:bool=False,
         metadata:GSEEMetaData | None =None,
         circuit_name:str='Hamiltonian',
-        include_nested_resources:bool=True,
+        include_nested_resources:bool=False,
         include_classical_bits:bool=False,
-        write_circuits:bool=False
+        write_circuits:bool=False,
 ) -> Circuit:
     t0 = time.perf_counter()
     gse_circuit = PhaseEstimation(
@@ -219,23 +220,23 @@ def gsee_resource_estimation(
 
     gse_circuit.generate_circuit()
     pe_circuit = gse_circuit.pe_circuit
-
     gate_synth_accuracy=metadata.gate_synth_accuracy
 
-    t0 = time.perf_counter()
-    logical_re = circuit_estimate(
+    if (nsteps or bits_precision) and not is_extrapolated:
+        is_extrapolated = True
+
+    grab_circuit_resources(
         circuit=pe_circuit,
         outdir=outdir,
-        numsteps=nsteps,
         algo_name='GSEE',
+        fname=circuit_name,
+        is_extrapolated=is_extrapolated,
+        numsteps=nsteps,
+        bits_precision=bits_precision,
+        metadata=metadata,
+        write_circuits=write_circuits,
         include_nested_resources=include_nested_resources,
-        gate_synth_accuracy=gate_synth_accuracy,
-        bits_precision=bits_precision, 
-        write_circuits=write_circuits
+        gate_synth_accuracy=gate_synth_accuracy
     )
-    outfile = f'{outdir}{circuit_name}_re.json'
-    if metadata:
-        re_metadata = asdict(metadata)
-        logical_re = re_metadata | logical_re
-    re_as_json(logical_re, outfile)
+
     return pe_circuit
