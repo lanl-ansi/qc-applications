@@ -1,8 +1,0 @@
-{
-    "num_qubits": 2176,
-    "t_count": 13056,
-    "circuit_depth": 15,
-    "gate_count": 31520,
-    "t_depth": 11,
-    "clifford_count": 18464
-}
