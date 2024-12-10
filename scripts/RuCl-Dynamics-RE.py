@@ -283,7 +283,7 @@ def rucl_estimate():
         'K3': rucl_K3}
 
     df_rucl = DataFrame(d_rucl)
-    re_dir = 'temp_RE/'
+    re_dir = 'temp_RE/Dynamics/'
     generate_rucl_re(
         energy_precision=1e-3,
         lattice_size=args.lattice_size,
