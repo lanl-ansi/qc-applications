@@ -248,7 +248,7 @@ def gsee_molecular_hamiltonian(
             outdir=outdir,
             algo_name='GSEE',
             fname=f'{catalyst_name}[{idx}]_active_space{active_space_frac}',
-            numsteps=trotter_steps,
+            nsteps=trotter_steps,
             bits_precision=bits_precision,
             metadata=molecular_metadata,
             write_circuits=write_circuits,

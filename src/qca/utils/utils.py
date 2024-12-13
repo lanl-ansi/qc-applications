@@ -135,11 +135,7 @@ def gen_resource_estimate(
     ) -> dict:
     '''
     Given some clifford + T circuit and a given filename, we grab the logical resource estimates
-    from the circuit and then write it to disk. The function also returns the resource dictionary
-    if the user needs it.
-
-    total_steps is a flag denoting if the circuit was estimated through trotterization. If so, the
-    user should specify the number of steps required.
+    from the circuit and returns the resource dictionary 
     '''
     num_qubits = len(cpt_circuit.all_qubits())
     gate_count = count_gates(cpt_circuit)
@@ -162,13 +158,13 @@ def gen_resource_estimate(
 
     return resource_estimate
 
-def scale_resource(resource: int, total_steps: int | None=None, bits_precision: float | None = None) -> int:
+def scale_resource(resource: int, nsteps: int | None=None, bits_precision: float | None = None) -> int:
     scaling_factor = 0
     if resource != 0:
         scaled_steps = 0
         scaled_bits = 0
-        if total_steps and total_steps > 0:
-            scaled_steps = total_steps
+        if nsteps and nsteps > 0:
+            scaled_steps = nsteps
         if bits_precision and bits_precision > 0:
             scaled_bits = pow(2, bits_precision - 1)
         
@@ -188,40 +184,40 @@ def estimate_cpt_resources(
         algo_name:str,
         is_extrapolated:bool,
         include_nested_resources:bool,
-        total_steps: int|None=None
+        nsteps: int|None=None
     ):
     logical_re = {
         'Logical_Abstract':  gen_resource_estimate(
             cpt_circuit=cpt_circuit,
         )
     }
-    if total_steps and is_extrapolated:
+    if nsteps and is_extrapolated:
         highest_scope = logical_re['Logical_Abstract']
         for key in highest_scope:
-            highest_scope[key] = scale_resource(highest_scope[key], total_steps)
+            highest_scope[key] = scale_resource(highest_scope[key], nsteps)
 
     logical_re['Logical_Abstract']['subcircuit_occurences'] = 1
-    if include_nested_resources and total_steps:
+    if include_nested_resources and nsteps:
         logical_re['Logical_Abstract']['subcircuit_info'] = grab_single_step_estimates(
             len(cpt_circuit.all_qubits()),
             logical_re['Logical_Abstract'],
             algo_name,
-            total_steps
+            nsteps
         )
     else:
         logical_re['Logical_Abstract']['subcircuit_info'] = {}
     return logical_re
 
-def grab_single_step_estimates(num_qubits: int, main_estimates: dict, algo_name:str, total_steps: int) -> dict:
+def grab_single_step_estimates(num_qubits: int, main_estimates: dict, algo_name:str, nsteps: int) -> dict:
     return {
         f'{algo_name}': {
             'num_qubits': num_qubits,
-            't_count': main_estimates['t_count']//total_steps,
-            'circuit_depth': main_estimates['circuit_depth']//total_steps,
-            'gate_count': main_estimates['gate_count']//total_steps,
-            't_depth': main_estimates['t_depth']//total_steps,
-            'clifford_count': main_estimates['clifford_count']//total_steps,
-            'subcircuit_occurences': total_steps,
+            't_count': main_estimates['t_count']//nsteps,
+            'circuit_depth': main_estimates['circuit_depth']//nsteps,
+            'gate_count': main_estimates['gate_count']//nsteps,
+            't_depth': main_estimates['t_depth']//nsteps,
+            'clifford_count': main_estimates['clifford_count']//nsteps,
+            'subcircuit_occurences': nsteps,
             'subcircuit_info': {}
         }
     }
@@ -241,7 +237,7 @@ def write_qasm(
 def circuit_estimate(
         circuit: cirq.AbstractCircuit,
         outdir: str,
-        numsteps: int,
+        nsteps: int,
         algo_name: str,
         include_nested_resources:bool,
         is_extrapolated:bool,
@@ -313,12 +309,12 @@ def circuit_estimate(
         curr_t_count = subcircuit_occurences * t_count
         curr_clifford_count = subcircuit_occurences * clifford_count
 
-        if (numsteps or bits_precision) and is_extrapolated:
-            total_gate_count += scale_resource(curr_gate_count, numsteps, bits_precision)
-            total_gate_depth += scale_resource(curr_gate_depth, numsteps, bits_precision)
-            total_T_depth += scale_resource(curr_t_depth, numsteps, bits_precision)
-            total_T_count += scale_resource(curr_t_count, numsteps, bits_precision)
-            total_clifford_count += scale_resource(curr_clifford_count, numsteps, bits_precision)
+        if (nsteps or bits_precision) and is_extrapolated:
+            total_gate_count += scale_resource(curr_gate_count, nsteps, bits_precision)
+            total_gate_depth += scale_resource(curr_gate_depth, nsteps, bits_precision)
+            total_T_depth += scale_resource(curr_t_depth, nsteps, bits_precision)
+            total_T_count += scale_resource(curr_t_count, nsteps, bits_precision)
+            total_clifford_count += scale_resource(curr_clifford_count, nsteps, bits_precision)
  
     main_estimates = {
         'Logical_Abstract': {
@@ -332,12 +328,12 @@ def circuit_estimate(
             'subcircuit_info': {}
         }
     }
-    if include_nested_resources and subcircuit_re and numsteps:
+    if include_nested_resources and subcircuit_re and nsteps:
         main_estimates['Logical_Abstract']['subcircuit_info'] = grab_single_step_estimates(
             len(circuit.all_qubits()),
             main_estimates['Logical_Abstract'],
             algo_name,
-            numsteps
+            nsteps
         )
         for op in subcircuit_re:
             for op_key in op.keys():
@@ -362,7 +358,7 @@ def grab_circuit_resources(circuit: cirq.AbstractCircuit,
                            algo_name: str,
                            fname: str,
                            is_extrapolated:bool,
-                           numsteps: int|None=None,
+                           nsteps: int|None=None,
                            bits_precision:int|None=None,
                            metadata: EstimateMetaData|None=None,
                            write_circuits:bool=False,
@@ -371,7 +367,7 @@ def grab_circuit_resources(circuit: cirq.AbstractCircuit,
     estimates = circuit_estimate(
         circuit=circuit,
         outdir=outdir,
-        numsteps=numsteps,
+        nsteps=nsteps,
         algo_name=algo_name,
         is_extrapolated=is_extrapolated,
         include_nested_resources=include_nested_resources,
