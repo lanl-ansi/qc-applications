@@ -6,8 +6,8 @@ import networkx as nx
 from networkx import Graph
 from pandas import DataFrame
 from networkx.generators.lattice import hexagonal_lattice_graph
-from qca.utils.utils import TrotterMetaData, QSPMetaData
-from qca.utils.algo_utils import estimate_trotter, estimate_qsp
+from qca.utils.utils import TrotterMetaData, QSPMetaData, GSEEMetaData
+from qca.utils.algo_utils import estimate_trotter, estimate_qsp, gsee_resource_estimation
 from qca.utils.hamiltonian_utils import (
     flatten_nx_graph,
     assign_hexagon_labels,
@@ -172,16 +172,41 @@ def gen_args():
         required=True,
         help='integer denoting the lattice size'
     )
+
+    parser.add_argument(
+        '-M',
+        '--mode',
+        type=str,
+        required=True,
+        choices=['dynamics', 'gsee'],
+        help ='Mode of operation: "dynamics" or "gsee'
+    )
+
+    parser.add_argument(
+        '-N',
+        '--nsteps',
+        type=int,
+        required=True,
+        help="Number of steps for the algorithms"
+    )
+
+    parser.add_argument(
+        '-T',
+        '--evolution_time',
+        type=float,
+        default=1000.0,
+        help='The evolution time (default: 1000)'
+    )
     return parser.parse_args()
 
-def generate_rucl_re(
+def generate_rucl_dynamics_re(
     energy_precision:float,
     lattice_size: int,
     evolution_time:float,
+    nsteps:int,
     df_rucl:DataFrame,
     outdir:str) -> None:
 
-    nsteps = 1500000
     gate_synth_accuracy = 10
     trotter_order = 2
     is_extrapolated=True
@@ -249,6 +274,75 @@ def generate_rucl_re(
             write_circuits=False
         )
 
+def generate_rucl_gsee_re(
+    energy_precision:float,
+    bits_precision:float,
+    lattice_size: int,
+    evolution_time:float,
+    nsteps:int,
+    df_rucl:DataFrame,
+    outdir:str) -> None:
+
+    gate_synth_accuracy = 10
+    trotter_order = 2
+    is_extrapolated=True
+    init_state = [0] * lattice_size * lattice_size * 2 #TODO: use DMRG as initial state prep
+    
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+    for rucl_idx in range(len(df_rucl)):
+        H_rucl_no_fields = generate_rucl_hamiltonian(
+            lattice_size,
+            df_rucl.iloc[rucl_idx],
+            field_x = lambda s: 0,
+            field_y = lambda s: 0,
+            field_z = lambda s: 0
+        )
+        H_rucl__no_fields_pyliqtr = pyH(H_rucl_no_fields)
+        openfermion_hamiltonian_rucl_no_fields = pyliqtr_hamiltonian_to_openfermion_qubit_operator(H_rucl__no_fields_pyliqtr)
+
+
+        E_min = -len(openfermion_hamiltonian_rucl_no_fields.terms)
+        E_max = 0
+        omega = E_max-E_min
+        t = 2*np.pi/omega
+        phase_offset = E_max*t
+
+        gsee_metadata = GSEEMetaData(
+            id = f'{time.time_ns()}',
+            name=f'RuCl_row_{rucl_idx}',
+            category='scientific',
+            size=f'lattice_size: {lattice_size}',
+            task='Ground State Energy Estimation',
+
+            gate_synth_accuracy=gate_synth_accuracy,
+            evolution_time = evolution_time, 
+            nsteps = nsteps,
+            trotter_order = trotter_order,
+            energy_precision=energy_precision,
+            is_extrapolated=is_extrapolated,
+
+        )
+
+        gsee_args = {
+        'trotterize' : True,
+        'mol_ham'    : openfermion_hamiltonian_rucl_no_fields,
+        'ev_time'    : evolution_time,
+        'trot_ord'   : trotter_order,
+        'trot_num'   : nsteps
+    }
+        gsee_resource_estimation(
+            outdir='GSEE/RuCl_GSEE/No_Field/',
+            nsteps=nsteps,
+            gsee_args=gsee_args,
+            init_state=init_state,
+            precision_order=1,
+            bits_precision=bits_precision,
+            phase_offset=phase_offset,
+            metadata = gsee_metadata
+    )
+
+
 def rucl_estimate():
     args = gen_args()
     rucl_references = ["Winter et al. PRB", "Winter et al. NC", "Wu et al.", "Cookmeyer and Moore", "Kim and Kee", "Suzuki and Suga",
@@ -283,14 +377,30 @@ def rucl_estimate():
         'K3': rucl_K3}
 
     df_rucl = DataFrame(d_rucl)
-    re_dir = 'temp_RE/Dynamics/'
-    generate_rucl_re(
-        energy_precision=1e-3,
-        lattice_size=args.lattice_size,
-        evolution_time=1000,
-        df_rucl=df_rucl,
-        outdir=re_dir
-    )
+
+
+    if args.mode == 'dynamics':
+        re_dir = 'temp_RE/Dynamics/'
+        generate_rucl_dynamics_re(
+            energy_precision=1e-3,
+            lattice_size=args.lattice_size,
+            evolution_time=args.evolution_time,
+            nsteps=args.nsteps,
+            df_rucl=df_rucl,
+            outdir=re_dir
+        )
+    elif args.mode == 'gsee':
+        re_dir = 'temp_RE/GSEE/'
+        generate_rucl_gsee_re(
+            energy_precision=1e-3,
+            bits_precision = 10,
+            lattice_size=args.lattice_size,
+            evolution_time=args.evolution_time,
+            nsteps=args.nsteps,
+            df_rucl=df_rucl,
+            outdir=re_dir
+        )
+
 
 if __name__ == '__main__':
     rucl_estimate()
