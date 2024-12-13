@@ -1,8 +1,21 @@
-import cirq
 import unittest
+from math import pow
+
+import cirq
+
 import numpy as np
-from qca.utils.utils import count_gates, count_T_gates, get_T_depth, get_T_depth_wire, gen_resource_estimate
+
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
+
+from qca.utils.utils import (
+    count_gates,
+    count_T_gates,
+    get_T_depth,
+    get_T_depth_wire,
+    gen_resource_estimate,
+    scale_resource
+)
+
 
 class UtilsTest(unittest.TestCase):
     def test_count_gates(self):
@@ -64,7 +77,7 @@ class UtilsTest(unittest.TestCase):
         circuit.append(layer_rx)
         circuit.append(layer_measurement)
         circ_cpt =  clifford_plus_t_direct_transform(circuit)
-        circ_estimate = gen_resource_estimate(circ_cpt, is_extrapolated=False)
+        circ_estimate = gen_resource_estimate(circ_cpt)
         correct_estimate = {'num_qubits': 4,
                             't_count': 8,
                             't_depth': 2,
@@ -72,6 +85,33 @@ class UtilsTest(unittest.TestCase):
                             'clifford_count': 12,
                             'circuit_depth': 5}
         self.assertEqual(circ_estimate, correct_estimate)
+
+    def test_scale_t_count(self):
+        t_count = 100
+        nsteps = 2 
+        bits_precision = 4
+        scaled_t_count = scale_resource(t_count, nsteps, bits_precision)
+        
+        expect = t_count * nsteps * pow(2, bits_precision -1)
+        self.assertEqual(scaled_t_count, expect)
+
+    def scale_toffolis(self):
+        tofolli_count = 30
+        t_count = tofolli_count * 4
+        bits_precision = 10
+        scaled_t_count = scale_resource(resource=t_count, bits_precision=bits_precision)
+        
+        expect = t_count * pow(2, bits_precision-1) 
+        self.assertEqual(scaled_t_count, expect)
+    
+    def verify_nop_scaler(self):
+        t_count = 0
+        nsteps = 2
+        bits_precision = 10
+        scaled_t_count = scale_resource(resource=t_count, bits_precision=bits_precision, nsteps=nsteps)
+
+        expect = 0
+        self.assertEqual(scaled_t_count, expect)
 
 if __name__ == '__main__':
     unittest.main()

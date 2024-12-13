@@ -97,7 +97,6 @@ def generate_forward_scattering(n_neutrinos: int, site_interactions:float=0):
     scattering_hamiltonian = nx_heisenberg_terms(flat_graph)
     return scattering_hamiltonian
 
-    
 def main():
     args = parse_args()
     n_neutrinos = args.n_neutrinos
