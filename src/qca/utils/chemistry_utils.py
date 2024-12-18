@@ -159,8 +159,11 @@ def gen_df_qpe(
         energy_error: float = 1e-3,
         df_prec: int | None = None,
         eps: float | None = None,
+        is_extrapolated:bool = False,
         gate_precision: float = 1e-10,
-        metadata: CatalystMetaData | None = None
+        include_nested_resources: bool = False,
+        metadata: CatalystMetaData | None = None,
+        write_circuits: bool = False
     ):
     if not df_prec and not eps:
         raise ValueError('Specify either df_prec/eps for QPE')
@@ -185,23 +188,21 @@ def gen_df_qpe(
     else:
         qpe_df_circuit = QubitizedPhaseEstimation(block_encoding=df_encoding, eps=eps)
     
-    if use_analytical:
-        resource_estimates = estimate_resources(qpe_df_circuit,rotation_gate_precision=gate_precision)
-        outfile = f'{outdir}{fname}_re.json'
-        gen_json(resource_estimates, outfile=outfile, metadatata=metadata)
-    else:
-        qpe_circuit = qpe_df_circuit.circuit
-        grab_circuit_resources(
-            circuit=qpe_circuit,
-            outdir=outdir,
-            algo_name='DF_Encoded_QPE',
-            fname=fname,
-            bits_precision=df_prec,
-            metadata=metadata,
-            write_circuits=True,
-            include_nested_resources=True,
-            gate_synth_accuracy=gate_precision
-        )
+    qpe_circuit = qpe_df_circuit.circuit
+    grab_circuit_resources(
+        circuit=qpe_circuit,
+        outdir=outdir,
+        algo_name='DF_QPE',
+        fname=fname,
+        is_extrapolated=is_extrapolated,
+        use_analytical=use_analytical,
+        bits_precision=df_prec,
+        metadata=metadata,
+        include_nested_resources=include_nested_resources,
+        gate_synth_accuracy=gate_precision,
+        write_circuits=write_circuits
+    )
+
 
 def generate_pathway_hamiltonians(
         basis: str,

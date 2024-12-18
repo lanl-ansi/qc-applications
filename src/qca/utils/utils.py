@@ -13,6 +13,7 @@ import cirq
 
 from pyLIQTR.utils.printing import openqasm
 from pyLIQTR.utils.utils import count_T_gates
+from pyLIQTR.utils.resource_analysis import estimate_resources
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 
 @dataclass
@@ -358,23 +359,30 @@ def grab_circuit_resources(circuit: cirq.AbstractCircuit,
                            algo_name: str,
                            fname: str,
                            is_extrapolated:bool,
+                           use_analytical: bool = False,
                            nsteps: int|None=None,
                            bits_precision:int|None=None,
                            metadata: EstimateMetaData|None=None,
                            write_circuits:bool=False,
                            include_nested_resources:bool=False,
                            gate_synth_accuracy: int | float=10) -> None:
-    estimates = circuit_estimate(
-        circuit=circuit,
-        outdir=outdir,
-        nsteps=nsteps,
-        algo_name=algo_name,
-        is_extrapolated=is_extrapolated,
-        include_nested_resources=include_nested_resources,
-        gate_synth_accuracy=gate_synth_accuracy,
-        bits_precision=bits_precision,
-        write_circuits=write_circuits,
-    )
+    if not use_analytical:
+        estimates = circuit_estimate(
+            circuit=circuit,
+            outdir=outdir,
+            nsteps=nsteps,
+            algo_name=algo_name,
+            is_extrapolated=is_extrapolated,
+            include_nested_resources=include_nested_resources,
+            gate_synth_accuracy=gate_synth_accuracy,
+            bits_precision=bits_precision,
+            write_circuits=write_circuits,
+        )
+    else:
+        estimates = estimate_resources(
+            circuit_element=circuit,
+            rotation_gate_precision=gate_synth_accuracy
+        )
     
     outfile = f'{outdir}{fname}_re.json'
     gen_json(estimates, outfile, metadata)
