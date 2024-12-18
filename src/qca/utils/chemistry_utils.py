@@ -138,6 +138,11 @@ def generate_molecular_hamiltonian(
             occupied_indices=occupied_indices,
             active_indices=active_indices
         )
+    elif occupied_indices and active_indices:
+        molecular_hamiltonian = mole.get_molecular_hamiltonian(
+            occupied_indices=occupied_indices,
+            active_indices=active_indices
+        )
     else:
         molecular_hamiltonian = mole.get_molecular_hamiltonian(
             occupied_indices=None,
