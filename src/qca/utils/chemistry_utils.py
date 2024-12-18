@@ -1,6 +1,7 @@
 import re
 import sys
 import time
+import os
 from dataclasses import dataclass
 from warnings import warn
 
@@ -133,10 +134,15 @@ def generate_molecular_hamiltonian(
         occupied_indices = range(active_space_start)
         active_indices = range(active_space_start, active_space_stop)
     
-    molecular_hamiltonian = mole.get_molecular_hamiltonian(
-        occupied_indices=occupied_indices,
-        active_indices=active_indices
-    )
+        molecular_hamiltonian = mole.get_molecular_hamiltonian(
+            occupied_indices=occupied_indices,
+            active_indices=active_indices
+        )
+    else:
+        molecular_hamiltonian = mole.get_molecular_hamiltonian(
+            occupied_indices=None,
+            active_indices=None
+        )
 
     molecular_hamiltonian -= mole.hf_energy
 
@@ -161,6 +167,9 @@ def gen_df_qpe(
 
     if not use_analytical and not df_prec:
         raise ValueError('Number of bits of precision is necessary for scaling resource estimates if not using analytical approach for DF encoded QPE')
+
+    if not os.path.exists(outdir):
+        os.makedirs(outdir) 
 
     mol_instance = getInstance('ChemicalHamiltonian', mol_ham=mol_ham, mol_name='Molecular Hamiltonian')
     df_encoding = getEncoding(
