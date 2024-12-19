@@ -13,6 +13,8 @@ import cirq
 
 from pyLIQTR.utils.printing import openqasm
 from pyLIQTR.utils.utils import count_T_gates
+import pyLIQTR.utils.global_ancilla_manager as gam
+from pyLIQTR.utils.circuit_decomposition import circuit_decompose_multi
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
 
 @dataclass
@@ -128,6 +130,14 @@ def get_T_depth(cpt_circuit: cirq.AbstractCircuit):
                 t_depth += 1
                 break
     return t_depth
+
+def complete_decomposition(circuit: cirq.AbstractCircuit) -> cirq.AbstractCircuit:
+    prev_decomp = None
+    context = cirq.DecompositionContext(gam.gam)
+    while circuit != prev_decomp:
+        prev_decomp = circuit
+        circuit = circuit_decompose_multi(circuit, 1, context=context)
+    return circuit
 
 def gen_resource_estimate(
         cpt_circuit: cirq.AbstractCircuit,
@@ -257,7 +267,8 @@ def circuit_estimate(
                 subcircuit_counts[gate_type][0] += 1
             else:
                 t0 = time.perf_counter()
-                decomposed_circuit = cirq.Circuit(cirq.decompose(operation))
+                # decomposed_circuit = cirq.Circuit(cirq.decompose(operation))
+                decomposed_circuit = complete_decomposition(cirq.Circuit(operation))
                 t1 = time.perf_counter()
                 decomposed_elapsed = t1-t0
                 print(f'   Time to decompose high level {gate_type_name} circuit: {decomposed_elapsed} seconds ')
