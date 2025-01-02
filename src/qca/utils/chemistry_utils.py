@@ -207,6 +207,7 @@ def gen_df_qpe(
         gate_synth_accuracy=gate_precision,
         write_circuits=write_circuits
     )
+    return qpe_circuit
 
 
 def generate_pathway_hamiltonians(
