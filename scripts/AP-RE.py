@@ -1,9 +1,9 @@
 import os
 from dataclasses import dataclass
 from argparse import ArgumentParser, Namespace
-from qca.utils.chemistry_utils import load_pathway, generate_electronic_hamiltonians, gsee_molecular_hamiltonian
+from qca.utils.chemistry_utils import load_pathway, gsee_molecular_hamiltonian, generate_molecular_hamiltonian, gen_df_qpe
 
-
+from openfermion.ops.representations import InteractionOperator
 @dataclass
 class pathway_info:
     pathway: list[int]
@@ -11,6 +11,11 @@ class pathway_info:
 
 def grab_arguments() -> Namespace:
     parser = ArgumentParser('Perform a sweep over different pathways of varying active spaces')
+    parser.add_argument(
+        '--use_df',
+        action='store_true',
+        help='Flag to double Factorize encode your hamiltonian'
+    )
     parser.add_argument(
         '-A',
         '--active_space_reduction',
@@ -81,27 +86,103 @@ def grab_arguments() -> Namespace:
         help='Directoty with pathway datafiles.',
         default='./data/'
     )
+    parser.add_argument(
+        '-GP',
+        '--gate_synth',
+        type=float,
+        help='Accuracy used when decomposing circuits',
+        default=1e-10
+    )
+    parser.add_argument(
+        '-BR',
+        type=int,
+        help='The number of precision bits to use for the rotation angles output by the QROM',
+        default=7
+    )
+    parser.add_argument(
+        '-DF',
+        type=float,
+        help='The threshold used to throw out factors from the double factorization.',
+        default=1e-3
+    )
+    parser.add_argument(
+        '-SF',
+        type=float,
+        help='The threshold used to throw out factors from the first eigendecomposition',
+        default=1e-8
+    )
+    parser.add_argument(
+        '-EE',
+        type=float,
+        help='The allowable error in phase estimation energy',
+        default=1e-3
+    )
     args = parser.parse_args()
     return args
+
+def gen_mol_hams(
+        fname: str,
+        basis:str,
+        pathway: list[int],
+        active_space_reduc: float | None,
+):
+    coords_pathways = load_pathway(fname, pathway)
+    hams = []
+    for coords in coords_pathways:
+        _, charge, multi = [int(coords[0][j]) for j in range(3)]
+        geometry = []
+        for coord in coords[1:]:
+            atom = (coord[0], tuple(coord[1]))
+            geometry.append(atom)
+        mol_ham = generate_molecular_hamiltonian(
+            basis=basis,
+            geometry=geometry,
+            multiplicity=multi,
+            charge=charge,
+            active_space_frac=active_space_reduc
+        )
+        hams.append(mol_ham)
+    return hams
+
+def df_subprocess(
+        outdir: str,
+        fname: str,
+        mol_hams: list[InteractionOperator],
+        br:int,
+        df_error_threshold:float,
+        sf_error_threshold:float,
+        energy_error:float,
+        df_prec:float | None,
+        eps: float | None,
+        gate_precision:float | None,
+        use_analytical: bool = True
+):
+    for ham in mol_hams:
+        gen_df_qpe(
+            mol_ham=ham,
+            use_analytical=use_analytical,
+            outdir=outdir,
+            fname=fname,
+            br=br,
+            df_error_threshold=df_error_threshold,
+            sf_error_threshold=sf_error_threshold,
+            energy_error=energy_error,
+            df_prec=df_prec,
+            eps=eps,
+            gate_precision=gate_precision,
+            is_extrapolated=use_analytical
+        )
+
 
 def trotter_subprocess(
         outdir:str,
         fname:str,
-        pathway: list[int],
-        basis:str,
+        mol_hams: list[InteractionOperator],
         ev_time:float,
-        active_space_reduc:float,
         trotter_order:int,
         trotter_steps:int,
         bits_precision:int
 ):
-    coords_pathways = load_pathway(fname, pathway)
-    molecular_hamiltonians = generate_electronic_hamiltonians(
-        basis=basis,
-        active_space_frac=active_space_reduc,
-        coordinates_pathway=coords_pathways,
-        run_scf=1
-    )
     catalyst_name = fname.split('.xyz')[0]
     gsee_args = {
         'trotterize' : True,
@@ -115,7 +196,7 @@ def trotter_subprocess(
         gse_args=gsee_args,
         trotter_steps=trotter_steps,
         bits_precision=bits_precision,
-        molecular_hamiltonians=molecular_hamiltonians
+        molecular_hamiltonians=mol_hams
     )
 
 
@@ -123,29 +204,50 @@ if __name__ == '__main__':
     pid = os.getpid()
     args = grab_arguments()
     pathway = args.pathway
-    if not pathway:
-        raise LookupError('Unspecified reaction pathway')
-    
-    outdir = args.outdir
+    is_single_instance:bool = pathway is None
+
+    outdir = args.dir
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
     fname = args.fname
+    use_df = args.use_df
     bits_precision = args.bits_prec
     active_space_reduc = args.active_space_reduction
     basis = args.basis
     evolution_time = args.evolution_time
     trotter_order = args.trotter_order
-    trotter_steps = args.trotter_steps 
+    trotter_steps = args.trotter_steps
     
-    trotter_subprocess(
-        outdir=outdir,
-        fname=fname,
-        pathway=pathway,
-        basis=basis,
-        ev_time=evolution_time,
-        active_space_reduc=active_space_reduc,
-        trotter_order=trotter_order,
-        trotter_steps=trotter_steps,
-        bits_precision=bits_precision
-    )    
+    br = args.BR
+    sf_error = args.SF
+    df_error = args.DF
+    energy_error = args.EE
+    gate_synth_accuracy = args.gate_synth
+    print("going to gen mol hams")
+    mol_hams = gen_mol_hams(fname, basis, pathway, active_space_reduc)
+    print('now doing it')
+    fname = f'/{fname.split('/')[-1]}'
+    if not use_df:
+        trotter_subprocess(
+            outdir=outdir,
+            fname=fname,
+            mol_hams=mol_hams,
+            ev_time=evolution_time,
+            trotter_order=trotter_order,
+            trotter_steps=trotter_steps,
+            bits_precision=bits_precision
+        )
+    else:
+        df_subprocess(
+            outdir=outdir,
+            fname=fname,
+            mol_hams=mol_hams,
+            br=br,
+            df_error_threshold=df_error,
+            sf_error_threshold=sf_error,
+            energy_error=energy_error,
+            df_prec=bits_precision,
+            gate_precision=gate_synth_accuracy,
+            eps=None
+        )
