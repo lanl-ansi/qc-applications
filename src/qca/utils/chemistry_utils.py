@@ -111,15 +111,15 @@ def generate_molecular_hamiltonian(
         run_fci:int=0
 ) -> InteractionOperator:
         
-    molecular_data = MolecularData(
+    mol_data = MolecularData(
         geometry=geometry,
         basis=basis,
         multiplicity=multiplicity,
         charge=charge,
     )
 
-    mole = run_pyscf(
-        molecule=molecular_data,
+    mol = run_pyscf(
+        molecule=mol_data,
         run_scf=1,
         run_mp2=run_mp2,
         run_cisd=run_cisd,
@@ -127,29 +127,29 @@ def generate_molecular_hamiltonian(
         run_fci=run_fci
     )
     if active_space_frac and not occupied_indices and not active_indices:
-        nocc = mole.n_electrons // 2
-        nvir = mole.n_orbitals - nocc
+        nocc = mol.n_electrons // 2
+        nvir = mol.n_orbitals - nocc
         active_space_start = nocc - ( nocc // active_space_frac )
         active_space_stop = nocc + ( nvir // active_space_frac )
         occupied_indices = range(active_space_start)
         active_indices = range(active_space_start, active_space_stop)
     
-        molecular_hamiltonian = mole.get_molecular_hamiltonian(
+        molecular_hamiltonian = mol.get_molecular_hamiltonian(
             occupied_indices=occupied_indices,
             active_indices=active_indices
         )
     elif occupied_indices and active_indices:
-        molecular_hamiltonian = mole.get_molecular_hamiltonian(
+        molecular_hamiltonian = mol.get_molecular_hamiltonian(
             occupied_indices=occupied_indices,
             active_indices=active_indices
         )
     else:
-        molecular_hamiltonian = mole.get_molecular_hamiltonian(
+        molecular_hamiltonian = mol.get_molecular_hamiltonian(
             occupied_indices=None,
             active_indices=None
         )
 
-    molecular_hamiltonian -= mole.hf_energy
+    molecular_hamiltonian -= mol.hf_energy
 
     return molecular_hamiltonian
 
@@ -158,7 +158,7 @@ def gen_df_qpe(
         use_analytical:bool,
         outdir:str,
         fname:str,
-        br: int = 7,
+        bits_rot: int = 7,
         df_error_threshold: float = 1e-3,
         sf_error_threshold: float = 1e-8,
         energy_error: float = 1e-3,
@@ -183,7 +183,7 @@ def gen_df_qpe(
     df_encoding = getEncoding(
         instance=mol_instance,
         encoding=VALID_ENCODINGS.DoubleFactorized,
-        br=br,
+        br=bits_rot,
         df_error_threshold=df_error_threshold,
         sf_error_threshold=sf_error_threshold,
         energy_error=energy_error
