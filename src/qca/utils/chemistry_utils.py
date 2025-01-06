@@ -1,7 +1,9 @@
 import re
 import sys
 import time
+import os
 from dataclasses import dataclass
+from warnings import warn
 
 import numpy as np
 
@@ -10,8 +12,12 @@ from openfermion.chem import MolecularData
 from openfermion.ops.representations import InteractionOperator
 
 from pyLIQTR.PhaseEstimation.pe import PhaseEstimation
+from pyLIQTR.ProblemInstances.getInstance import getInstance
+from pyLIQTR.utils.resource_analysis import estimate_resources
+from pyLIQTR.qubitization.phase_estimation import QubitizedPhaseEstimation
+from pyLIQTR.BlockEncodings.getEncoding import getEncoding, VALID_ENCODINGS
 
-from qca.utils.utils import grab_circuit_resources, CatalystMetaData
+from qca.utils.utils import grab_circuit_resources, CatalystMetaData, gen_json
 
 @dataclass
 class molecular_info:
@@ -91,7 +97,120 @@ def load_pathway(fname:str, pathway:list[int]) -> list:
                 idx += 1
     return coordinates_pathway
 
-def generate_electronic_hamiltonians(
+def generate_molecular_hamiltonian(
+        basis: str,
+        geometry: list[tuple[str, float]],
+        multiplicity: int,
+        charge:int,
+        active_space_frac: float | None = None,
+        occupied_indices: list[int] | None = None,
+        active_indices: list[int] | None = None,
+        run_mp2:int=0,
+        run_cisd:int=0,
+        run_ccsd:int=0,
+        run_fci:int=0
+) -> InteractionOperator:
+        
+    mol_data = MolecularData(
+        geometry=geometry,
+        basis=basis,
+        multiplicity=multiplicity,
+        charge=charge,
+    )
+
+    mol = run_pyscf(
+        molecule=mol_data,
+        run_scf=1,
+        run_mp2=run_mp2,
+        run_cisd=run_cisd,
+        run_ccsd=run_ccsd,
+        run_fci=run_fci
+    )
+    if active_space_frac and not occupied_indices and not active_indices:
+        nocc = mol.n_electrons // 2
+        nvir = mol.n_orbitals - nocc
+        active_space_start = nocc - ( nocc // active_space_frac )
+        active_space_stop = nocc + ( nvir // active_space_frac )
+        occupied_indices = range(active_space_start)
+        active_indices = range(active_space_start, active_space_stop)
+    
+        molecular_hamiltonian = mol.get_molecular_hamiltonian(
+            occupied_indices=occupied_indices,
+            active_indices=active_indices
+        )
+    elif occupied_indices and active_indices:
+        molecular_hamiltonian = mol.get_molecular_hamiltonian(
+            occupied_indices=occupied_indices,
+            active_indices=active_indices
+        )
+    else:
+        molecular_hamiltonian = mol.get_molecular_hamiltonian(
+            occupied_indices=None,
+            active_indices=None
+        )
+
+    molecular_hamiltonian -= mol.hf_energy
+
+    return molecular_hamiltonian
+
+def gen_df_qpe(
+        mol_ham: InteractionOperator,
+        use_analytical:bool,
+        outdir:str,
+        fname:str,
+        bits_rot: int = 7,
+        df_error_threshold: float = 1e-3,
+        sf_error_threshold: float = 1e-8,
+        energy_error: float = 1e-3,
+        df_prec: int | None = None,
+        eps: float | None = None,
+        is_extrapolated:bool = False,
+        gate_precision: float = 1e-10,
+        include_nested_resources: bool = False,
+        metadata: CatalystMetaData | None = None,
+        write_circuits: bool = False
+    ):
+    if not df_prec and not eps:
+        raise ValueError('Specify either df_prec/eps for QPE')
+
+    if not use_analytical and not df_prec:
+        raise ValueError('Number of bits of precision is necessary for scaling resource estimates if not using analytical approach for DF encoded QPE')
+
+    if not os.path.exists(outdir):
+        os.makedirs(outdir) 
+
+    mol_instance = getInstance('ChemicalHamiltonian', mol_ham=mol_ham, mol_name='Molecular Hamiltonian')
+    df_encoding = getEncoding(
+        instance=mol_instance,
+        encoding=VALID_ENCODINGS.DoubleFactorized,
+        br=bits_rot,
+        df_error_threshold=df_error_threshold,
+        sf_error_threshold=sf_error_threshold,
+        energy_error=energy_error
+    )
+    if df_prec:
+        qpe_df_circuit = QubitizedPhaseEstimation(block_encoding=df_encoding, prec=df_prec)
+    else:
+        qpe_df_circuit = QubitizedPhaseEstimation(block_encoding=df_encoding, eps=eps)
+    
+    qpe_circuit = qpe_df_circuit.circuit
+    grab_circuit_resources(
+        circuit=qpe_circuit,
+        outdir=outdir,
+        algo_name='DF_QPE',
+        fname=fname,
+        is_extrapolated=is_extrapolated,
+        use_analytical=use_analytical,
+        bits_precision=df_prec,
+        metadata=metadata,
+        include_nested_resources=include_nested_resources,
+        gate_synth_accuracy=gate_precision,
+        write_circuits=write_circuits
+    )
+    return qpe_circuit
+
+
+def generate_pathway_hamiltonians(
         basis: str,
         active_space_frac: float,
         coordinates_pathway:list,
@@ -114,7 +233,6 @@ def generate_electronic_hamiltonians(
         
         molecule = MolecularData(
             geometry=geometry,
-            basis=basis,
             multiplicity=multi,
             charge=charge,
             description='catalyst'
@@ -197,6 +315,7 @@ def gsee_molecular_hamiltonian(
         include_nested_resources:bool=False,
         gate_synth_accuracy: int|float = 10,
     ) -> int:
+    warn('This function is deprecated. Prefer to use DF encoded QPE', DeprecationWarning, stacklevel=2)
     for idx, molecular_hamiltonian_info in enumerate(molecular_hamiltonians):
         uid = time.time_ns()
         molecular_hamiltonian = molecular_hamiltonian_info.molecular_hamiltonian
