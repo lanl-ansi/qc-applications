@@ -1,10 +1,9 @@
 import os
 from dataclasses import dataclass
 from argparse import ArgumentParser, Namespace
-from concurrent.futures import ThreadPoolExecutor, as_completed, ProcessPoolExecutor
-from qca.utils.chemistry_utils import load_pathway, generate_electronic_hamiltonians, gsee_molecular_hamiltonian
+from qca.utils.chemistry_utils import load_pathway, gsee_molecular_hamiltonian, generate_molecular_hamiltonian, gen_df_qpe
 
-
+from openfermion.ops.representations import InteractionOperator
 @dataclass
 class pathway_info:
     pathway: list[int]
@@ -13,11 +12,72 @@ class pathway_info:
 def grab_arguments() -> Namespace:
     parser = ArgumentParser('Perform a sweep over different pathways of varying active spaces')
     parser.add_argument(
+        '--use_df',
+        action='store_true',
+        help='Flag to double Factorize encode your hamiltonian'
+    )
+    parser.add_argument(
         '-A',
         '--active_space_reduction',
         type=int,
         help='Factor to reduce the active space',
-        default=10
+        default=1
+    )
+    parser.add_argument(
+        '-F',
+        '--fname',
+        type=str,
+        help='absolute filepath pointing to xyz file for extracting molecular hamiltonian along a reaction pathway',
+        required=True
+    )
+    parser.add_argument(
+        '-B',
+        '--basis',
+        type=str,
+        help='basis working in',
+        default='sto-3g'
+    )
+    parser.add_argument(
+        '-T',
+        '--evolution_time',
+        type=float,
+        help='Float representing total evolution time if approximating exp^{iHt} for phase estimation',
+        default=1
+    )
+    parser.add_argument(
+        '-O',
+        '--trotter_order',
+        type=int,
+        help='specify trotter order if using a trotter subprocess for phase estimation',
+        default=2
+    )
+    parser.add_argument(
+        '-S',
+        '--trotter_steps',
+        type=int,
+        help='Number of trotter steps if using a trotter subprocess for phase estimation',
+        default=1
+    )
+    parser.add_argument(
+        '-P',
+        '--pathway',
+        metavar='N',
+        type=int,
+        nargs='*',
+        help='reaction pathway of interest'
+    )
+    parser.add_argument(
+        '-D',
+        '--dir',
+        type=str,
+        default=os.path.dirname(os.path.realpath(__file__)),
+        help='directory to store generated resource estimates')
+    parser.add_argument(
+        '-BP',
+        '--bits_prec',
+        type=int,
+        default=10,
+        help='Number of bits to estimate phase to'
     )
     parser.add_argument(
         '-d', 
@@ -26,95 +86,168 @@ def grab_arguments() -> Namespace:
         help='Directoty with pathway datafiles.',
         default='./data/'
     )
+    parser.add_argument(
+        '-GP',
+        '--gate_synth',
+        type=float,
+        help='Accuracy used when decomposing circuits',
+        default=1e-10
+    )
+    parser.add_argument(
+        '-BR',
+        type=int,
+        help='The number of precision bits to use for the rotation angles output by the QROM',
+        default=7
+    )
+    parser.add_argument(
+        '-DF',
+        type=float,
+        help='The threshold used to throw out factors from the double factorization.',
+        default=1e-3
+    )
+    parser.add_argument(
+        '-SF',
+        type=float,
+        help='The threshold used to throw out factors from the first eigendecomposition',
+        default=1e-8
+    )
+    parser.add_argument(
+        '-EE',
+        type=float,
+        help='The allowable error in phase estimation energy',
+        default=1e-3
+    )
     args = parser.parse_args()
     return args
 
-def generate_ap_re(
-        catalyst_name:str,
-        num_processes:int,
-        hamiltonians: list,
-        gsee_args:dict,
-        trotter_steps:int,
-        bits_precision: int
-    ):
-    results = []
-    with ProcessPoolExecutor(max_workers=num_processes) as executor:
-        for idx, hamiltonian in enumerate(hamiltonians):
-            future = executor.submit(
-                gsee_molecular_hamiltonian,
-                f'pathway({idx})_{catalyst_name}',
-                gsee_args,
-                trotter_steps,
-                bits_precision,
-                hamiltonian
-            )
-            results.append(future)
-        for future in as_completed(results):
-            print(f'completed')
+def gen_mol_hams(
+        fname: str,
+        basis:str,
+        pathway: list[int],
+        active_space_reduc: float | None,
+):
+    coords_pathways = load_pathway(fname, pathway)
+    hams = []
+    for coords in coords_pathways:
+        _, charge, multi = [int(coords[0][j]) for j in range(3)]
+        geometry = []
+        for coord in coords[1:]:
+            atom = (coord[0], tuple(coord[1]))
+            geometry.append(atom)
+        mol_ham = generate_molecular_hamiltonian(
+            basis=basis,
+            geometry=geometry,
+            multiplicity=multi,
+            charge=charge,
+            active_space_frac=active_space_reduc
+        )
+        hams.append(mol_ham)
+    return hams
 
-def grab_molecular_hamiltonians_pool(
-        active_space_reduc:float,
-        num_processes:int,
-        pathways: list,
-        basis:str
-    ) -> list:
-    hamiltonians = []
-    results = []
-    with ThreadPoolExecutor(max_workers=num_processes) as executor:
-        for coords in pathways:
-            future = executor.submit(
-                generate_electronic_hamiltonians,
-                basis, active_space_reduc, coords, 1
-            )
-            results.append(future)
-        for future in as_completed(results):
-            hamiltonians.append(future.result())
-    return hamiltonians
+def df_subprocess(
+        outdir: str,
+        fname: str,
+        mol_hams: list[InteractionOperator],
+        br:int,
+        df_error_threshold:float,
+        sf_error_threshold:float,
+        energy_error:float,
+        df_prec:float | None,
+        eps: float | None,
+        gate_precision:float | None,
+        use_analytical: bool = True
+):
+    for ham in mol_hams:
+        gen_df_qpe(
+            mol_ham=ham,
+            use_analytical=use_analytical,
+            outdir=outdir,
+            fname=fname,
+            br=br,
+            df_error_threshold=df_error_threshold,
+            sf_error_threshold=sf_error_threshold,
+            energy_error=energy_error,
+            df_prec=df_prec,
+            eps=eps,
+            gate_precision=gate_precision,
+            is_extrapolated=use_analytical
+        )
+
+
+def trotter_subprocess(
+        outdir:str,
+        fname:str,
+        mol_hams: list[InteractionOperator],
+        ev_time:float,
+        trotter_order:int,
+        trotter_steps:int,
+        bits_precision:int
+):
+    catalyst_name = fname.split('.xyz')[0]
+    gsee_args = {
+        'trotterize' : True,
+        'ev_time'    : ev_time,
+        'trot_ord'   : trotter_order,
+        'trot_num'   : trotter_steps
+    }
+    gsee_molecular_hamiltonian(
+        outdir=outdir,
+        catalyst_name=catalyst_name,
+        gse_args=gsee_args,
+        trotter_steps=trotter_steps,
+        bits_precision=bits_precision,
+        molecular_hamiltonians=mol_hams
+    )
 
 
 if __name__ == '__main__':
     pid = os.getpid()
     args = grab_arguments()
+    pathway = args.pathway
+    is_single_instance:bool = pathway is None
+
+    outdir = args.dir
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+
+    fname = args.fname
+    use_df = args.use_df
+    bits_precision = args.bits_prec
     active_space_reduc = args.active_space_reduction
-    pathway_directory= args.directory
-    pathways = [
-        pathway_info(
-            pathway=[27, 1, 14, 15, 16, 24, 25, 26],
-            fname=f'{pathway_directory}water_oxidation_Co2O9H12.xyz'
-        ),
-        pathway_info(
-            pathway=[3, 1, 14, 15, 16, 20, 21, 22, 23],
-            fname=f'{pathway_directory}water_oxidation_Co2O9H12.xyz'
-        ),
-        pathway_info(
-            pathway=[2, 1, 14, 15, 16, 17, 18, 19],
-            fname='{pathway_directory}water_oxidation_Co2O9H12.xyz'
-        ),
-        pathway_info(
-            pathway=[5, 10, 28, 29, 30, 31, 32, 33],
-            fname='{pathway_directory}water_oxidation_Co2O9H12.xyz'
+    basis = args.basis
+    evolution_time = args.evolution_time
+    trotter_order = args.trotter_order
+    trotter_steps = args.trotter_steps
+    
+    br = args.BR
+    sf_error = args.SF
+    df_error = args.DF
+    energy_error = args.EE
+    gate_synth_accuracy = args.gate_synth
+    print("going to gen mol hams")
+    mol_hams = gen_mol_hams(fname, basis, pathway, active_space_reduc)
+    print('now doing it')
+    fname = f'/{fname.split('/')[-1]}'
+    if not use_df:
+        trotter_subprocess(
+            outdir=outdir,
+            fname=fname,
+            mol_hams=mol_hams,
+            ev_time=evolution_time,
+            trotter_order=trotter_order,
+            trotter_steps=trotter_steps,
+            bits_precision=bits_precision
         )
-    ]
-    coords_pathways = [
-        load_pathway(pathway.fname, pathway.pathway) for pathway in pathways
-    ]
-    molecular_hamiltonians = grab_molecular_hamiltonians_pool(
-        active_space_reduc=active_space_reduc,
-        num_processes=len(pathways),
-        pathways=coords_pathways,
-        basis='sto-3g'
-    )
-    gsee_args = {
-        'trotterize' : True,
-        'ev_time'    : 1,
-        'trot_ord'   : 2,
-        'trot_num'   : 1
-    }
-    generate_ap_re(
-        catalyst_name='Co2O9H12',
-        num_processes=len(pathways),
-        hamiltonians=molecular_hamiltonians,
-        gsee_args=gsee_args,
-        trotter_steps=1,
-        bits_precision=10
-    )
+    else:
+        df_subprocess(
+            outdir=outdir,
+            fname=fname,
+            mol_hams=mol_hams,
+            br=br,
+            df_error_threshold=df_error,
+            sf_error_threshold=sf_error,
+            energy_error=energy_error,
+            df_prec=bits_precision,
+            gate_precision=gate_synth_accuracy,
+            eps=None
+        )

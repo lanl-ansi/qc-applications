@@ -1,7 +1,9 @@
 import re
 import sys
 import time
+import os
 from dataclasses import dataclass
+from warnings import warn
 
 import numpy as np
 
@@ -10,10 +12,13 @@ from openfermion.chem import MolecularData
 from openfermion.ops.representations import InteractionOperator
 
 from pyLIQTR.PhaseEstimation.pe import PhaseEstimation
+from pyLIQTR.ProblemInstances.getInstance import getInstance
+from pyLIQTR.utils.resource_analysis import estimate_resources
+from pyLIQTR.qubitization.phase_estimation import QubitizedPhaseEstimation
+from pyLIQTR.BlockEncodings.getEncoding import getEncoding, VALID_ENCODINGS
 
-from qca.utils.utils import circuit_estimate, EstimateMetaData
+from qca.utils.utils import grab_circuit_resources, CatalystMetaData, gen_json
 
-import random
 @dataclass
 class molecular_info:
     """Class for keeping track of information for a given state in the molecular orbital basis"""
@@ -92,7 +97,120 @@ def load_pathway(fname:str, pathway:list[int]) -> list:
                 idx += 1
     return coordinates_pathway
 
-def generate_electronic_hamiltonians(
+def generate_molecular_hamiltonian(
+        basis: str,
+        geometry: list[tuple[str, float]],
+        multiplicity: int,
+        charge:int,
+        active_space_frac: float | None = None,
+        occupied_indices: list[int] | None = None,
+        active_indices: list[int] | None = None,
+        run_mp2:int=0,
+        run_cisd:int=0,
+        run_ccsd:int=0,
+        run_fci:int=0
+) -> InteractionOperator:
+        
+    mol_data = MolecularData(
+        geometry=geometry,
+        basis=basis,
+        multiplicity=multiplicity,
+        charge=charge,
+    )
+
+    mol = run_pyscf(
+        molecule=mol_data,
+        run_scf=1,
+        run_mp2=run_mp2,
+        run_cisd=run_cisd,
+        run_ccsd=run_ccsd,
+        run_fci=run_fci
+    )
+    if active_space_frac and not occupied_indices and not active_indices:
+        nocc = mol.n_electrons // 2
+        nvir = mol.n_orbitals - nocc
+        active_space_start = nocc - ( nocc // active_space_frac )
+        active_space_stop = nocc + ( nvir // active_space_frac )
+        occupied_indices = range(active_space_start)
+        active_indices = range(active_space_start, active_space_stop)
+    
+        molecular_hamiltonian = mol.get_molecular_hamiltonian(
+            occupied_indices=occupied_indices,
+            active_indices=active_indices
+        )
+    elif occupied_indices and active_indices:
+        molecular_hamiltonian = mol.get_molecular_hamiltonian(
+            occupied_indices=occupied_indices,
+            active_indices=active_indices
+        )
+    else:
+        molecular_hamiltonian = mol.get_molecular_hamiltonian(
+            occupied_indices=None,
+            active_indices=None
+        )
+
+    molecular_hamiltonian -= mol.hf_energy
+
+    return molecular_hamiltonian
+
+def gen_df_qpe(
+        mol_ham: InteractionOperator,
+        use_analytical:bool,
+        outdir:str,
+        fname:str,
+        bits_rot: int = 7,
+        df_error_threshold: float = 1e-3,
+        sf_error_threshold: float = 1e-8,
+        energy_error: float = 1e-3,
+        df_prec: int | None = None,
+        eps: float | None = None,
+        is_extrapolated:bool = False,
+        gate_precision: float = 1e-10,
+        include_nested_resources: bool = False,
+        metadata: CatalystMetaData | None = None,
+        write_circuits: bool = False
+    ):
+    if not df_prec and not eps:
+        raise ValueError('Specify either df_prec/eps for QPE')
+
+    if not use_analytical and not df_prec:
+        raise ValueError('Number of bits of precision is necessary for scaling resource estimates if not using analytical approach for DF encoded QPE')
+
+    if not os.path.exists(outdir):
+        os.makedirs(outdir) 
+
+    mol_instance = getInstance('ChemicalHamiltonian', mol_ham=mol_ham, mol_name='Molecular Hamiltonian')
+    df_encoding = getEncoding(
+        instance=mol_instance,
+        encoding=VALID_ENCODINGS.DoubleFactorized,
+        br=bits_rot,
+        df_error_threshold=df_error_threshold,
+        sf_error_threshold=sf_error_threshold,
+        energy_error=energy_error
+    )
+    if df_prec:
+        qpe_df_circuit = QubitizedPhaseEstimation(block_encoding=df_encoding, prec=df_prec)
+    else:
+        qpe_df_circuit = QubitizedPhaseEstimation(block_encoding=df_encoding, eps=eps)
+    
+    qpe_circuit = qpe_df_circuit.circuit
+    grab_circuit_resources(
+        circuit=qpe_circuit,
+        outdir=outdir,
+        algo_name='DF_QPE',
+        fname=fname,
+        is_extrapolated=is_extrapolated,
+        use_analytical=use_analytical,
+        bits_precision=df_prec,
+        metadata=metadata,
+        include_nested_resources=include_nested_resources,
+        gate_synth_accuracy=gate_precision,
+        write_circuits=write_circuits
+    )
+    return qpe_circuit
+
+
+def generate_pathway_hamiltonians(
         basis: str,
         active_space_frac: float,
         coordinates_pathway:list,
@@ -115,7 +233,6 @@ def generate_electronic_hamiltonians(
         
         molecule = MolecularData(
             geometry=geometry,
-            basis=basis,
             multiplicity=multi,
             charge=charge,
             description='catalyst'
@@ -186,34 +303,49 @@ def generate_electronic_hamiltonians(
     return molecular_hamiltonians
 
 def gsee_molecular_hamiltonian(
+        outdir: str,
         catalyst_name:str,
         gse_args: dict,
         trotter_steps: int,
         bits_precision: int,
         molecular_hamiltonians: list[molecular_info],
-        value_per_circuit:float=None,
-        repetitions_per_application:int=None
+        value_per_circuit:float|None=None,
+        repetitions_per_application:int|None=None,
+        write_circuits:bool=False,
+        include_nested_resources:bool=False,
+        gate_synth_accuracy: int|float = 10,
     ) -> int:
-    uid = random.randint(0, 1000)
+    warn('This function is deprecated. Prefer to use DF encoded QPE', DeprecationWarning, stacklevel=2)
     for idx, molecular_hamiltonian_info in enumerate(molecular_hamiltonians):
+        uid = time.time_ns()
         molecular_hamiltonian = molecular_hamiltonian_info.molecular_hamiltonian
         molecular_hf_energy = molecular_hamiltonian_info.hf_energy
         active_space_frac = molecular_hamiltonian_info.active_space_reduction
         basis = molecular_hamiltonian_info.basis
         gse_args['mol_ham'] = molecular_hamiltonian
+        
         phase_offset = grab_molecular_phase_offset(molecular_hf_energy)
         init_state = molecular_hamiltonian_info.initial_state
-        molecular_metadata = EstimateMetaData(
+
+        ev_time = gse_args['ev_time']
+        trotter_order = gse_args['trot_ord']
+        trotter_steps = gse_args['trot_num']
+
+        molecular_metadata = CatalystMetaData(
             id = uid,
-            name=f'{catalyst_name}_molecule({idx})',
-            category='scientific',
-            size=f'{molecular_hamiltonian.n_qubits}',
-            task='Ground State Energy Estimation',
-            implementations=f'trotterization subprocess, basis={basis}, active_space_reduction={active_space_frac}, bits_precision={bits_precision}',
+            name=f'{catalyst_name}[{idx}]',
+            category='Scientific',
+            size=f'{molecular_hamiltonian.n_qubits} qubits',
+            task='GSEE',
+            gate_synth_accuracy=gate_synth_accuracy,
             value_per_circuit=value_per_circuit,
-            repetitions_per_application=repetitions_per_application
+            repetitions_per_application=repetitions_per_application,
+            basis=basis,
+            evolution_time=ev_time,
+            bits_precision=bits_precision,
+            trotter_order=trotter_order,
+            nsteps=trotter_steps
         )
-        uid += 1
 
         t0 = time.perf_counter()
         gse_inst = PhaseEstimation(
@@ -230,14 +362,17 @@ def gsee_molecular_hamiltonian(
         gse_circuit = gse_inst.pe_circuit
         
         t0 = time.perf_counter()
-        circuit_estimate(
+        grab_circuit_resources(
             circuit=gse_circuit,
-            metadata=molecular_metadata,
-            outdir='GSE/Quantum_Chemistry/',
-            numsteps=trotter_steps,
-            circuit_name=f'{catalyst_name}_{idx}_active_space{active_space_frac}',
+            outdir=outdir,
+            algo_name='GSEE',
+            fname=f'{catalyst_name}[{idx}]_active_space{active_space_frac}',
+            nsteps=trotter_steps,
             bits_precision=bits_precision,
-            write_circuits=False
+            metadata=molecular_metadata,
+            write_circuits=write_circuits,
+            include_nested_resources=include_nested_resources,
+            gate_synth_accuracy=gate_synth_accuracy
         )
         t1 = time.perf_counter()
-        print(f'Time to estimate Co2O9H12_step({idx}): {t1-t0}')
+        print(f'Time to estimate state {idx}: {t1-t0}')

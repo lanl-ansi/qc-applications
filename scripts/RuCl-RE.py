@@ -300,7 +300,6 @@ def generate_rucl_gsee_re(
     graph = flatten_nx_graph(graph)
     n_qubits = len(graph.nodes)
     init_state = [0] * n_qubits
-
     
     if not os.path.exists(outdir):
         os.makedirs(outdir)
