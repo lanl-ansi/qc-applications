@@ -393,7 +393,7 @@ def grab_circuit_resources(circuit: cirq.AbstractCircuit,
         logical_estimates = estimate_resources(
             circuit_element=circuit,
             rotation_gate_precision=gate_synth_accuracy
-        )
+        ) 
         estimates = {'Logical_Abstract':{
             'num_qubits': logical_estimates['LogicalQubits'],
             't_count': logical_estimates['T'],
@@ -403,5 +403,8 @@ def grab_circuit_resources(circuit: cirq.AbstractCircuit,
             'subcircuit_info': {}
         }}
 
+    #calculate and insert value_per_t_gate
+    estimates['value_per_t_gate'] = metadata.value_per_circuit/estimates.get('Logical_Abstract').get('t_count')
+    
     outfile = f'{outdir}{fname}_re.json'
     gen_json(estimates, outfile, metadata)
