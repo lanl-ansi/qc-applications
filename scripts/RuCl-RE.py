@@ -284,7 +284,6 @@ def generate_rucl_dynamics_re(
         )
 
 def generate_rucl_gsee_re(
-    energy_precision:float,
     bits_precision:float,
     lattice_size: int,
     evolution_time:float,
@@ -295,7 +294,13 @@ def generate_rucl_gsee_re(
     gate_synth_accuracy = 10
     trotter_order = 2
     is_extrapolated=True
-    init_state = [0] * lattice_size * lattice_size * 2 #TODO: use DMRG as initial state prep
+
+    graph = hexagonal_lattice_graph(lattice_size,lattice_size)
+    assign_hexagon_labels(graph)
+    graph = flatten_nx_graph(graph)
+    n_qubits = len(graph.nodes)
+    init_state = [0] * n_qubits
+
     
     if not os.path.exists(outdir):
         os.makedirs(outdir)
@@ -328,7 +333,7 @@ def generate_rucl_gsee_re(
             evolution_time = evolution_time, 
             nsteps = nsteps,
             trotter_order = trotter_order,
-            energy_precision=energy_precision,
+            bits_precision = bits_precision,
             is_extrapolated=is_extrapolated,
 
         )
@@ -341,14 +346,15 @@ def generate_rucl_gsee_re(
         'trot_num'   : nsteps
     }
         gsee_resource_estimation(
-            outdir='GSEE/RuCl_GSEE/No_Field/',
+            outdir=outdir,
             nsteps=nsteps,
             gsee_args=gsee_args,
             init_state=init_state,
             precision_order=1,
             bits_precision=bits_precision,
             phase_offset=phase_offset,
-            metadata = gsee_metadata
+            metadata = gsee_metadata,
+            circuit_name = f'qsee_rucl_size_{lattice_size}_row_{rucl_idx}'
     )
 
 
@@ -359,7 +365,7 @@ def rucl_estimate():
     df_rucl = pd.read_csv(f"{RuCl_csv_directory}RuCl_test_input.csv")
 
     if args.mode == 'dynamics':
-        re_dir = 'temp_RE/Dynamics/'
+        re_dir = 'RuCl_RE/Dynamics/'
         generate_rucl_dynamics_re(
             energy_precision=1e-3,
             lattice_size=args.lattice_size,
@@ -369,9 +375,8 @@ def rucl_estimate():
             outdir=re_dir
         )
     elif args.mode == 'gsee':
-        re_dir = 'temp_RE/GSEE/'
+        re_dir = 'RuCl_RE/GSEE/'
         generate_rucl_gsee_re(
-            energy_precision=1e-3,
             bits_precision = 10,
             lattice_size=args.lattice_size,
             evolution_time=args.evolution_time,

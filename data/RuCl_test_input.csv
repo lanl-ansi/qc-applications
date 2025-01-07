@@ -1,7 +1,7 @@
-reference, method, J1, K1, Gam1, Gam_prime1, J2, K2, J3, K3
-"Winter et al. PRB","Ab initio (DFT + exact diag.)", -1.7,-6.7,6.6,-0.9,0,0,2.7,0
-"Winter et al. NC","Ab initio-inspired (INS fit)", -0.5, -5.0, 2.5,0,0,0,0.5,0
-"Wu et al.","THz spectroscopy fit", -0.35,-2.8, 2.4,0,0,0,0.34,0
+reference,method,J1,K1,Gam1,Gam_prime1,J2,K2,J3,K3
+"Winter et al. PRB","Ab initio (DFT + exact diag.)",-1.7,-6.7,6.6,-0.9,0,0,2.7,0
+"Winter et al. NC","Ab initio-inspired (INS fit)",-0.5,-5.0,2.5,0,0,0,0.5,0
+"Wu et al.","THz spectroscopy fit",-0.35,-2.8, 2.4,0,0,0,0.34,0
 "Cookmeyer and Moore","Magnon thermal Hall (sign)",-0.5,-5.0,2.5,0,0,0,0.1125,0
 "Kim and Kee","DFT + t=U expansion",-1.53,-6.55,5.25,-0.95,0,0,0,0
 "Suzuki and Suga","Magnetic specific heat",-1.53,-24.4,5.25,-0.95,0,0,0,0
