@@ -404,7 +404,8 @@ def grab_circuit_resources(circuit: cirq.AbstractCircuit,
         }}
 
     #calculate and insert value_per_t_gate
-    estimates['value_per_t_gate'] = metadata.value_per_circuit/estimates.get('Logical_Abstract').get('t_count')
+    if metadata is not None:
+        estimates['value_per_t_gate'] = metadata.value_per_circuit/(estimates.get('Logical_Abstract').get('t_count') * metadata.repetitions_per_application)
     
     outfile = f'{outdir}{fname}_re.json'
     gen_json(estimates, outfile, metadata)
