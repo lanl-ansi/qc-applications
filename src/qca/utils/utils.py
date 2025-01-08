@@ -408,7 +408,7 @@ def grab_circuit_resources(circuit: cirq.AbstractCircuit,
         if (metadata.value_per_circuit != None) and (metadata.repetitions_per_application != None):
             estimates['value_per_t_gate'] = metadata.value_per_circuit/(estimates.get('Logical_Abstract').get('t_count') * metadata.repetitions_per_application)
         else:
-            raise ValueError("circit value or repetetions per application not defined")
+            raise ValueError("Circuit value or repetetions per application not defined")
         
     else: 
         raise ValueError("Metadata object not defined")
