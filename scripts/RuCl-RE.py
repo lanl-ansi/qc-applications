@@ -149,10 +149,21 @@ def assign_hexagon_labels_rucl(graph):
         if (r-1, c+2) in graph and (r + c)%2 == 1:
             graph.add_edge(n, (r-1, c+2), label= 'Y3')
 
-def generate_rucl_hamiltonian(lattice_size, data_series, s=0, field_x=lambda s: 0, field_y=lambda s: 0, field_z=lambda s: 0):
+
+
+def build_rucl_graph(lattice_size):
     graph = hexagonal_lattice_graph(lattice_size,lattice_size)
     assign_hexagon_labels_rucl(graph)
     graph = flatten_nx_graph(graph)
+    return graph
+
+def rucl_init_state_gsee(lattice_size):
+    graph = build_rucl_graph(lattice_size)
+    init_state = [0] * len(graph.nodes)
+    return init_state
+
+def generate_rucl_hamiltonian(lattice_size, data_series, s=0, field_x=lambda s: 0, field_y=lambda s: 0, field_z=lambda s: 0):
+    graph = build_rucl_graph(lattice_size)
     H_constant = nx_rucl_terms(graph, data_series)
     H_time_varied = generate_time_varying_terms(graph, s, x=field_x, y = field_y, z = field_z)
     H = H_constant + H_time_varied
@@ -200,11 +211,19 @@ def gen_args():
     )
 
     parser.add_argument(
-        '-D', 
-        '--directory', 
+        '-I', 
+        '--input_dir', 
         type=str, 
-        help='Directoty with pathway datafiles.',
+        help='Input directory containing datafiles. (Ex: RuCl_input.csv file)',
         default='../data/'
+    )
+
+    parser.add_argument(
+        '-O',
+        '--output_dir',
+        type=str,
+        help="Parent directory for resource-estimation outputs (default: RuCl_RE/)",
+        default = "RuCl_RE/"
     )
     return parser.parse_args()
 
@@ -255,7 +274,7 @@ def generate_rucl_dynamics_re(
             metadata=trotter_metadata,
             outdir=outdir,
             trotter_order=trotter_order,
-            hamiltonian_name=f'trotter_rucl_size_{lattice_size}_row_{rucl_idx}',
+            hamiltonian_name=f'_trotter_rucl_size_{lattice_size}_row_{rucl_idx}',
             nsteps=nsteps,
             is_extrapolated=is_extrapolated
         )
@@ -279,7 +298,7 @@ def generate_rucl_dynamics_re(
             energy_precision=energy_precision,
             metadata=qsp_metadata,
             outdir=outdir,
-            hamiltonian_name=f'qsp_rucl_size_{lattice_size}_row_{rucl_idx}',
+            hamiltonian_name=f'_qsp_rucl_size_{lattice_size}_row_{rucl_idx}',
             write_circuits=False
         )
 
@@ -295,11 +314,7 @@ def generate_rucl_gsee_re(
     trotter_order = 2
     is_extrapolated=True
 
-    graph = hexagonal_lattice_graph(lattice_size,lattice_size)
-    assign_hexagon_labels(graph)
-    graph = flatten_nx_graph(graph)
-    n_qubits = len(graph.nodes)
-    init_state = [0] * n_qubits
+    init_state = rucl_init_state_gsee(lattice_size)
     
     if not os.path.exists(outdir):
         os.makedirs(outdir)
@@ -353,18 +368,18 @@ def generate_rucl_gsee_re(
             bits_precision=bits_precision,
             phase_offset=phase_offset,
             metadata = gsee_metadata,
-            circuit_name = f'qsee_rucl_size_{lattice_size}_row_{rucl_idx}'
+            circuit_name = f'_rucl_size_{lattice_size}_row_{rucl_idx}'
     )
 
 
 def rucl_estimate():
     args = gen_args()
 
-    RuCl_csv_directory=args.directory
+    RuCl_csv_directory=args.input_dir
     df_rucl = pd.read_csv(f"{RuCl_csv_directory}RuCl_test_input.csv")
 
     if args.mode == 'dynamics':
-        re_dir = 'RuCl_RE/Dynamics/'
+        re_dir = os.path.join(args.output_dir, "Dynamics/")
         generate_rucl_dynamics_re(
             energy_precision=1e-3,
             lattice_size=args.lattice_size,
@@ -374,7 +389,7 @@ def rucl_estimate():
             outdir=re_dir
         )
     elif args.mode == 'gsee':
-        re_dir = 'RuCl_RE/GSEE/'
+        re_dir = os.path.join(args.output_dir, "GSEE/")
         generate_rucl_gsee_re(
             bits_precision = 10,
             lattice_size=args.lattice_size,
