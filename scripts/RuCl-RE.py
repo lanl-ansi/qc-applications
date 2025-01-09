@@ -157,13 +157,8 @@ def build_rucl_graph(lattice_size):
     graph = flatten_nx_graph(graph)
     return graph
 
-def rucl_init_state_gsee(lattice_size):
-    graph = build_rucl_graph(lattice_size)
-    init_state = [0] * len(graph.nodes)
-    return init_state
 
-def generate_rucl_hamiltonian(lattice_size, data_series, s=0, field_x=lambda s: 0, field_y=lambda s: 0, field_z=lambda s: 0):
-    graph = build_rucl_graph(lattice_size)
+def generate_rucl_hamiltonian(graph, data_series, s=0, field_x=lambda s: 0, field_y=lambda s: 0, field_z=lambda s: 0):
     H_constant = nx_rucl_terms(graph, data_series)
     H_time_varied = generate_time_varying_terms(graph, s, x=field_x, y = field_y, z = field_z)
     H = H_constant + H_time_varied
@@ -242,8 +237,9 @@ def generate_rucl_dynamics_re(
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     for rucl_idx in range(len(df_rucl)):
+        graph = build_rucl_graph(lattice_size)
         H_rucl = generate_rucl_hamiltonian(
-            lattice_size,
+            graph,
             df_rucl.iloc[rucl_idx],
             field_x = lambda s: 1/sqrt(6)/2,
             field_y = lambda s: 1/sqrt(6)/2,
@@ -274,7 +270,7 @@ def generate_rucl_dynamics_re(
             metadata=trotter_metadata,
             outdir=outdir,
             trotter_order=trotter_order,
-            hamiltonian_name=f'_trotter_rucl_size_{lattice_size}_row_{rucl_idx}',
+            hamiltonian_name=f'Dynamics_trotter_rucl_size_{lattice_size}_row_{rucl_idx}',
             nsteps=nsteps,
             is_extrapolated=is_extrapolated
         )
@@ -298,7 +294,7 @@ def generate_rucl_dynamics_re(
             energy_precision=energy_precision,
             metadata=qsp_metadata,
             outdir=outdir,
-            hamiltonian_name=f'_qsp_rucl_size_{lattice_size}_row_{rucl_idx}',
+            hamiltonian_name=f'Dynamics_qsp_rucl_size_{lattice_size}_row_{rucl_idx}',
             write_circuits=False
         )
 
@@ -314,13 +310,13 @@ def generate_rucl_gsee_re(
     trotter_order = 2
     is_extrapolated=True
 
-    init_state = rucl_init_state_gsee(lattice_size)
     
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     for rucl_idx in range(len(df_rucl)):
+        graph = build_rucl_graph(lattice_size)
         H_rucl_no_fields = generate_rucl_hamiltonian(
-            lattice_size,
+            graph,
             df_rucl.iloc[rucl_idx],
             field_x = lambda s: 0,
             field_y = lambda s: 0,
@@ -329,6 +325,7 @@ def generate_rucl_gsee_re(
         H_rucl__no_fields_pyliqtr = pyH(H_rucl_no_fields)
         openfermion_hamiltonian_rucl_no_fields = pyliqtr_hamiltonian_to_openfermion_qubit_operator(H_rucl__no_fields_pyliqtr)
 
+        init_state = [0] * len(graph.nodes)
 
         E_min = -len(openfermion_hamiltonian_rucl_no_fields.terms)
         E_max = 0
@@ -368,7 +365,7 @@ def generate_rucl_gsee_re(
             bits_precision=bits_precision,
             phase_offset=phase_offset,
             metadata = gsee_metadata,
-            circuit_name = f'_rucl_size_{lattice_size}_row_{rucl_idx}'
+            circuit_name = f'GSEE_rucl_size_{lattice_size}_row_{rucl_idx}'
     )
 
 
