@@ -95,24 +95,28 @@ def grab_arguments() -> Namespace:
     )
     parser.add_argument(
         '-BR',
+        '--bits_rot',
         type=int,
         help='The number of precision bits to use for the rotation angles output by the QROM',
         default=7
     )
     parser.add_argument(
         '-DF',
+        '--df_error',
         type=float,
         help='The threshold used to throw out factors from the double factorization.',
         default=1e-3
     )
     parser.add_argument(
         '-SF',
+        '--sf_error',
         type=float,
         help='The threshold used to throw out factors from the first eigendecomposition',
         default=1e-8
     )
     parser.add_argument(
         '-EE',
+        '--energy_error',
         type=float,
         help='The allowable error in phase estimation energy',
         default=1e-3
@@ -148,7 +152,7 @@ def df_subprocess(
         outdir: str,
         fname: str,
         mol_hams: list[InteractionOperator],
-        br:int,
+        bits_rot:int,
         df_error_threshold:float,
         sf_error_threshold:float,
         energy_error:float,
@@ -157,13 +161,14 @@ def df_subprocess(
         gate_precision:float | None,
         use_analytical: bool = True
 ):
-    for ham in mol_hams:
+    for idx, ham in enumerate(mol_hams):
+        new_name = f'{fname.split(".xyz")[0]}_{idx}'
         gen_df_qpe(
             mol_ham=ham,
             use_analytical=use_analytical,
             outdir=outdir,
-            fname=fname,
-            br=br,
+            fname=new_name,
+            bits_rot=bits_rot,
             df_error_threshold=df_error_threshold,
             sf_error_threshold=sf_error_threshold,
             energy_error=energy_error,
@@ -209,7 +214,6 @@ if __name__ == '__main__':
     outdir = args.dir
     if not os.path.exists(outdir):
         os.makedirs(outdir)
-
     fname = args.fname
     use_df = args.use_df
     bits_precision = args.bits_prec
@@ -219,14 +223,12 @@ if __name__ == '__main__':
     trotter_order = args.trotter_order
     trotter_steps = args.trotter_steps
     
-    br = args.BR
-    sf_error = args.SF
-    df_error = args.DF
-    energy_error = args.EE
+    bits_rot = args.bits_rot
+    sf_error = args.sf_error
+    df_error = args.df_error
+    energy_error = args.energy_error
     gate_synth_accuracy = args.gate_synth
-    print("going to gen mol hams")
     mol_hams = gen_mol_hams(fname, basis, pathway, active_space_reduc)
-    print('now doing it')
     fname = f'/{fname.split('/')[-1]}'
     if not use_df:
         trotter_subprocess(
@@ -243,7 +245,7 @@ if __name__ == '__main__':
             outdir=outdir,
             fname=fname,
             mol_hams=mol_hams,
-            br=br,
+            bits_rot=bits_rot,
             df_error_threshold=df_error,
             sf_error_threshold=sf_error,
             energy_error=energy_error,
