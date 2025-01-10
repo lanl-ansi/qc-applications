@@ -20,7 +20,7 @@ def main(args):
     trotter_order_dicke = args.trotter_order
     trotter_steps_dicke = args.trotter_steps
 
-    name = args.name
+    name = f'{args.name}_{n_s}_ns_{n_b}_nb'
     directory = args.directory
     value = args.value
     repetitions = args.repetitions
@@ -76,6 +76,7 @@ def main(args):
         nsteps=trotter_steps_dicke,
         gsee_args=args_dicke,
         init_state=init_state_dicke,
+        use_analytical=True,
         precision_order=1, #actual precision bits accounted as scaling factors in the resource estimate
         phase_offset=dicke_phase_offset,
         bits_precision=bits_precision_dicke,
