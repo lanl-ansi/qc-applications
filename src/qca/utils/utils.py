@@ -394,7 +394,7 @@ def grab_circuit_resources(circuit: cirq.AbstractCircuit,
     else:
         if gate_synth_accuracy > 1:
             log.warning('gate_synth_accuracy is greater than 1. Converting it to 1e-{gate_synth_accuracy}')
-            gate_synth_accuracy = float(f'1e-{gate_synth_accuracy}')
+            gate_synth_accuracy = pow(10, -gate_synth_accuracy)
 
         logical_estimates = pyLRA.estimate_resources(
             circuit,
