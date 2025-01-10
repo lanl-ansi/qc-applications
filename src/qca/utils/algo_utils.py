@@ -4,7 +4,6 @@ import random
 import numpy as np
 import networkx as nx
 
-import cirq
 from cirq import Circuit
 from cirq.contrib import qasm_import
 
@@ -200,6 +199,7 @@ def gsee_resource_estimation(
         bits_precision:int,
         phase_offset:float,
         is_extrapolated:bool=False,
+        use_analytical:bool=False,
         metadata:GSEEMetaData | None =None,
         circuit_name:str='Hamiltonian',
         include_nested_resources:bool=False,
@@ -231,6 +231,7 @@ def gsee_resource_estimation(
         algo_name='GSEE',
         fname=circuit_name,
         is_extrapolated=is_extrapolated,
+        use_analytical=use_analytical,
         nsteps=nsteps,
         bits_precision=bits_precision,
         metadata=metadata,
