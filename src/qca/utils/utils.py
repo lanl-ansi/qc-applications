@@ -402,7 +402,6 @@ def grab_circuit_resources(circuit: cirq.AbstractCircuit,
             profile=False
         )
         estimates = {'Logical_Abstract':{
-            'num_qubits': logical_estimates['LogicalQubits'],
             't_count': logical_estimates['T'],
             'clifford_count': logical_estimates['Clifford'],
             'gate_count': logical_estimates['T'] + logical_estimates['Clifford'],
@@ -411,8 +410,9 @@ def grab_circuit_resources(circuit: cirq.AbstractCircuit,
         if is_extrapolated:
             for resource in header:
                 header[resource] = scale_resource(header[resource], nsteps, bits_precision)
-        
         header['subcircuit_occurences'] = 1
+        header['num_qubits'] = logical_estimates['LogicalQubits']
+
         header['subcircuit_info'] = {}
 
     #calculate and insert value_per_t_gate
