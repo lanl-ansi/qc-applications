@@ -1,6 +1,7 @@
 import os
 import time
 import random
+from typing import Union
 import numpy as np
 import networkx as nx
 
@@ -71,6 +72,7 @@ def estimate_qsp(
     energy_precision:float,
     outdir:str,
     is_extrapolated:bool=False,
+    use_analytical:bool=False,
     metadata: QSPMetaData | None=None,
     hamiltonian_name:str='hamiltonian',
     write_circuits:bool=False,
@@ -101,6 +103,7 @@ def estimate_qsp(
         algo_name='QSP',
         fname=hamiltonian_name,
         is_extrapolated=is_extrapolated,
+        use_analytical=use_analytical,
         nsteps=nsteps,
         metadata=metadata,
         write_circuits=write_circuits,
@@ -116,6 +119,7 @@ def estimate_trotter(
     evolution_time: float,
     energy_precision: float,
     outdir:str,
+    use_analytical:bool=False,
     is_extrapolated: bool=True,
     trotter_order: int = 2,
     metadata: TrotterMetaData | None=None,
@@ -123,7 +127,7 @@ def estimate_trotter(
     write_circuits:bool=False,
     nsteps:int|None=None,
     include_nested_resources:bool=True
-) -> Circuit:
+) -> Union[None, Circuit]:
       
     if not os.path.exists(outdir):
         os.makedirs(outdir)
@@ -160,35 +164,48 @@ def estimate_trotter(
     qasm_str_trotter = open_fermion_to_qasm(count_qubits(openfermion_hamiltonian), trotter_circuit_of)
     trotter_circuit_qasm = qasm_import.circuit_from_qasm(qasm_str_trotter)
 
-    t0 = time.perf_counter()
-    cpt_trotter = clifford_plus_t_direct_transform(circuit=trotter_circuit_qasm, gate_precision=gate_synth_accuracy)
-    t1 = time.perf_counter()
-    elapsed = t1-t0
-    print(f'Time to generate a clifford + T circuit from trotter circuit: {elapsed} seconds')
-
-    if write_circuits:
-        outfile_qasm_trotter = f'{outdir}Trotter_Unitary.qasm'
-        write_qasm(
-            circuit=trotter_circuit_qasm,
-            fname=outfile_qasm_trotter
+    if use_analytical:
+        grab_circuit_resources(
+            trotter_circuit_qasm,
+            outdir,
+            'Trotter',
+            fname=hamiltonian_name,
+            is_extrapolated=True,
+            use_analytical=True,
+            nsteps=nsteps,
+            metadata=metadata,
+            gate_synth_accuracy=gate_synth_accuracy
         )
-        outfile_qasm_cpt = f'{outdir}Trotter_Unitary.cpt.qasm'
-        write_qasm(
-            circuit=cpt_trotter,
-            fname=outfile_qasm_cpt
+        return None
+    else:
+        t0 = time.perf_counter()
+        cpt_trotter = clifford_plus_t_direct_transform(circuit=trotter_circuit_qasm, gate_precision=gate_synth_accuracy)
+        t1 = time.perf_counter()
+        elapsed = t1-t0
+        print(f'Time to generate a clifford + T circuit from trotter circuit: {elapsed} seconds')
+
+        if write_circuits:
+            outfile_qasm_trotter = f'{outdir}Trotter_Unitary.qasm'
+            write_qasm(
+                circuit=trotter_circuit_qasm,
+                fname=outfile_qasm_trotter
+            )
+            outfile_qasm_cpt = f'{outdir}Trotter_Unitary.cpt.qasm'
+            write_qasm(
+                circuit=cpt_trotter,
+                fname=outfile_qasm_cpt
+            )
+
+        logical_re = estimate_cpt_resources(
+            cpt_circuit=cpt_trotter,
+            is_extrapolated=is_extrapolated,
+            algo_name= 'TrotterStep',
+            nsteps=nsteps,
+            include_nested_resources=include_nested_resources
         )
-
-    logical_re = estimate_cpt_resources(
-        cpt_circuit=cpt_trotter,
-        is_extrapolated=is_extrapolated,
-        algo_name= 'TrotterStep',
-        nsteps=nsteps,
-        include_nested_resources=include_nested_resources
-    )
-    outfile = f'{outdir}{hamiltonian_name}_re.json'
-
-    gen_json(logical_re, outfile, metadata )
-    return cpt_trotter
+        outfile = f'{outdir}{hamiltonian_name}_re.json'
+        gen_json(logical_re, outfile, metadata )
+        return cpt_trotter
 
 def gsee_resource_estimation(
         outdir:str,
