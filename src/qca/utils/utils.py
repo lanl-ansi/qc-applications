@@ -6,17 +6,18 @@ from statistics import median
 from dataclasses import dataclass, field, asdict
 
 import pandas as pd
-
+import logging as log
 import matplotlib.pyplot as plt
 
 import cirq
 
 from pyLIQTR.utils.printing import openqasm
 from pyLIQTR.utils.utils import count_T_gates
+import pyLIQTR.utils.resource_analysis as pyLRA
 import pyLIQTR.utils.global_ancilla_manager as gam
-from pyLIQTR.utils.resource_analysis import estimate_resources
 from pyLIQTR.utils.circuit_decomposition import circuit_decompose_multi
 from pyLIQTR.gate_decomp.cirq_transforms import clifford_plus_t_direct_transform
+
 
 @dataclass
 class EstimateMetaData:
@@ -27,7 +28,8 @@ class EstimateMetaData:
     task: str
     is_extrapolated: bool=field(default=False, kw_only=True)
     gate_synth_accuracy: int | float = field(default=10,kw_only=True)
-    value_per_circuit: float | None=field(default=None, kw_only=True)
+    value: float | None=field(default=None, kw_only=True)
+    value_per_t_gate: float | None=field(default=None,kw_only=True)
     repetitions_per_application: int | None=field(default=None, kw_only=True)
 
 @dataclass
@@ -365,6 +367,10 @@ def gen_json(main_estimate: dict, outfile:str, metadatata: EstimateMetaData|None
         main_estimate = re_metadata | main_estimate
     re_as_json(main_estimate, outfile)
 
+def gen_value_t_gate(metadata: EstimateMetaData, t_count: int):
+    if metadata and metadata.value != None and metadata.repetitions_per_application != None:
+        metadata.value_per_t_gate = metadata.value/t_count
+
 def grab_circuit_resources(circuit: cirq.AbstractCircuit,
                            outdir: str,
                            algo_name: str,
@@ -390,24 +396,31 @@ def grab_circuit_resources(circuit: cirq.AbstractCircuit,
             write_circuits=write_circuits,
         )
     else:
-        logical_estimates = estimate_resources(
-            circuit_element=circuit,
-            rotation_gate_precision=gate_synth_accuracy
-        ) 
+        if gate_synth_accuracy > 1:
+            log.warning('gate_synth_accuracy is greater than 1. Converting it to 1e-{gate_synth_accuracy}')
+            gate_synth_accuracy = pow(10, -gate_synth_accuracy)
+
+        logical_estimates = pyLRA.estimate_resources(
+            circuit,
+            rotation_gate_precision=gate_synth_accuracy,
+            profile=False
+        )
         estimates = {'Logical_Abstract':{
-            'num_qubits': logical_estimates['LogicalQubits'],
             't_count': logical_estimates['T'],
             'clifford_count': logical_estimates['Clifford'],
             'gate_count': logical_estimates['T'] + logical_estimates['Clifford'],
-            'subcircuit_occurences': 1,
-            'subcircuit_info': {}
         }}
+        header = estimates['Logical_Abstract']
+        if is_extrapolated:
+            for resource in header:
+                header[resource] = scale_resource(header[resource], nsteps, bits_precision)
+        header['subcircuit_occurences'] = 1
+        header['num_qubits'] = logical_estimates['LogicalQubits']
 
-    #calculate and insert value_per_t_gate
-    if metadata != None:
-        estimates['value_per_t_gate'] = 0
-        if (metadata.value_per_circuit != None) and (metadata.repetitions_per_application != None):
-            estimates['value_per_t_gate'] = metadata.value_per_circuit/(estimates.get('Logical_Abstract').get('t_count') * metadata.repetitions_per_application)
+        header['subcircuit_info'] = {}
+
+    t_count = estimates['Logical_Abstract']['t_count']
+    gen_value_t_gate(metadata, t_count)
     
     outfile = f'{outdir}{fname}_re.json'
     gen_json(estimates, outfile, metadata)

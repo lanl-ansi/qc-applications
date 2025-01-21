@@ -20,7 +20,7 @@ def main(args):
     trotter_order_dicke = args.trotter_order
     trotter_steps_dicke = args.trotter_steps
 
-    name = args.name
+    name = f'{args.name}_{n_s}_ns_{n_b}_nb'
     directory = args.directory
     value = args.value
     repetitions = args.repetitions
@@ -50,8 +50,8 @@ def main(args):
     init_state_dicke = [0] * (n_b + n_s + 1) #TODO: use Fock state from Hartree-Fock as initial state
 
     print('starting')
-    value_per_circuit = value/repetitions
-    value_per_circuit=6
+    value = value/repetitions
+    value=6
     #TODO: See if I need to refactor the size string to include the variable names
     dicke_metadata = GSEEMetaData(
         id=time.time_ns(),
@@ -59,7 +59,7 @@ def main(args):
         category='scientific',
         size=f'{n_b} + 1 + {n_s}',
         task='Ground State Energy Estimation',
-        value_per_circuit=value_per_circuit,
+        value=value,
         repetitions_per_application=repetitions,
 
         
@@ -76,6 +76,7 @@ def main(args):
         nsteps=trotter_steps_dicke,
         gsee_args=args_dicke,
         init_state=init_state_dicke,
+        use_analytical=True,
         precision_order=1, #actual precision bits accounted as scaling factors in the resource estimate
         phase_offset=dicke_phase_offset,
         bits_precision=bits_precision_dicke,

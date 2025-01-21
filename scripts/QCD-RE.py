@@ -134,6 +134,7 @@ def main():
         evolution_time=evolution_time,
         energy_precision=energy_precision,
         outdir=outdir,
+        use_analytical=True,
         hamiltonian_name=hamiltonian_name,
         nsteps=num_steps,
         trotter_order=trotter_order,
