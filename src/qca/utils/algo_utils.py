@@ -233,9 +233,9 @@ def gsee_resource_estimation(
     )
     t1 = time.perf_counter()
     elapsed = t1-t0
+    gse_circuit.generate_circuit()
     print(f'Time to generate circuit for GSEE: {elapsed} seconds')
 
-    gse_circuit.generate_circuit()
     pe_circuit = gse_circuit.pe_circuit
     gate_synth_accuracy=metadata.gate_synth_accuracy
 
