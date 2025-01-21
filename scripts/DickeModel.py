@@ -50,8 +50,8 @@ def main(args):
     init_state_dicke = [0] * (n_b + n_s + 1) #TODO: use Fock state from Hartree-Fock as initial state
 
     print('starting')
-    value_per_circuit = value/repetitions
-    value_per_circuit=6
+    value = value/repetitions
+    value=6
     #TODO: See if I need to refactor the size string to include the variable names
     dicke_metadata = GSEEMetaData(
         id=time.time_ns(),
@@ -59,7 +59,7 @@ def main(args):
         category='scientific',
         size=f'{n_b} + 1 + {n_s}',
         task='Ground State Energy Estimation',
-        value_per_circuit=value_per_circuit,
+        value=value,
         repetitions_per_application=repetitions,
 
         

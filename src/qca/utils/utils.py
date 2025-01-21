@@ -28,7 +28,7 @@ class EstimateMetaData:
     task: str
     is_extrapolated: bool=field(default=False, kw_only=True)
     gate_synth_accuracy: int | float = field(default=10,kw_only=True)
-    value_per_circuit: float | None=field(default=None, kw_only=True)
+    value: float | None=field(default=None, kw_only=True)
     value_per_t_gate: float | None=field(default=None,kw_only=True)
     repetitions_per_application: int | None=field(default=None, kw_only=True)
 
@@ -367,6 +367,10 @@ def gen_json(main_estimate: dict, outfile:str, metadatata: EstimateMetaData|None
         main_estimate = re_metadata | main_estimate
     re_as_json(main_estimate, outfile)
 
+def gen_value_t_gate(metadata: EstimateMetaData, t_count: int):
+    if metadata and metadata.value != None and metadata.repetitions_per_application != None:
+        metadata.value_per_t_gate = metadata.value/t_count
+
 def grab_circuit_resources(circuit: cirq.AbstractCircuit,
                            outdir: str,
                            algo_name: str,
@@ -415,11 +419,8 @@ def grab_circuit_resources(circuit: cirq.AbstractCircuit,
 
         header['subcircuit_info'] = {}
 
-    #calculate and insert value_per_t_gate
-    if metadata != None:
-        header = estimates['Logical_Abstract']
-        if (metadata.value_per_circuit != None) and (metadata.repetitions_per_application != None):
-            metadata.value_per_t_gate = metadata.value_per_circuit/header['t_count']
+    t_count = estimates['Logical_Abstract']['t_count']
+    gen_value_t_gate(metadata, t_count)
     
     outfile = f'{outdir}{fname}_re.json'
     gen_json(estimates, outfile, metadata)

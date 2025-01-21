@@ -59,7 +59,7 @@ def main(args):
         category='scientific',
         size=f'{lattice_size}x{lattice_size}',
         task='Ground State Energy Estimation',
-        value_per_circuit=value,
+        value=value,
         repetitions_per_application=repetitions,
 
         evolution_time=evolution_time,

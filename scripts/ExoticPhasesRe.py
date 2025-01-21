@@ -125,7 +125,7 @@ def gsee_exotic_phases(args, use_square:bool, system_val:float):
         nsteps=trotter_steps,
         is_extrapolated=True,
         gate_synth_accuracy=1e-10,
-        value_per_circuit=system_val,
+        value=system_val,
         repetitions_per_application=100
     )
 
@@ -179,7 +179,7 @@ def dynamics(args, system_val:float):
         nsteps=trotter_steps,
         is_extrapolated=True,
         gate_synth_accuracy=1e-10,
-        value_per_circuit=system_val,
+        value=system_val,
         repetitions_per_application=200
     )
 

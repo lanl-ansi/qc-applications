@@ -22,6 +22,7 @@ from pyLIQTR.phase_factors.fourier_response.fourier_response import Angler_fouri
 
 from qca.utils.utils import (
     gen_json,
+    gen_value_t_gate,
     write_qasm,
     grab_circuit_resources,
     estimate_cpt_resources,
@@ -203,6 +204,9 @@ def estimate_trotter(
             nsteps=nsteps,
             include_nested_resources=include_nested_resources
         )
+        t_count = logical_re['Logical_Abstract']['t_count']
+        gen_value_t_gate(metadata, t_count)
+        
         outfile = f'{outdir}{hamiltonian_name}_re.json'
         gen_json(logical_re, outfile, metadata )
         return cpt_trotter
