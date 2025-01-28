@@ -16,11 +16,11 @@ def parse_args():
     parser = ArgumentParser(prog='QCD Resource Estimate Generator')
     parser.add_argument('-N', '--n_neutrinos', type=int, help='Number of neutrinos in the forward scattering model')
     parser.add_argument('-T', '--trotter_steps', type=int, default=None, help='Number of trotter steps')
-    parser.add_argument('-d', '--directory', type=str, default='./', help='output file directory')
+    parser.add_argument('-D', '--directory', type=str, default='./', help='output file directory')
     parser.add_argument('-S', '--site_inter', type=float, default=0.0, help='site interaction terms')
     parser.add_argument('-P', '--energy_precision', type=float, required=True, help='acceptable shift in state energy')
     parser.add_argument('-O', '--trotter_order', type=int, help='Specify the trotter order used', default=2)
-    parser.add_argument('-x', '--extrapolate', default=False, action='store_true')
+    parser.add_argument('-X', '--extrapolate', default=False, action='store_true')
 
     return parser.parse_args()
 
