@@ -12,6 +12,7 @@ class pathway_info:
 def grab_arguments() -> Namespace:
     parser = ArgumentParser('Perform a sweep over different pathways of varying active spaces')
     parser.add_argument(
+        '-DF',
         '--use_df',
         action='store_true',
         help='Flag to double Factorize encode your hamiltonian'
@@ -67,10 +68,10 @@ def grab_arguments() -> Namespace:
         help='reaction pathway of interest'
     )
     parser.add_argument(
-        '-D',
-        '--dir',
+        '-RE',
+        '--re_dir',
         type=str,
-        default=os.path.dirname(os.path.realpath(__file__)),
+        default=f'{os.path.dirname(os.path.realpath(__file__))}/',
         help='directory to store generated resource estimates')
     parser.add_argument(
         '-BP',
@@ -78,13 +79,6 @@ def grab_arguments() -> Namespace:
         type=int,
         default=10,
         help='Number of bits to estimate phase to'
-    )
-    parser.add_argument(
-        '-d', 
-        '--directory', 
-        type=str, 
-        help='Directoty with pathway datafiles.',
-        default='./data/'
     )
     parser.add_argument(
         '-GP',
@@ -101,14 +95,14 @@ def grab_arguments() -> Namespace:
         default=7
     )
     parser.add_argument(
-        '-DF',
+        '-DFE',
         '--df_error',
         type=float,
         help='The threshold used to throw out factors from the double factorization.',
         default=1e-3
     )
     parser.add_argument(
-        '-SF',
+        '-SFE',
         '--sf_error',
         type=float,
         help='The threshold used to throw out factors from the first eigendecomposition',
@@ -150,7 +144,7 @@ def gen_mol_hams(
 
 def df_subprocess(
         outdir: str,
-        fname: str,
+        circuit_name: str,
         mol_hams: list[InteractionOperator],
         bits_rot:int,
         df_error_threshold:float,
@@ -162,7 +156,8 @@ def df_subprocess(
         use_analytical: bool = True
 ):
     for idx, ham in enumerate(mol_hams):
-        new_name = f'{fname.split(".xyz")[0]}_{idx}'
+        new_name = f'{circuit_name}_{idx}'
+        # is_extrapolated is false as the circuit is already constructed w/ respect to the number of bits precision
         gen_df_qpe(
             mol_ham=ham,
             use_analytical=use_analytical,
@@ -175,20 +170,18 @@ def df_subprocess(
             df_prec=df_prec,
             eps=eps,
             gate_precision=gate_precision,
-            is_extrapolated=use_analytical
+            is_extrapolated=False
         )
-
 
 def trotter_subprocess(
         outdir:str,
-        fname:str,
+        circuit_name:str,
         mol_hams: list[InteractionOperator],
         ev_time:float,
         trotter_order:int,
         trotter_steps:int,
         bits_precision:int
 ):
-    catalyst_name = fname.split('.xyz')[0]
     gsee_args = {
         'trotterize' : True,
         'ev_time'    : ev_time,
@@ -197,7 +190,7 @@ def trotter_subprocess(
     }
     gsee_molecular_hamiltonian(
         outdir=outdir,
-        catalyst_name=catalyst_name,
+        catalyst_name=circuit_name,
         gse_args=gsee_args,
         trotter_steps=trotter_steps,
         bits_precision=bits_precision,
@@ -209,9 +202,11 @@ if __name__ == '__main__':
     pid = os.getpid()
     args = grab_arguments()
     pathway = args.pathway
+    if not pathway:
+        raise ValueError('Pathway not specified')
     is_single_instance:bool = pathway is None
 
-    outdir = args.dir
+    outdir = args.re_dir
     if not os.path.exists(outdir):
         os.makedirs(outdir)
     fname = args.fname
@@ -228,12 +223,14 @@ if __name__ == '__main__':
     df_error = args.df_error
     energy_error = args.energy_error
     gate_synth_accuracy = args.gate_synth
+    fname = os.path.abspath(fname)
     mol_hams = gen_mol_hams(fname, basis, pathway, active_space_reduc)
-    fname = f'/{fname.split('/')[-1]}'
+    circuit_name = os.path.basename(fname).split('.xyz')[0]
+
     if not use_df:
         trotter_subprocess(
             outdir=outdir,
-            fname=fname,
+            circuit_name=circuit_name,
             mol_hams=mol_hams,
             ev_time=evolution_time,
             trotter_order=trotter_order,
@@ -243,7 +240,7 @@ if __name__ == '__main__':
     else:
         df_subprocess(
             outdir=outdir,
-            fname=fname,
+            circuit_name=circuit_name,
             mol_hams=mol_hams,
             bits_rot=bits_rot,
             df_error_threshold=df_error,
