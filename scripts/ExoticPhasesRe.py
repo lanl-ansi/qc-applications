@@ -73,23 +73,23 @@ def generate_heisenberg_triangular_hamiltonian(lattice_size:int, j1:float, j2:fl
 
 def get_args():
     parser = ArgumentParser()
-    parser.add_argument('-l', '--lattice_size', type=int, help='Lattice size')
-    parser.add_argument('-bp', '--bits_prec', type=int, help='Number of bits to estimate phase to')
-    parser.add_argument('-to', '--trotter_order', type=int, default=2, help='Trotter order for trotterized subprocess QPE')
-    parser.add_argument('-ts', '--trotter_steps', type=int, default=1, help='Number of trotter steps for trotterized subprocess QPE')
-    parser.add_argument('-p', '--energy_precision', type=float, default=1e-3)
-    parser.add_argument('-j1', type=float, default=1)
-    parser.add_argument('-j2', type=float, default=1/2)
-    parser.add_argument('-o', '--outdir', default='./', type=str)
-    parser.add_argument('-n', '--name', default='ExoticPhases', type=str)
-    parser.add_argument('-e', '--evolution_time', type=float, default=100)
-    parser.add_argument('-r', '--reps', type=int)
+    parser.add_argument('-L', '--lattice_size', type=int, help='integer denoting the lattice size')
+    parser.add_argument('-BP', '--bits_prec', type=int, help='Number of bits to estimate phase to')
+    parser.add_argument('-TO', '--trotter_order', type=int, default=2, help='Trotter order for trotterized subprocess QPE')
+    parser.add_argument('-TS', '--trotter_steps', type=int, default=1, help='Number of trotter steps for trotterized subprocess QPE')
+    parser.add_argument('-P', '--energy_precision', type=float, default=1e-3)
+    parser.add_argument('-J1', type=float, default=1)
+    parser.add_argument('-J2', type=float, default=1/2)
+    parser.add_argument('-O', '--outdir', default='./', type=str)
+    parser.add_argument('-N', '--name', default='ExoticPhasesRe', type=str)
+    parser.add_argument('-E', '--evolution_time', type=float, default=100)
+    parser.add_argument('-R', '--reps', type=int)
     return parser.parse_args()
 
 def gsee_exotic_phases(args, use_square:bool, system_val:float):
     lattice_size = args.lattice_size
-    j1 = args.j1
-    j2 = args.j2
+    j1 = args.J1
+    j2 = args.J2
     trotter_order = args.trotter_order
     trotter_steps = args.trotter_steps
     shape = 'square' if use_square else 'triangular'
@@ -152,8 +152,8 @@ def gsee_exotic_phases(args, use_square:bool, system_val:float):
 
 def dynamics(args, system_val:float):
     lattice_size = args.lattice_size
-    j1 = args.j1
-    j2 = args.j2
+    j1 = args.J1
+    j2 = args.J2
     evolution_time = args.evolution_time
     energy_precision = args.energy_precision
     trotter_steps = args.trotter_steps
