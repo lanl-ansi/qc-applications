@@ -49,10 +49,6 @@ def main(args):
 
     init_state_dicke = [0] * (n_b + n_s + 1) #TODO: use Fock state from Hartree-Fock as initial state
 
-    print('starting')
-    value = value/repetitions
-    value=6
-    #TODO: See if I need to refactor the size string to include the variable names
     dicke_metadata = GSEEMetaData(
         id=time.time_ns(),
         name=name,
@@ -106,8 +102,8 @@ def parse_arguments():
     parser.add_argument('-to', '--trotter-order', type=int, default=2)
     parser.add_argument('-n', '--name', type=str, default=f'DickeModel', help='name of this circuit instance, becomes prefix for output file')
     parser.add_argument('-d', '--directory', type=str, default='./', help='output file directory')
-    parser.add_argument('-v', '--value', type=float, default=0, help='value of the total application')
-    parser.add_argument('-r', '--repetitions', type=int, default=1, help='repetitions needed to achieve value of computatation (not runs of this script)')
+    parser.add_argument('-v', '--value', type=float, default=6, help='value of the total application')
+    parser.add_argument('-r', '--repetitions', type=int, default=130000, help='repetitions needed to achieve value of computatation (not runs of this script)')
     parser.add_argument('-c', '--circuit_write', default=False, action='store_true')
     return parser
 
