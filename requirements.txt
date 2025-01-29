@@ -1,4 +1,4 @@
-pyLIQTR == 1.2.1
+pyLIQTR == 1.3.4
 matplotlib
 networkx
 numpy

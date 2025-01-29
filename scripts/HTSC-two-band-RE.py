@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 
-import os
 import argparse
 import time
-import openfermion as of
 import numpy as np
 import math
-from pyLIQTR.PhaseEstimation.pe import PhaseEstimation
-from networkx import get_node_attributes, draw, draw_networkx_edge_labels
+
 from qca.utils.algo_utils import gsee_resource_estimation
-from qca.utils.utils import circuit_estimate, EstimateMetaData
+from qca.utils.utils import GSEEMetaData
 from qca.utils.hamiltonian_utils import generate_two_orbital_nx, nx_to_two_orbital_hamiltonian
 
 ## Two band
@@ -40,15 +37,15 @@ def main(args):
     E_min = -len(ham.terms) * max(abs(t1), abs(t2), abs(t3), abs(t4), abs(mu))
     E_max = 0
     omega = E_max-E_min
-    t = 2*np.pi/omega
-    phase_offset = E_max*t
+    evolution_time = 2*np.pi/omega
+    phase_offset = E_max*evolution_time
 
     init_state = [0] * n_qubits
 
     gsee_args = {
         'trotterize' : True,
         'mol_ham'    : ham,
-        'ev_time'    : t,
+        'ev_time'    : evolution_time,
         'trot_ord'   : trotter_order,
         'trot_num'   : 1 #Accounted for in a scaling argument later
     }
@@ -56,22 +53,26 @@ def main(args):
 
     print('starting')
 
-    metadata = EstimateMetaData(
+    metadata = GSEEMetaData(
         id=time.time_ns(),
         name=name,
         category='scientific',
         size=f'{lattice_size}x{lattice_size}',
         task='Ground State Energy Estimation',
-        value_per_circuit=value,
+        value=value,
         repetitions_per_application=repetitions,
-        implementations=f'GSEE, evolution_time={t}, bits_precision={bits_precision}, trotter_order={trotter_order}',
+
+        evolution_time=evolution_time,
+        trotter_order=trotter_order,
+        bits_precision=bits_precision,
+        nsteps=trotter_steps,
     )
 
     print('Estimating Circuit Resources')
-    t0 = time.perf_counter()
+    t_start = time.perf_counter()
     estimate = gsee_resource_estimation(
             outdir=directory,
-            numsteps=trotter_steps,
+            nsteps=trotter_steps,
             gsee_args=gsee_args,
             init_state=init_state,
             precision_order=1,
@@ -80,7 +81,8 @@ def main(args):
             circuit_name=name,
             metadata=metadata,
             write_circuits=args.circuit_write)
-    t1 = time.perf_counter()
+    t_finish = time.perf_counter()
+    print(f'Time to estimate two_band: {t_finish-t_start}')
     return estimate
 
 def estimate_bits_precision(epsilon):

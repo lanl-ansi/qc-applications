@@ -1,0 +1,20 @@
+reference,method,J1,K1,Gam1,Gam_prime1,J2,K2,J3,K3
+"Winter et al. PRB","Ab initio (DFT + exact diag.)",-1.7,-6.7,6.6,-0.9,0,0,2.7,0
+"Winter et al. NC","Ab initio-inspired (INS fit)",-0.5,-5.0,2.5,0,0,0,0.5,0
+"Wu et al.","THz spectroscopy fit",-0.35,-2.8, 2.4,0,0,0,0.34,0
+"Cookmeyer and Moore","Magnon thermal Hall (sign)",-0.5,-5.0,2.5,0,0,0,0.1125,0
+"Kim and Kee","DFT + t=U expansion",-1.53,-6.55,5.25,-0.95,0,0,0,0
+"Suzuki and Suga","Magnetic specific heat",-1.53,-24.4,5.25,-0.95,0,0,0,0
+"Yadav et al.","Quantum chemistry (MRCI)",1.2,-5.6,1.2,-0.7,0.25,0,0.25,0
+"Ran et al.","Spin wave fit to INS gap",0,-6.8,9.5,0,0,0,0,0
+"Hou et al.","Constrained DFT + U",-1.87,-10.7,3.8,0,0,0,1.27,0.63
+"Wang et al.","DFT + t=U expansion",-0.3,-10.9,6.1,0,0,0,0.03,0
+"Eichstaedt et al.","Fully ab initio (DFT + cRPA + t=U)",-1.4,-14.3,9.8,-2.23,0,-0.63,1.0,0.03
+"Eichstaedt et al.","Neglecting non-local Coulomb",-0.2,-4.5,3.0,-0.73,0,-0.33,0.7,0.1
+"Eichstaedt et al.","Neglecting non-local SOC",-1.3,-13.3,9.4,-2.3,0,-0.67,1.0,0.1
+"Banerjee et al.","Spin wave fit",-4.6,7.0,0,0,0,0,0,0
+"Kim et al.","DFT + t=U expansion",-12,17.0,12.0,0,0,0,0,0
+"Kim and Kee","DFT + t=U expansion",-3.5,4.6,6.42,-0.04,0,0,0,0
+"Winter et al.","Ab initio (DFT + exact diag.)",-5.5,7.6,8.4,0.2,0,0,2.3,0
+"Ozel et al.","Spin wave fit/THz spectroscopy",-0.95,1.15,3.8,0,0,0,0,0
+"Ozel et al.","Spin wave fit/THz spectroscopy",0.46,-3.5,2.35,0,0,0,0,0
