@@ -154,6 +154,7 @@ def gen_resource_estimate(
     gate_count = count_gates(cpt_circuit)
     t_count = count_T_gates(cpt_circuit)
     t_depth = get_T_depth(cpt_circuit)
+    max_t_depth_wire = get_T_depth_wire(cpt_circuit)
     clifford_count = gate_count - t_count
     circuit_depth = len(cpt_circuit)
     
@@ -163,6 +164,7 @@ def gen_resource_estimate(
         'circuit_depth': circuit_depth,
         'gate_count': gate_count,
         't_depth': t_depth,
+        'max_t_depth_wire': max_t_depth_wire,
         'clifford_count': clifford_count,
     }
 
@@ -207,7 +209,8 @@ def estimate_cpt_resources(
     if nsteps and is_extrapolated:
         highest_scope = logical_re['Logical_Abstract']
         for key in highest_scope:
-            highest_scope[key] = scale_resource(highest_scope[key], nsteps)
+            if key != 'num_qubits':
+                highest_scope[key] = scale_resource(highest_scope[key], nsteps)
 
     logical_re['Logical_Abstract']['subcircuit_occurences'] = 1
     if include_nested_resources and nsteps:
@@ -229,6 +232,7 @@ def grab_single_step_estimates(num_qubits: int, main_estimates: dict, algo_name:
             'circuit_depth': main_estimates['circuit_depth']//nsteps,
             'gate_count': main_estimates['gate_count']//nsteps,
             't_depth': main_estimates['t_depth']//nsteps,
+            'max_t_depth_wire': main_estimates['max_t_depth_wire']//nsteps,
             'clifford_count': main_estimates['clifford_count']//nsteps,
             'subcircuit_occurences': nsteps,
             'subcircuit_info': {}
@@ -297,6 +301,7 @@ def circuit_estimate(
     total_gate_count = 0
     total_gate_depth = 0
     total_T_count = 0
+    total_max_T_depth_wire = 0
     total_T_depth = 0
     total_clifford_count = 0
     subcircuit_re = []
@@ -315,19 +320,21 @@ def circuit_estimate(
         gate_depth = resource_estimate['circuit_depth']
         t_depth = resource_estimate['t_depth']
         t_count = resource_estimate['t_count']
+        max_t_depth_wire = resource_estimate['max_t_depth_wire']
         clifford_count = resource_estimate['clifford_count']
         
         curr_gate_count = subcircuit_occurences * gate_count
         curr_gate_depth = subcircuit_occurences * gate_depth 
         curr_t_depth = subcircuit_occurences * t_depth
         curr_t_count = subcircuit_occurences * t_count
+        curr_max_t_depth_wire = subcircuit_occurences * max_t_depth_wire
         curr_clifford_count = subcircuit_occurences * clifford_count
-
         if (nsteps or bits_precision) and is_extrapolated:
             total_gate_count += scale_resource(curr_gate_count, nsteps, bits_precision)
             total_gate_depth += scale_resource(curr_gate_depth, nsteps, bits_precision)
             total_T_depth += scale_resource(curr_t_depth, nsteps, bits_precision)
             total_T_count += scale_resource(curr_t_count, nsteps, bits_precision)
+            total_max_T_depth_wire += scale_resource(curr_max_t_depth_wire, nsteps, bits_precision)
             total_clifford_count += scale_resource(curr_clifford_count, nsteps, bits_precision)
  
     main_estimates = {
@@ -337,6 +344,7 @@ def circuit_estimate(
             'circuit_depth': total_gate_depth,
             'gate_count': total_gate_count,
             't_depth': total_T_depth,
+            'max_t_depth_wire': total_max_T_depth_wire,
             'clifford_count': total_clifford_count,
             'subcircuit_occurences': 1,
             'subcircuit_info': {}
