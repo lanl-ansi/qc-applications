@@ -274,7 +274,6 @@ def circuit_estimate(
                 subcircuit_counts[gate_type][0] += 1
             else:
                 t0 = time.perf_counter()
-                # decomposed_circuit = cirq.Circuit(cirq.decompose(operation))
                 decomposed_circuit = complete_decomposition(cirq.Circuit(operation))
                 t1 = time.perf_counter()
                 decomposed_elapsed = t1-t0
