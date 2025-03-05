@@ -31,17 +31,17 @@ where the block of metadata information is the following (note that any key belo
 ```json
 {
     "name": str, // Name of the experiment
-    "category": str, // Type of experiment such as scientific or industry
-    "size": str, // Size of the hamiltonian
+    "category": str, // Type of experiment such as scientific or industrial
+    "size": str, // Size of the Hamiltonian
     "task": str, // The computational task such as ground_state_energy_estimation and time_dependent_dynamics
     "implementation": str, // Description of the implementation such as block encoding used
     "value": float, // The utility estimate in US dollars for the problem
     "value_per_t_gate": float, // The utility estimate value per t gate,
-    "repetitions_per_application": int, // total number of times to repeat the circuit to realize its utility
-    "is_extrapolated": bool, // denoting if the circuit was extrapolated to save compute time
+    "repetitions_per_application": int, // Total number of times to repeat the circuit to realize its utility
+    "is_extrapolated": bool, // Denoting if the circuit was extrapolated to save compute time
     "gate_synth_accuracy": float, // The approximation error to decompose the circuit
-    "nsteps": int, //total number of steps taken
-    "evolution_time": float, // total evolution time
+    "nsteps": int, // Total number of steps taken
+    "evolution_time": float, // Total evolution time
     "energy_precision": float, // Acceptable shift in state energy
 }
 ```
