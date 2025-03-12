@@ -81,7 +81,7 @@ def estimate_bits_precision(epsilon):
     return math.ceil(math.log2(1.0/epsilon))
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(prog='HTSC-two-band-RE')
+    parser = argparse.ArgumentParser(prog='HTSC-one-band-RE')
     parser.add_argument('-l', '--lattice-size', type=int, default=20)
     parser.add_argument('-e', '--error-precision', type=float, default=1e-5)
     parser.add_argument('-t', '--trotter-steps', type=int, default=1)
