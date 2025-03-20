@@ -82,6 +82,7 @@ class UtilsTest(unittest.TestCase):
                             't_count': 8,
                             't_depth': 2,
                             'gate_count': 20,
+                            'max_t_depth_wire': 2,
                             'clifford_count': 12,
                             'circuit_depth': 5}
         self.assertEqual(circ_estimate, correct_estimate)
