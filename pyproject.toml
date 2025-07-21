@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "qca"
 version = "0.2.0"
 dynamic = ["dependencies"]
-requires-python = ">=3.9, <=3.12"
+requires-python = ">=3.10, <=3.12"
 description = "Documentation of Applications for Quantum Computers"
 readme = "README.md"
 license = {file = "License.md"}
