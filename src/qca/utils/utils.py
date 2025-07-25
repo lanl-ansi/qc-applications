@@ -40,17 +40,18 @@ class GSEEMetaData(EstimateMetaData):
     nsteps: int
 
 @dataclass
-class CatalystMetaData(GSEEMetaData):
+class CatalystMetaData(EstimateMetaData):
     basis: str
-    occupied_orbitals:int
-    unoccupied_orbitals:int
+    num_electrons: int
+    num_orbitals: int
+    active_space_fraction: int
 
 @dataclass
 class TrotterMetaData(EstimateMetaData):
     evolution_time: float #NOTE: This is JT in the current implementation
     trotter_order: int
     energy_precision: float
-    nsteps: int=None 
+    nsteps: int=None
 
 @dataclass
 class QSPMetaData(EstimateMetaData):
@@ -390,6 +391,10 @@ def grab_circuit_resources(circuit: cirq.AbstractCircuit,
                            write_circuits:bool=False,
                            include_nested_resources:bool=False,
                            gate_synth_accuracy: int | float=10) -> None:
+    
+    if not os.path.exists(outdir):
+        os.makedirs(outdir)
+        
     if not use_analytical:
         estimates = circuit_estimate(
             circuit=circuit,

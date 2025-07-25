@@ -1,7 +1,6 @@
 import re
 import sys
 import time
-import os
 from dataclasses import dataclass
 from warnings import warn
 
@@ -54,20 +53,20 @@ def grab_line_info(current_line:str):
 
 def grab_pathway_info(
         data: list[str],
-        nat:int,
+        num_atoms:int,
         current_line: str,
-        coord_pathways:list,
         current_idx:int
     ):
     coords_list = []
     multiplicity, charge = grab_line_info(current_line)
-    coords_list.append([nat, charge, multiplicity])
-    for point in range(nat):
+    coords_list.append([num_atoms, charge, multiplicity])
+    for point in range(num_atoms):
         data_point = data[current_idx+1+point].split()
-        aty = data_point[0]
+        atomic_symbol = data_point[0]
         xyz = [float(data_point[i]) for i in range(1,4)]
-        coords_list.append([aty, xyz])
-    coord_pathways.append(coords_list)
+        coords_list.append([atomic_symbol, xyz])
+
+    return coords_list
 
 def load_pathway(fname:str, pathway:list[int]) -> list:
     '''
@@ -85,14 +84,17 @@ def load_pathway(fname:str, pathway:list[int]) -> list:
                 geo_name = ''
                 if len(line.split(',')) > 2:
                     geo_name = line.split(',')[2]
-                nat = int(data[idx-1].split()[0])
+                num_atoms = int(data[idx-1].split()[0]) #Extract the integer above each set of coordinates
                 if geo_name and pathway:
                     order = extract_number(geo_name)
                     if order and order in pathway:
-                        grab_pathway_info(data, nat, line, coordinates_pathway, idx)
+                        pathway_info = grab_pathway_info(data, num_atoms, line, idx)
+                        coordinates_pathway.append(pathway_info)
                 else:
-                    grab_pathway_info(data, nat, line, coordinates_pathway, idx)
-                idx += nat + 2
+                    pathway_info = grab_pathway_info(data, num_atoms, line, idx)
+                    coordinates_pathway.append(pathway_info)
+
+                idx += num_atoms + 2
             else:
                 idx += 1
     return coordinates_pathway
@@ -110,7 +112,7 @@ def generate_molecular_hamiltonian(
         run_ccsd:int=0,
         run_fci:int=0
 ) -> InteractionOperator:
-        
+    """Generates a molecular Hamiltonian using the Double-Factorization encoding"""
     mol_data = MolecularData(
         geometry=geometry,
         basis=basis,
@@ -126,11 +128,16 @@ def generate_molecular_hamiltonian(
         run_ccsd=run_ccsd,
         run_fci=run_fci
     )
+    num_electrons = mol.n_electrons
+    num_orbitals = mol.n_orbitals
+    
     if active_space_frac and not occupied_indices and not active_indices:
-        nocc = mol.n_electrons // 2
-        nvir = mol.n_orbitals - nocc
-        active_space_start = nocc - ( nocc // active_space_frac )
-        active_space_stop = nocc + ( nvir // active_space_frac )
+        num_occupied_orbitals = num_electrons // 2
+        num_free_orbitals = num_orbitals - num_occupied_orbitals
+
+        active_space_start = num_occupied_orbitals - ( num_occupied_orbitals // active_space_frac )
+        active_space_stop = num_occupied_orbitals + ( num_free_orbitals // active_space_frac)
+
         occupied_indices = range(active_space_start)
         active_indices = range(active_space_start, active_space_stop)
     
@@ -150,34 +157,23 @@ def generate_molecular_hamiltonian(
         )
 
     molecular_hamiltonian -= mol.hf_energy
+    return molecular_hamiltonian, num_electrons, num_orbitals
 
-    return molecular_hamiltonian
-
-def gen_df_qpe(
+def gen_double_factorization_qpe(
         mol_ham: InteractionOperator,
         use_analytical:bool,
-        outdir:str,
-        fname:str,
         bits_rot: int = 7,
         df_error_threshold: float = 1e-3,
         sf_error_threshold: float = 1e-8,
         energy_error: float = 1e-3,
         df_prec: int | None = None,
         eps: float | None = None,
-        is_extrapolated:bool = False,
-        gate_precision: float = 1e-10,
-        include_nested_resources: bool = False,
-        metadata: CatalystMetaData | None = None,
-        write_circuits: bool = False
     ):
     if not df_prec and not eps:
         raise ValueError('Specify either df_prec/eps for QPE')
 
     if not use_analytical and not df_prec:
         raise ValueError('Number of bits of precision is necessary for scaling resource estimates if not using analytical approach for DF encoded QPE')
-
-    if not os.path.exists(outdir):
-        os.makedirs(outdir) 
 
     mol_instance = getInstance('ChemicalHamiltonian', mol_ham=mol_ham, mol_name='Molecular Hamiltonian')
     df_encoding = getEncoding(
@@ -192,21 +188,8 @@ def gen_df_qpe(
         qpe_df_circuit = QubitizedPhaseEstimation(block_encoding=df_encoding, prec=df_prec)
     else:
         qpe_df_circuit = QubitizedPhaseEstimation(block_encoding=df_encoding, eps=eps)
-    
     qpe_circuit = qpe_df_circuit.circuit
-    grab_circuit_resources(
-        circuit=qpe_circuit,
-        outdir=outdir,
-        algo_name='DF_QPE',
-        fname=fname,
-        is_extrapolated=is_extrapolated,
-        use_analytical=use_analytical,
-        bits_precision=df_prec,
-        metadata=metadata,
-        include_nested_resources=include_nested_resources,
-        gate_synth_accuracy=gate_precision,
-        write_circuits=write_circuits
-    )
+
     return qpe_circuit
 
 
@@ -336,7 +319,7 @@ def gsee_molecular_hamiltonian(
             name=f'{catalyst_name}[{idx}]',
             category='Scientific',
             size=f'{molecular_hamiltonian.n_qubits} qubits',
-            task='GSEE',
+            task='Trotterized QPE',
             gate_synth_accuracy=gate_synth_accuracy,
             value=value,
             repetitions_per_application=repetitions_per_application,
