@@ -24,6 +24,8 @@ class molecular_info:
     basis: str
     occupied_qubits: int
     unoccupied_qubits: int
+    num_electrons: int
+    num_orbitals: int
     initial_state: np.ndarray[int]
     hf_energy:float
     active_space_reduction:float
@@ -275,6 +277,8 @@ def generate_pathway_hamiltonians(
             basis=basis,
             occupied_qubits=molecular_occupied,
             unoccupied_qubits=molecular_unoccupied,
+            num_electrons = molecule.n_electrons,
+            num_orbitals = molecule.n_orbitals, 
             initial_state=initial_state,
             hf_energy=molecule.hf_energy,
             active_space_reduction=active_space_frac,
@@ -314,20 +318,20 @@ def gsee_molecular_hamiltonian(
         trotter_order = gse_args['trot_ord']
         trotter_steps = gse_args['trot_num']
 
+        #TODO: Include algorithmic Hyperparmeters
         molecular_metadata = CatalystMetaData(
             id = uid,
             name=f'{catalyst_name}[{idx}]',
             category='Scientific',
-            size=f'{molecular_hamiltonian.n_qubits} qubits',
             task='Trotterized QPE',
+            size=f'{molecular_hamiltonian.n_qubits} qubits',
+            num_electrons=molecular_hamiltonian_info.num_electrons,
+            num_orbitals=molecular_hamiltonian_info.num_orbitals,
+            active_space_fraction=active_space_frac,
             gate_synth_accuracy=gate_synth_accuracy,
             value=value,
             repetitions_per_application=repetitions_per_application,
             basis=basis,
-            evolution_time=ev_time,
-            bits_precision=bits_precision,
-            trotter_order=trotter_order,
-            nsteps=trotter_steps
         )
 
         t0 = time.perf_counter()
@@ -355,7 +359,8 @@ def gsee_molecular_hamiltonian(
             metadata=molecular_metadata,
             write_circuits=write_circuits,
             include_nested_resources=include_nested_resources,
-            gate_synth_accuracy=gate_synth_accuracy
+            gate_synth_accuracy=gate_synth_accuracy,
+            is_extrapolated=False
         )
         t1 = time.perf_counter()
         print(f'Time to estimate state {idx}: {t1-t0}')
